@@ -27,25 +27,26 @@ def fetch_participants():
     resp.raise_for_status()
     data = resp.json()
 
-    # NOTE: the exact shape of this response has not been fully verified
-    # against a live call yet. This function tries the most likely shapes:
-    # either a bare list, or a dict with the list under one of a few
-    # common keys. Run the script once manually (see README) and check
-    # the printed "Current total" / any KeyError to confirm which branch
-    # actually applies, then simplify this function if needed.
-    if isinstance(data, list):
-        return data
+    def find_list(node, depth=0):
+        if isinstance(node, list):
+            return node
+        if isinstance(node, dict) and depth < 3:
+            for key in ("participants", "list", "items", "active_participants", "result"):
+                if key in node:
+                    found = find_list(node[key], depth + 1)
+                    if found is not None:
+                        return found
+        return None
 
-    if isinstance(data, dict):
-        for key in ("active_participants", "participants", "result"):
-            if key in data and isinstance(data[key], list):
-                return data[key]
+    entries = find_list(data)
+    if entries is None:
+        preview = json.dumps(data, indent=2, ensure_ascii=False)[:3000]
         raise ValueError(
-            f"Could not find a participants list in the response. "
-            f"Top-level keys were: {list(data.keys())}"
+            "Could not find a participants list in the response.\n"
+            f"Top-level keys were: {list(data.keys()) if isinstance(data, dict) else type(data)}\n"
+            f"Response preview (truncated):\n{preview}"
         )
-
-    raise ValueError("Unexpected response type from participants endpoint")
+    return entries
 
 
 def participant_id(entry):
