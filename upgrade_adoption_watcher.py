@@ -36,23 +36,19 @@ def fetch_active_participants():
     resp.raise_for_status()
     data = resp.json()
 
-    entries = data.get("active_participants")
+    entries = data.get("active_participants", {}).get("participants")
     if not isinstance(entries, list):
         preview = json.dumps(data, indent=2, ensure_ascii=False)[:3000]
         raise ValueError(
-            "'active_participants' is not a plain list as expected.\n"
+            "Could not find participants list under active_participants.participants.\n"
             f"Preview:\n{preview}"
         )
     return entries
 
 
 def participant_identity(entry):
-    """Best-effort extraction of (id, weight, url) from one participant entry.
-    Field names are guessed and NOT yet verified against a live response --
-    see the calibration printout below on first run.
-    """
     pid = None
-    for key in ("participant_id", "address", "id"):
+    for key in ("index", "participant_id", "address", "id"):
         if key in entry:
             pid = str(entry[key])
             break
