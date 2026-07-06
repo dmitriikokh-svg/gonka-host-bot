@@ -72,8 +72,6 @@ def participant_identity(entry):
 
 
 def fetch_version(url):
-    """Query one participant's own /v1/versions. Returns a version string
-    or None if unreachable / unparsable."""
     try:
         resp = requests.get(f"{url}/v1/versions", timeout=VERSION_CHECK_TIMEOUT)
         resp.raise_for_status()
@@ -81,12 +79,20 @@ def fetch_version(url):
     except Exception:
         return None
 
-    for key in ("api_version", "version", "decentralized_api_version"):
+    if isinstance(data, dict) and isinstance(data.get("api_version"), dict):
+        v = data["api_version"].get("version")
+        if v:
+            return str(v)
+
+    for key in ("version", "decentralized_api_version"):
         if isinstance(data, dict) and key in data:
             return str(data[key])
-    # Unknown shape -- return the raw dump so it shows up in logs once,
-    # instead of silently guessing wrong.
+
     return f"UNRECOGNIZED_SHAPE:{json.dumps(data)[:200]}"
+
+
+def normalize_version(v):
+    return v.lstrip("vV") if isinstance(v, str) else v
 
 
 def main():
@@ -126,7 +132,7 @@ def main():
         v = results.get(p["id"])
         if v is None:
             unreachable += 1
-        elif v == TARGET_VERSION:
+        elif normalize_version(v) == normalize_version(TARGET_VERSION):
             adopted_weight += p["weight"] or 0
 
     pct = (adopted_weight / total_weight * 100) if total_weight else 0
