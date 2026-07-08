@@ -21,6 +21,7 @@ import sys
 import requests
 
 PARTICIPANTS_URL = "http://node2.gonka.ai:8000/v1/epochs/current/participants"
+EPOCH_URL = "https://node3.gonka.ai/v1/epochs/latest"
 STATE_FILE = "state/upgrade_adoption.json"
 VERSION_CHECK_TIMEOUT = 5
 MAX_WORKERS = 20
@@ -45,6 +46,13 @@ def fetch_active_participants():
         )
     return entries
 
+def fetch_current_epoch():
+    try:
+        resp = requests.get(EPOCH_URL, timeout=15)
+        resp.raise_for_status()
+        return resp.json().get("latest_epoch", {}).get("index")
+    except Exception:
+        return None
 
 def participant_identity(entry):
     pid = None
@@ -71,24 +79,29 @@ def participant_identity(entry):
     return pid, weight, url
 
 
-def fetch_version(url):
-    try:
-        resp = requests.get(f"{url}/v1/versions", timeout=VERSION_CHECK_TIMEOUT)
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception:
-        return None
-
-    if isinstance(data, dict) and isinstance(data.get("api_version"), dict):
-        v = data["api_version"].get("version")
-        if v:
-            return str(v)
-
-    for key in ("version", "decentralized_api_version"):
-        if isinstance(data, dict) and key in data:
-            return str(data[key])
-
-    return f"UNRECOGNIZED_SHAPE:{json.dumps(data)[:200]}"
+def fetch_version(url, retries=2, timeout=VERSION_CHECK_TIMEOUT):
+    """Query one participant's own /v1/versions, with a couple of retries
+    before giving up -- a single slow response shouldn't count a host as
+    unreachable and silently drop its weight from the numerator."""
+    last_error = None
+    for attempt in range(retries + 1):
+        try:
+            resp = requests.get(f"{url}/v1/versions", timeout=timeout)
+            resp.raise_for_status()
+            data = resp.json()
+            if isinstance(data, dict) and isinstance(data.get("api_version"), dict):
+                v = data["api_version"].get("version")
+                if v:
+                    return str(v)
+            for key in ("version", "decentralized_api_version"):
+                if isinstance(data, dict) and key in data:
+                    return str(data[key])
+            return f"UNRECOGNIZED_SHAPE:{json.dumps(data)[:200]}"
+        except Exception as exc:
+            last_error = exc
+            continue
+    print(f"WARNING: {url} unreachable after {retries + 1} attempts ({last_error})")
+    return None
 
 
 def normalize_version(v):
@@ -152,10 +165,13 @@ def main():
     )
     changed = previous is None or previous.get("adopted_weight") != adopted_weight
 
+    epoch = fetch_current_epoch()
+    epoch_note = f" (\u044d\u043f\u043e\u0445\u0430 {epoch})" if epoch is not None else ""
+
     if changed:
         status_line = "\u2705 \u041f\u043e\u0440\u043e\u0433 \u0434\u043e\u0441\u0442\u0438\u0433\u043d\u0443\u0442!" if crossed_threshold_now else ""
         message = (
-            f"\U0001F4CA \u041f\u0440\u043e\u0433\u0440\u0435\u0441\u0441 \u0430\u043f\u0433\u0440\u0435\u0439\u0434\u0430 \u0434\u043e {TARGET_VERSION}:\n"
+            f"\U0001F4CA \u041f\u0440\u043e\u0433\u0440\u0435\u0441\u0441 \u0430\u043f\u0433\u0440\u0435\u0439\u0434\u0430 \u0434\u043e {TARGET_VERSION}{epoch_note}:\n"
             f"{adopted_weight} / {total_weight} \u0432\u0435\u0441\u0430 ({pct:.1f}%)\n"
             f"\u041f\u043e\u0440\u043e\u0433: {THRESHOLD}\n"
             f"\u041d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u044b\u0445 \u0445\u043e\u0441\u0442\u043e\u0432: {unreachable}\n"
