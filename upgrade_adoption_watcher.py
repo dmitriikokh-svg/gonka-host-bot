@@ -19,6 +19,9 @@ import os
 import sys
 
 import requests
+import ipaddress
+import socket
+from urllib.parse import urlparse, urlunparse
 
 PARTICIPANTS_URL = "http://node2.gonka.ai:8000/v1/epochs/current/participants"
 EPOCH_URL = "https://node3.gonka.ai/v1/epochs/latest"
@@ -78,6 +81,48 @@ def participant_identity(entry):
 
     return pid, weight, url
 
+def validate_public_url(raw_url):
+    if not raw_url:
+        raise ValueError("empty participant URL")
+
+    parsed = urlparse(raw_url)
+
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError(f"unsupported URL scheme: {parsed.scheme!r}")
+
+    if parsed.username or parsed.password:
+        raise ValueError("URLs with embedded credentials are not allowed")
+
+    if not parsed.hostname:
+        raise ValueError("URL has no hostname")
+
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise ValueError(f"invalid URL port: {exc}") from exc
+
+    try:
+        addresses = {
+            ipaddress.ip_address(info[4][0])
+            for info in socket.getaddrinfo(
+                parsed.hostname,
+                port or (443 if parsed.scheme == "https" else 80),
+                type=socket.SOCK_STREAM,
+            )
+        }
+    except socket.gaierror as exc:
+        raise ValueError(
+            f"hostname does not resolve: {parsed.hostname!r}"
+        ) from exc
+
+    if not addresses or any(not address.is_global for address in addresses):
+        raise ValueError(
+            f"URL resolves to a non-public address: {parsed.hostname!r}"
+        )
+
+    return urlunparse(
+        (parsed.scheme, parsed.netloc, parsed.path.rstrip("/"), "", "", "")
+    )
 
 def fetch_version(url, retries=2, timeout=VERSION_CHECK_TIMEOUT):
     """Query one participant's own /v1/versions, with a couple of retries
@@ -111,81 +156,206 @@ def normalize_version(v):
 def main():
     entries = fetch_active_participants()
 
-    # --- Calibration printout: shows real structure of the first entry.
-    # Remove/ignore once field names above are confirmed correct.
     if entries:
         print("Sample participant entry (for field-name calibration):")
         print(json.dumps(entries[0], indent=2, ensure_ascii=False)[:1500])
 
     parsed = []
-    for e in entries:
-        pid, weight, url = participant_identity(e)
-        if url:
-            parsed.append({"id": pid, "weight": weight, "url": url})
-        else:
-            print(f"WARNING: no usable URL field found for participant {pid}")
+    seen_ids = set()
+    network_total_weight = 0
+    unknown_weight = 0
 
-    total_weight = sum(p["weight"] or 0 for p in parsed)
+    for entry in entries:
+        pid, weight, url = participant_identity(entry)
+
+        if not pid:
+            raise ValueError("participant has no stable id")
+
+        if pid in seen_ids:
+            raise ValueError(f"duplicate participant id: {pid}")
+
+        seen_ids.add(pid)
+
+        if weight is None or weight < 0:
+            raise ValueError(
+                f"participant {pid} has invalid weight: {weight!r}"
+            )
+
+        network_total_weight += weight
+
+        if not url:
+            print(
+                f"WARNING: no usable URL field found for participant {pid}"
+            )
+            unknown_weight += weight
+            continue
+
+        try:
+            safe_url = validate_public_url(url)
+        except ValueError as exc:
+            print(
+                f"WARNING: skipping unsafe URL for {pid}: {exc}"
+            )
+            unknown_weight += weight
+            continue
+
+        parsed.append(
+            {
+                "id": pid,
+                "weight": weight,
+                "url": safe_url,
+            }
+        )
 
     results = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-        futures = {pool.submit(fetch_version, p["url"]): p for p in parsed}
+
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=MAX_WORKERS
+    ) as pool:
+        futures = {
+            pool.submit(fetch_version, participant["url"]): participant
+            for participant in parsed
+        }
+
         first_printed = False
+
         for future in concurrent.futures.as_completed(futures):
-            p = futures[future]
+            participant = futures[future]
             version = future.result()
-            results[p["id"]] = version
+
+            results[participant["id"]] = version
+
             if version and not first_printed:
-                print(f"Sample /v1/versions result (for calibration): {version}")
+                print(
+                    "Sample /v1/versions result "
+                    f"(for calibration): {version}"
+                )
                 first_printed = True
 
     adopted_weight = 0
     unreachable = 0
-    for p in parsed:
-        v = results.get(p["id"])
-        if v is None:
-            unreachable += 1
-        elif normalize_version(v) == normalize_version(TARGET_VERSION):
-            adopted_weight += p["weight"] or 0
 
-    pct = (adopted_weight / total_weight * 100) if total_weight else 0
+    for participant in parsed:
+        version = results.get(participant["id"])
+
+        if version is None:
+            unreachable += 1
+            unknown_weight += participant["weight"]
+            continue
+
+        if normalize_version(version) == normalize_version(
+            TARGET_VERSION
+        ):
+            adopted_weight += participant["weight"]
+
+    pct = (
+        adopted_weight / network_total_weight * 100
+        if network_total_weight
+        else 0
+    )
+
+    threshold_reached = (
+        adopted_weight >= THRESHOLD
+        and unknown_weight == 0
+    )
+
     print(
-        f"Adoption: {adopted_weight}/{total_weight} ({pct:.1f}%), "
-        f"threshold {THRESHOLD}, unreachable hosts: {unreachable}"
+        f"Adoption: {adopted_weight}/{network_total_weight} "
+        f"({pct:.1f}%), "
+        f"threshold {THRESHOLD}, "
+        f"unreachable hosts: {unreachable}, "
+        f"unknown weight: {unknown_weight}"
     )
 
     previous = None
+
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE) as f:
             previous = json.load(f)
 
     crossed_threshold_now = (
-        adopted_weight >= THRESHOLD
-        and (previous is None or previous.get("adopted_weight", 0) < THRESHOLD)
+        threshold_reached
+        and (
+            previous is None
+            or not previous.get("threshold_reached", False)
+        )
     )
-    changed = previous is None or previous.get("adopted_weight") != adopted_weight
+
+    changed = (
+        previous is None
+        or previous.get("target_version") != TARGET_VERSION
+        or previous.get("threshold") != THRESHOLD
+        or previous.get("adopted_weight") != adopted_weight
+        or previous.get("network_total_weight")
+        != network_total_weight
+        or previous.get("unknown_weight") != unknown_weight
+        or previous.get("unreachable_count") != unreachable
+        or previous.get("threshold_reached")
+        != threshold_reached
+    )
 
     epoch = fetch_current_epoch()
-    epoch_note = f" (\u044d\u043f\u043e\u0445\u0430 {epoch})" if epoch is not None else ""
+    epoch_note = (
+        f" (эпоха {epoch})"
+        if epoch is not None
+        else ""
+    )
 
     if changed:
-        status_line = "\u2705 \u041f\u043e\u0440\u043e\u0433 \u0434\u043e\u0441\u0442\u0438\u0433\u043d\u0443\u0442!" if crossed_threshold_now else ""
+        status_line = (
+            "✅ Порог достигнут!"
+            if crossed_threshold_now
+            else ""
+        )
+
         message = (
-            f"\U0001F4CA \u041f\u0440\u043e\u0433\u0440\u0435\u0441\u0441 \u0430\u043f\u0433\u0440\u0435\u0439\u0434\u0430 \u0434\u043e {TARGET_VERSION}{epoch_note}:\n"
-            f"{adopted_weight} / {total_weight} \u0432\u0435\u0441\u0430 ({pct:.1f}%)\n"
-            f"\u041f\u043e\u0440\u043e\u0433: {THRESHOLD}\n"
-            f"\u041d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u044b\u0445 \u0445\u043e\u0441\u0442\u043e\u0432: {unreachable}\n"
+            f"📊 Прогресс апгрейда до "
+            f"{TARGET_VERSION}{epoch_note}:\n"
+            f"{adopted_weight} / {network_total_weight} "
+            f"веса ({pct:.1f}%)\n"
+            f"Порог: {THRESHOLD}\n"
+            f"Недоступных хостов: {unreachable}\n"
+            f"Неизвестный вес: {unknown_weight}\n"
             f"{status_line}"
         )
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        requests.post(url, json={"chat_id": CHAT_ID, "text": message}, timeout=15).raise_for_status()
+
+        telegram_url = (
+            f"https://api.telegram.org/"
+            f"bot{BOT_TOKEN}/sendMessage"
+        )
+
+        requests.post(
+            telegram_url,
+            json={
+                "chat_id": CHAT_ID,
+                "text": message,
+            },
+            timeout=15,
+        ).raise_for_status()
+
         print("Sent Telegram update.")
     else:
         print("No change since last run, no message sent.")
 
-    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+    os.makedirs(
+        os.path.dirname(STATE_FILE),
+        exist_ok=True,
+    )
+
     with open(STATE_FILE, "w") as f:
-        json.dump({"adopted_weight": adopted_weight, "total_weight": total_weight}, f, indent=2)
+        json.dump(
+            {
+                "target_version": TARGET_VERSION,
+                "threshold": THRESHOLD,
+                "adopted_weight": adopted_weight,
+                "network_total_weight": network_total_weight,
+                "unknown_weight": unknown_weight,
+                "unreachable_count": unreachable,
+                "threshold_reached": threshold_reached,
+            },
+            f,
+            indent=2,
+        )
 
 
 if __name__ == "__main__":
