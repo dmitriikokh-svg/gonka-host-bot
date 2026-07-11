@@ -12,6 +12,7 @@ import csv
 import json
 import os
 import sys
+import html
 from datetime import datetime, timezone
 
 import requests
@@ -117,7 +118,7 @@ def main():
         log_rows = [(nid, epoch, participant_url(by_id[nid])) for nid in new_ids]
         append_to_log(log_rows)
 
-        lines = "\n".join(f"\u2022 <code>{i}</code>" for i in sorted(new_ids))
+        lines = "\n".join(f"• <code>{html.escape(i)}</code>" for i in sorted(new_ids))
         epoch_note = f" (\u044d\u043f\u043e\u0445\u0430 {epoch})" if epoch is not None else ""
         message = f"\U0001F195 \u041d\u043e\u0432\u044b\u0439 \u0445\u043e\u0441\u0442(\u044b) \u0432 \u0441\u0435\u0442\u0438 Gonka ({len(new_ids)}){epoch_note}:\n{lines}"
         send_telegram_message(message)
