@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: check-new-hosts
+  cancel-in-progress: false
+
 jobs:
   check-new-hosts:
     runs-on: ubuntu-latest
@@ -31,6 +35,6 @@ jobs:
         run: |
           git config user.name "gonka-bot"
           git config user.email "gonka-bot@users.noreply.github.com"
-          git add state/hosts.json
+          git add state/hosts.json state/host_log.csv
           git diff --staged --quiet || git commit -m "Update hosts state [skip ci]"
           git push
