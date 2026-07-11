@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: check-exclusions
+  cancel-in-progress: false
+
 jobs:
   check-glamsterdam:
     runs-on: ubuntu-latest
