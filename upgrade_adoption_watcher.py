@@ -58,25 +58,77 @@ def fetch_current_epoch():
         return None
 
 def participant_identity(entry):
+    if not isinstance(entry, dict):
+        raise ValueError(
+            "Participant entry must be an object, "
+            f"got {type(entry).__name__}"
+        )
+
     pid = None
-    for key in ("index", "participant_id", "address", "id"):
-        if key in entry:
-            pid = str(entry[key])
+
+    for key in (
+        "index",
+        "participant_id",
+        "address",
+        "id",
+    ):
+        value = entry.get(key)
+
+        if value:
+            pid = str(value)
             break
 
     weight = None
-    for key in ("weight", "power", "voting_power", "stake"):
-        if key in entry:
-            try:
-                weight = int(entry[key])
-            except (TypeError, ValueError):
-                pass
-            break
+
+    # Основной источник веса
+    raw_weight = entry.get("weight")
+
+    if raw_weight is not None:
+        try:
+            weight = int(raw_weight)
+        except (TypeError, ValueError):
+            weight = None
+
+    # Fallback для API-ответов, где weight = null
+    if weight is None:
+        voting_powers = entry.get("voting_powers")
+
+        if isinstance(voting_powers, list):
+            powers = []
+
+            for item in voting_powers:
+                if not isinstance(item, dict):
+                    continue
+
+                raw_power = item.get("voting_power")
+
+                if raw_power is None:
+                    continue
+
+                try:
+                    powers.append(int(raw_power))
+                except (TypeError, ValueError):
+                    continue
+
+            if powers:
+                weight = sum(powers)
+
+                print(
+                    f"WARNING: using voting_powers fallback "
+                    f"for participant {pid}: {weight}"
+                )
 
     url = None
-    for key in ("inference_url", "url", "api_url"):
-        if key in entry:
-            url = str(entry[key]).rstrip("/")
+
+    for key in (
+        "inference_url",
+        "url",
+        "api_url",
+    ):
+        value = entry.get(key)
+
+        if value:
+            url = str(value).rstrip("/")
             break
 
     return pid, weight, url
