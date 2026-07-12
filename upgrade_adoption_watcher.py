@@ -273,6 +273,21 @@ def main():
         with open(STATE_FILE) as f:
             previous = json.load(f)
 
+    threshold_reached = adopted_weight >= THRESHOLD
+
+    unknown_pct = (
+        unknown_weight / network_total_weight * 100
+        if network_total_weight
+        else 0
+    )
+    
+    if unknown_pct < 10:
+        unknown_band = "normal"
+    elif unknown_pct < 25:
+        unknown_band = "degraded"
+    else:
+        unknown_band = "unreliable"
+    
     crossed_threshold_now = (
         threshold_reached
         and (
@@ -280,18 +295,13 @@ def main():
             or not previous.get("threshold_reached", False)
         )
     )
-
+    
     changed = (
         previous is None
         or previous.get("target_version") != TARGET_VERSION
         or previous.get("threshold") != THRESHOLD
-        or previous.get("adopted_weight") != adopted_weight
-        or previous.get("network_total_weight")
-        != network_total_weight
-        or previous.get("unknown_weight") != unknown_weight
-        or previous.get("unreachable_count") != unreachable
-        or previous.get("threshold_reached")
-        != threshold_reached
+        or previous.get("threshold_reached") != threshold_reached
+        or previous.get("unknown_band") != unknown_band
     )
 
     epoch = fetch_current_epoch()
@@ -352,6 +362,7 @@ def main():
                 "unknown_weight": unknown_weight,
                 "unreachable_count": unreachable,
                 "threshold_reached": threshold_reached,
+                "unknown_band": unknown_band,
             },
             f,
             indent=2,
