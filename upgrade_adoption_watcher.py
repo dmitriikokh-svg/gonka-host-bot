@@ -216,6 +216,7 @@ def main():
     seen_ids = set()
     network_total_weight = 0
     unknown_weight = 0
+    unknown_participants = 0
 
     for entry in entries:
         pid, weight, url = participant_identity(entry)
@@ -229,10 +230,17 @@ def main():
         seen_ids.add(pid)
 
         if weight is None or weight < 0:
-            raise ValueError(
-                f"participant {pid} has invalid weight: {weight!r}"
+            print(
+                f"WARNING: skipping participant {pid} "
+                f"because weight is unavailable"
             )
-
+            print(
+                "Participant payload:",
+                json.dumps(entry, indent=2, ensure_ascii=False)[:3000]
+            )
+            unknown_participants += 1
+            continue
+        
         network_total_weight += weight
 
         if not url:
@@ -379,6 +387,7 @@ def main():
             f"Недоступных хостов: {unreachable}\n"
             f"Неизвестный вес: {unknown_weight}\n"
             f"{status_line}"
+            f"Участников без веса: {unknown_participants}\n"
         )
 
         telegram_url = (
@@ -415,6 +424,7 @@ def main():
                 "unreachable_count": unreachable,
                 "threshold_reached": threshold_reached,
                 "unknown_band": unknown_band,
+                "unknown_participants": unknown_participants,
             },
             f,
             indent=2,
