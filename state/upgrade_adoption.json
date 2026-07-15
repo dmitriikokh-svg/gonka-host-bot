@@ -1,11 +1,11 @@
 {
   "target_version": "v0.2.13-post8",
   "threshold": 267800,
-  "adopted_weight": 328392,
+  "adopted_weight": 398284,
   "network_total_weight": 507436,
-  "unknown_weight": 87533,
-  "unreachable_count": 8,
+  "unknown_weight": 20002,
+  "unreachable_count": 7,
   "threshold_reached": true,
-  "unknown_band": "degraded",
+  "unknown_band": "normal",
   "unknown_participants": 0
 }
