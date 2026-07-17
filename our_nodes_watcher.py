@@ -86,6 +86,20 @@ def fetch_participants(urls: list[str], timeout: int) -> list[dict]:
     raise RuntimeError("all participants sources failed: " + " | ".join(errors))
 
 
+def fetch_epoch(urls: list[str], timeout: int) -> int | None:
+    for url in urls:
+        try:
+            response = requests.get(url, timeout=timeout)
+            response.raise_for_status()
+            data = response.json()
+            value = data.get("latest_epoch", {}).get("index")
+            if value is not None:
+                return int(value)
+        except Exception as exc:
+            print(f"WARNING: epoch source failed {url}: {type(exc).__name__}: {exc}")
+    return None
+
+
 def participant_map(entries: list[dict]) -> dict[str, dict]:
     result = {}
     for entry in entries:
@@ -203,8 +217,40 @@ def build_recovery(node: dict, previous: dict, result: dict, now: str) -> str:
     )
 
 
-def inspect_node(node: dict, participants: dict[str, dict], config: dict) -> dict:
+def build_weight_alert(node: dict, result: dict, epoch: int | None) -> str:
+    epoch_text = str(epoch) if epoch is not None else "unknown"
+    return (
+        "⚠️ <b>Weight ratio упал</b>\n\n"
+        f"Нода: <code>{escape_text(node['name'])}</code> "
+        f"(<code>{escape_text(node['participant_address'])}</code>)\n"
+        f"Weight ratio: <b>{result['weight_ratio']:.2f}%</b>\n"
+        f"Вес ноды: {result['weight']}\n"
+        f"Общий вес: {result['total_weight']}\n"
+        f"Эпоха: {escape_text(epoch_text)}\n"
+        f"Порог: {result['ratio_alert_threshold']:.2f}%"
+    )
+
+
+def build_weight_recovery(node: dict, result: dict, epoch: int | None) -> str:
+    epoch_text = str(epoch) if epoch is not None else "unknown"
+    return (
+        "✅ <b>Weight ratio восстановился</b>\n\n"
+        f"Нода: <code>{escape_text(node['name'])}</code>\n"
+        f"Weight ratio: <b>{result['weight_ratio']:.2f}%</b>\n"
+        f"Вес ноды: {result['weight']}\n"
+        f"Общий вес: {result['total_weight']}\n"
+        f"Эпоха: {escape_text(epoch_text)}"
+    )
+
+
+def inspect_node(
+    node: dict,
+    participants: dict[str, dict],
+    total_weight: int,
+    config: dict,
+) -> dict:
     entry = participants.get(node["participant_address"])
+    weight = participant_weight(entry)
     endpoint = check_endpoint(
         node,
         config.get("health_path", "/v1/versions"),
@@ -219,21 +265,28 @@ def inspect_node(node: dict, participants: dict[str, dict], config: dict) -> dic
             "reason": "participant_absent",
             "details": "address not found in current participants",
             "endpoint": endpoint,
+            "weight": None,
+            "weight_ratio": None,
         }
     if not endpoint["ok"]:
         return {
             "ok": False,
             "reason": "endpoint_unhealthy",
             "details": endpoint.get("error", "endpoint check failed"),
-            "weight": participant_weight(entry),
+            "weight": weight,
+            "weight_ratio": (weight / total_weight * 100) if weight is not None and total_weight else None,
+            "total_weight": total_weight,
             "endpoint": endpoint,
         }
 
+    ratio = (weight / total_weight * 100) if weight is not None and total_weight else None
     return {
         "ok": True,
         "reason": "ok",
         "details": f"HTTP {endpoint['http_status']} in {endpoint['latency_ms']} ms",
-        "weight": participant_weight(entry),
+        "weight": weight,
+        "weight_ratio": ratio,
+        "total_weight": total_weight,
         "endpoint": endpoint,
     }
 
@@ -246,6 +299,18 @@ def main() -> None:
         participant_urls = [config["participants_url"]]
     entries = fetch_participants(participant_urls, 30)
     participants = participant_map(entries)
+    total_weight = sum(
+        weight for weight in (participant_weight(entry) for entry in participants.values())
+        if weight is not None and weight > 0
+    )
+    epoch_urls = config.get("epoch_urls", [])
+    epoch = fetch_epoch(epoch_urls, 15) if isinstance(epoch_urls, list) else None
+    ratio_alert_threshold = float(config.get("weight_ratio_alert_below_percent", 25.0))
+    ratio_recovery_threshold = float(
+        config.get("weight_ratio_recovery_above_percent", ratio_alert_threshold)
+    )
+    if ratio_recovery_threshold < ratio_alert_threshold:
+        raise ValueError("weight ratio recovery threshold must be >= alert threshold")
     state = load_state()
     now = utc_now()
     alerts = []
@@ -253,7 +318,8 @@ def main() -> None:
     for node in config["nodes"]:
         node_id = node["name"]
         previous = state["nodes"].get(node_id, {"status": "unknown"})
-        result = inspect_node(node, participants, config)
+        result = inspect_node(node, participants, total_weight, config)
+        result["ratio_alert_threshold"] = ratio_alert_threshold
 
         current_status = "up" if result["ok"] else "down"
         previous_status = previous.get("status", "unknown")
@@ -262,6 +328,17 @@ def main() -> None:
             alerts.append(build_alert(node, {**result, "reason": result["reason"]}, now))
         elif current_status == "up" and previous_status == "down":
             alerts.append(build_recovery(node, previous, result, now))
+
+        previous_ratio_alerted = bool(previous.get("weight_ratio_alerted", False))
+        ratio = result.get("weight_ratio")
+        ratio_alerted = previous_ratio_alerted
+        if ratio is not None:
+            if not previous_ratio_alerted and ratio < ratio_alert_threshold:
+                alerts.append(build_weight_alert(node, result, epoch))
+                ratio_alerted = True
+            elif previous_ratio_alerted and ratio >= ratio_recovery_threshold:
+                alerts.append(build_weight_recovery(node, result, epoch))
+                ratio_alerted = False
 
         state["nodes"][node_id] = {
             "status": current_status,
@@ -273,13 +350,17 @@ def main() -> None:
             ),
             "participant_present": node["participant_address"] in participants,
             "weight": result.get("weight"),
+            "weight_ratio": result.get("weight_ratio"),
+            "weight_ratio_alerted": ratio_alerted,
+            "total_weight": result.get("total_weight", total_weight),
+            "epoch": epoch,
             "reason": result.get("reason"),
             "details": result.get("details"),
         }
 
         print(
             f"{node_id}: {current_status}; reason={result.get('reason')}; "
-            f"weight={result.get('weight')}"
+            f"weight={result.get('weight')}; ratio={result.get('weight_ratio')}%"
         )
 
     for message in alerts:
@@ -291,6 +372,8 @@ def main() -> None:
 
     state["checked_at"] = now
     state["participant_count"] = len(participants)
+    state["total_weight"] = total_weight
+    state["epoch"] = epoch
     save_state(state)
 
 
