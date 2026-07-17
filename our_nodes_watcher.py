@@ -44,9 +44,12 @@ def load_config() -> dict:
         raise ValueError("config must contain a non-empty nodes list")
 
     for node in nodes:
-        for field in ("name", "participant_address", "endpoint"):
+        for field in ("name", "endpoint"):
             if not isinstance(node.get(field), str) or not node[field].strip():
                 raise ValueError(f"node is missing required field: {field}")
+        if node.get("participant_required", True):
+            if not isinstance(node.get("participant_address"), str) or not node["participant_address"].strip():
+                raise ValueError("participant-required node is missing participant_address")
         validate_public_http_url(node["endpoint"])
 
     return config
@@ -284,6 +287,24 @@ def inspect_node(
     )
 
     if not entry:
+        if not node.get("participant_required", True):
+            if not endpoint["ok"]:
+                return {
+                    "ok": False,
+                    "reason": "endpoint_unhealthy",
+                    "details": endpoint.get("error", "endpoint check failed"),
+                    "endpoint": endpoint,
+                    "weight": None,
+                    "weight_ratio": None,
+                }
+            return {
+                "ok": True,
+                "reason": "participant_check_skipped",
+                "details": f"HTTP {endpoint['http_status']} in {endpoint['latency_ms']} ms",
+                "endpoint": endpoint,
+                "weight": None,
+                "weight_ratio": None,
+            }
         return {
             "ok": False,
             "reason": "participant_absent",
