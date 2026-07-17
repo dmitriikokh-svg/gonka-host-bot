@@ -1,8 +1,9 @@
 """Monitor the team's Gonka host nodes.
 
-The watcher combines two independent signals:
+The watcher combines three independent signals:
   * the configured participant address is present in the current participants;
   * the configured public endpoint answers the configured health endpoint.
+  * the participant's authoritative current_epoch_stats.confirmationPoCRatio.
 
 One scheduled run performs several HTTP attempts. A node is alerted only when
 all attempts fail in the same run. State is persisted between GitHub Actions
@@ -27,6 +28,7 @@ import requests
 ROOT = Path(__file__).resolve().parent
 CONFIG_FILE = ROOT / "config" / "our_nodes.json"
 STATE_FILE = ROOT / "state" / "our_nodes_state.json"
+RATIO_METRIC_VERSION = "confirmation_poc_ratio_v1"
 
 BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
@@ -117,6 +119,30 @@ def participant_weight(entry: dict | None):
         return int(value) if value is not None else None
     except (TypeError, ValueError):
         return None
+
+
+def participant_confirmation_ratio(entry: dict | None):
+    """Return authoritative cPoC ratio as a percentage, or None.
+
+    The chain exposes current_epoch_stats.confirmationPoCRatio as a ratio in
+    the 0..1 range. Accept a percentage-shaped value as a compatibility
+    fallback because some dashboard/API versions serialize it differently.
+    """
+    if not entry:
+        return None
+    stats = entry.get("current_epoch_stats")
+    if not isinstance(stats, dict):
+        return None
+    value = stats.get("confirmationPoCRatio")
+    if value is None:
+        value = stats.get("confirmation_poc_ratio")
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return None
+    if value < 0:
+        return None
+    return value * 100 if value <= 1 else value
 
 
 def check_endpoint(node: dict, health_path: str, timeout: int, retries: int, delay: int) -> dict:
@@ -220,12 +246,11 @@ def build_recovery(node: dict, previous: dict, result: dict, now: str) -> str:
 def build_weight_alert(node: dict, result: dict, epoch: int | None) -> str:
     epoch_text = str(epoch) if epoch is not None else "unknown"
     return (
-        "⚠️ <b>Weight ratio упал</b>\n\n"
+        "⚠️ <b>Confirmation PoC ratio упал</b>\n\n"
         f"Нода: <code>{escape_text(node['name'])}</code> "
         f"(<code>{escape_text(node['participant_address'])}</code>)\n"
-        f"Weight ratio: <b>{result['weight_ratio']:.2f}%</b>\n"
+        f"Confirmation PoC ratio: <b>{result['weight_ratio']:.2f}%</b>\n"
         f"Вес ноды: {result['weight']}\n"
-        f"Общий вес: {result['total_weight']}\n"
         f"Эпоха: {escape_text(epoch_text)}\n"
         f"Порог: {result['ratio_alert_threshold']:.2f}%"
     )
@@ -234,11 +259,10 @@ def build_weight_alert(node: dict, result: dict, epoch: int | None) -> str:
 def build_weight_recovery(node: dict, result: dict, epoch: int | None) -> str:
     epoch_text = str(epoch) if epoch is not None else "unknown"
     return (
-        "✅ <b>Weight ratio восстановился</b>\n\n"
+        "✅ <b>Confirmation PoC ratio восстановился</b>\n\n"
         f"Нода: <code>{escape_text(node['name'])}</code>\n"
-        f"Weight ratio: <b>{result['weight_ratio']:.2f}%</b>\n"
+        f"Confirmation PoC ratio: <b>{result['weight_ratio']:.2f}%</b>\n"
         f"Вес ноды: {result['weight']}\n"
-        f"Общий вес: {result['total_weight']}\n"
         f"Эпоха: {escape_text(epoch_text)}"
     )
 
@@ -246,11 +270,11 @@ def build_weight_recovery(node: dict, result: dict, epoch: int | None) -> str:
 def inspect_node(
     node: dict,
     participants: dict[str, dict],
-    total_weight: int,
     config: dict,
 ) -> dict:
     entry = participants.get(node["participant_address"])
     weight = participant_weight(entry)
+    confirmation_ratio = participant_confirmation_ratio(entry)
     endpoint = check_endpoint(
         node,
         config.get("health_path", "/v1/versions"),
@@ -274,19 +298,16 @@ def inspect_node(
             "reason": "endpoint_unhealthy",
             "details": endpoint.get("error", "endpoint check failed"),
             "weight": weight,
-            "weight_ratio": (weight / total_weight * 100) if weight is not None and total_weight else None,
-            "total_weight": total_weight,
+            "weight_ratio": confirmation_ratio,
             "endpoint": endpoint,
         }
 
-    ratio = (weight / total_weight * 100) if weight is not None and total_weight else None
     return {
         "ok": True,
         "reason": "ok",
         "details": f"HTTP {endpoint['http_status']} in {endpoint['latency_ms']} ms",
         "weight": weight,
-        "weight_ratio": ratio,
-        "total_weight": total_weight,
+        "weight_ratio": confirmation_ratio,
         "endpoint": endpoint,
     }
 
@@ -299,10 +320,6 @@ def main() -> None:
         participant_urls = [config["participants_url"]]
     entries = fetch_participants(participant_urls, 30)
     participants = participant_map(entries)
-    total_weight = sum(
-        weight for weight in (participant_weight(entry) for entry in participants.values())
-        if weight is not None and weight > 0
-    )
     epoch_urls = config.get("epoch_urls", [])
     epoch = fetch_epoch(epoch_urls, 15) if isinstance(epoch_urls, list) else None
     ratio_alert_threshold = float(config.get("weight_ratio_alert_below_percent", 25.0))
@@ -318,7 +335,7 @@ def main() -> None:
     for node in config["nodes"]:
         node_id = node["name"]
         previous = state["nodes"].get(node_id, {"status": "unknown"})
-        result = inspect_node(node, participants, total_weight, config)
+        result = inspect_node(node, participants, config)
         result["ratio_alert_threshold"] = ratio_alert_threshold
 
         current_status = "up" if result["ok"] else "down"
@@ -329,7 +346,12 @@ def main() -> None:
         elif current_status == "up" and previous_status == "down":
             alerts.append(build_recovery(node, previous, result, now))
 
-        previous_ratio_alerted = bool(previous.get("weight_ratio_alerted", False))
+        # Reset the old state once after migrating from the incorrect
+        # network-share calculation to the authoritative cPoC ratio.
+        previous_ratio_alerted = (
+            previous.get("ratio_metric_version") == RATIO_METRIC_VERSION
+            and bool(previous.get("weight_ratio_alerted", False))
+        )
         ratio = result.get("weight_ratio")
         ratio_alerted = previous_ratio_alerted
         if ratio is not None:
@@ -352,7 +374,7 @@ def main() -> None:
             "weight": result.get("weight"),
             "weight_ratio": result.get("weight_ratio"),
             "weight_ratio_alerted": ratio_alerted,
-            "total_weight": result.get("total_weight", total_weight),
+            "ratio_metric_version": RATIO_METRIC_VERSION,
             "epoch": epoch,
             "reason": result.get("reason"),
             "details": result.get("details"),
@@ -372,7 +394,6 @@ def main() -> None:
 
     state["checked_at"] = now
     state["participant_count"] = len(participants)
-    state["total_weight"] = total_weight
     state["epoch"] = epoch
     save_state(state)
 
