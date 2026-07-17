@@ -35,6 +35,15 @@
       "endpoint": "https://node3.gonka.ai",
       "role": "host",
       "critical": true
+    },
+    {
+      "name": "node4",
+      "participant_address": "gonka120v3e0awars8d6yhwxyrvqypstf2ccnz3cyxc7",
+      "endpoint": "https://node4.gonka.ai",
+      "role": "read-only network node",
+      "critical": true,
+      "participant_required": false,
+      "address_source": "node4 validator dashboard"
     }
   ]
 }
