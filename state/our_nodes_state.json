@@ -1,33 +1,47 @@
 {
-  "checked_at": "2026-07-17T12:54:02+00:00",
+  "checked_at": "2026-07-17T13:00:16+00:00",
+  "epoch": 331,
   "nodes": {
     "node1": {
-      "details": "HTTP 200 in 362 ms",
+      "details": "HTTP 200 in 346 ms",
+      "epoch": 331,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-17T12:54:02+00:00",
+      "last_checked_at": "2026-07-17T13:00:16+00:00",
       "participant_present": true,
       "reason": "ok",
       "status": "up",
-      "weight": 1293
+      "total_weight": 441704,
+      "weight": 1293,
+      "weight_ratio": 0.2927299730136019,
+      "weight_ratio_alerted": true
     },
     "node2": {
-      "details": "HTTP 200 in 350 ms",
+      "details": "HTTP 200 in 227 ms",
+      "epoch": 331,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-17T12:54:02+00:00",
+      "last_checked_at": "2026-07-17T13:00:16+00:00",
       "participant_present": true,
       "reason": "ok",
       "status": "up",
-      "weight": 1285
+      "total_weight": 441704,
+      "weight": 1285,
+      "weight_ratio": 0.2909188053538116,
+      "weight_ratio_alerted": true
     },
     "node3": {
-      "details": "HTTP 200 in 512 ms",
+      "details": "HTTP 200 in 379 ms",
+      "epoch": 331,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-17T12:54:02+00:00",
+      "last_checked_at": "2026-07-17T13:00:16+00:00",
       "participant_present": true,
       "reason": "ok",
       "status": "up",
-      "weight": 2570
+      "total_weight": 441704,
+      "weight": 2570,
+      "weight_ratio": 0.5818376107076232,
+      "weight_ratio_alerted": true
     }
   },
-  "participant_count": 33
+  "participant_count": 33,
+  "total_weight": 441704
 }
