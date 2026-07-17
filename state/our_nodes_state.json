@@ -1,12 +1,12 @@
 {
-  "checked_at": "2026-07-17T16:40:56+00:00",
+  "checked_at": "2026-07-17T17:35:47+00:00",
   "epoch": 331,
   "nodes": {
     "node1": {
-      "details": "HTTP 200 in 355 ms",
+      "details": "HTTP 200 in 361 ms",
       "epoch": 331,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-17T16:40:56+00:00",
+      "last_checked_at": "2026-07-17T17:35:47+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
@@ -16,10 +16,10 @@
       "weight_ratio_alerted": false
     },
     "node2": {
-      "details": "HTTP 200 in 544 ms",
+      "details": "HTTP 200 in 262 ms",
       "epoch": 331,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-17T16:40:56+00:00",
+      "last_checked_at": "2026-07-17T17:35:47+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
@@ -29,10 +29,10 @@
       "weight_ratio_alerted": false
     },
     "node3": {
-      "details": "HTTP 200 in 527 ms",
+      "details": "HTTP 200 in 380 ms",
       "epoch": 331,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-17T16:40:56+00:00",
+      "last_checked_at": "2026-07-17T17:35:47+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
@@ -42,14 +42,14 @@
       "weight_ratio_alerted": false
     },
     "node4": {
-      "details": "ConnectTimeout: HTTPSConnectionPool(host='node4.gonka.ai', port=443): Max retries exceeded with url: /v1/versions (Caused by ConnectTimeoutError(<HTTPSConnection(host='node4.gonka.ai', port=443) at 0x7fbda5e9c440>, 'Connection to node4.gonka.ai timed out. (connect timeout=10)'))",
+      "details": "HTTP 200 in 246 ms",
       "epoch": 331,
-      "first_failed_at": "2026-07-17T16:40:56+00:00",
-      "last_checked_at": "2026-07-17T16:40:56+00:00",
+      "first_failed_at": null,
+      "last_checked_at": "2026-07-17T17:35:47+00:00",
       "participant_present": false,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
-      "reason": "endpoint_unhealthy",
-      "status": "down",
+      "reason": "participant_check_skipped",
+      "status": "up",
       "weight": null,
       "weight_ratio": null,
       "weight_ratio_alerted": false
