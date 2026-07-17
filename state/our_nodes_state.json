@@ -1,47 +1,60 @@
 {
-  "checked_at": "2026-07-17T13:04:29+00:00",
+  "checked_at": "2026-07-17T16:40:56+00:00",
   "epoch": 331,
   "nodes": {
     "node1": {
-      "details": "HTTP 200 in 318 ms",
+      "details": "HTTP 200 in 355 ms",
       "epoch": 331,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-17T13:04:29+00:00",
+      "last_checked_at": "2026-07-17T16:40:56+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
       "status": "up",
-      "weight": 1293,
+      "weight": 3761,
       "weight_ratio": null,
       "weight_ratio_alerted": false
     },
     "node2": {
-      "details": "HTTP 200 in 242 ms",
+      "details": "HTTP 200 in 544 ms",
       "epoch": 331,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-17T13:04:29+00:00",
+      "last_checked_at": "2026-07-17T16:40:56+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
       "status": "up",
-      "weight": 1285,
+      "weight": 1267,
       "weight_ratio": null,
       "weight_ratio_alerted": false
     },
     "node3": {
-      "details": "HTTP 200 in 350 ms",
+      "details": "HTTP 200 in 527 ms",
       "epoch": 331,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-17T13:04:29+00:00",
+      "last_checked_at": "2026-07-17T16:40:56+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
       "status": "up",
-      "weight": 2570,
+      "weight": 5098,
+      "weight_ratio": null,
+      "weight_ratio_alerted": false
+    },
+    "node4": {
+      "details": "ConnectTimeout: HTTPSConnectionPool(host='node4.gonka.ai', port=443): Max retries exceeded with url: /v1/versions (Caused by ConnectTimeoutError(<HTTPSConnection(host='node4.gonka.ai', port=443) at 0x7fbda5e9c440>, 'Connection to node4.gonka.ai timed out. (connect timeout=10)'))",
+      "epoch": 331,
+      "first_failed_at": "2026-07-17T16:40:56+00:00",
+      "last_checked_at": "2026-07-17T16:40:56+00:00",
+      "participant_present": false,
+      "ratio_metric_version": "confirmation_poc_ratio_v1",
+      "reason": "endpoint_unhealthy",
+      "status": "down",
+      "weight": null,
       "weight_ratio": null,
       "weight_ratio_alerted": false
     }
   },
-  "participant_count": 33,
+  "participant_count": 37,
   "total_weight": 441704
 }
