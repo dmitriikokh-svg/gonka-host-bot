@@ -1,0 +1,33 @@
+{
+  "checked_at": "2026-07-17T12:54:02+00:00",
+  "nodes": {
+    "node1": {
+      "details": "HTTP 200 in 362 ms",
+      "first_failed_at": null,
+      "last_checked_at": "2026-07-17T12:54:02+00:00",
+      "participant_present": true,
+      "reason": "ok",
+      "status": "up",
+      "weight": 1293
+    },
+    "node2": {
+      "details": "HTTP 200 in 350 ms",
+      "first_failed_at": null,
+      "last_checked_at": "2026-07-17T12:54:02+00:00",
+      "participant_present": true,
+      "reason": "ok",
+      "status": "up",
+      "weight": 1285
+    },
+    "node3": {
+      "details": "HTTP 200 in 512 ms",
+      "first_failed_at": null,
+      "last_checked_at": "2026-07-17T12:54:02+00:00",
+      "participant_present": true,
+      "reason": "ok",
+      "status": "up",
+      "weight": 2570
+    }
+  },
+  "participant_count": 33
+}
