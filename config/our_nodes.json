@@ -1,0 +1,34 @@
+{
+  "participants_urls": [
+    "http://node1.gonka.ai:8000/v1/epochs/current/participants",
+    "http://node2.gonka.ai:8000/v1/epochs/current/participants",
+    "https://node3.gonka.ai/v1/epochs/current/participants"
+  ],
+  "health_path": "/v1/versions",
+  "request_timeout_seconds": 10,
+  "health_retries": 3,
+  "retry_delay_seconds": 2,
+  "nodes": [
+    {
+      "name": "node1",
+      "participant_address": "gonka1y2a9p56kv044327uycmqdexl7zs82fs5ryv5le",
+      "endpoint": "http://node1.gonka.ai:8000",
+      "role": "host",
+      "critical": true
+    },
+    {
+      "name": "node2",
+      "participant_address": "gonka1dkl4mah5erqggvhqkpc8j3qs5tyuetgdy552cp",
+      "endpoint": "http://node2.gonka.ai:8000",
+      "role": "host-validator",
+      "critical": true
+    },
+    {
+      "name": "node3",
+      "participant_address": "gonka1kx9mca3xm8u8ypzfuhmxey66u0ufxhs7nm6wc5",
+      "endpoint": "https://node3.gonka.ai",
+      "role": "host",
+      "critical": true
+    }
+  ]
+}
