@@ -1,12 +1,12 @@
 {
-  "checked_at": "2026-07-19T20:10:55+00:00",
+  "checked_at": "2026-07-19T23:40:15+00:00",
   "epoch": 333,
   "nodes": {
     "node1": {
-      "details": "HTTP 200 in 326 ms",
+      "details": "HTTP 200 in 324 ms",
       "epoch": 333,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-19T20:10:55+00:00",
+      "last_checked_at": "2026-07-19T23:40:15+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
@@ -16,10 +16,10 @@
       "weight_ratio_alerted": false
     },
     "node2": {
-      "details": "HTTP 200 in 469 ms",
+      "details": "HTTP 200 in 368 ms",
       "epoch": 333,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-19T20:10:55+00:00",
+      "last_checked_at": "2026-07-19T23:40:15+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
@@ -29,10 +29,10 @@
       "weight_ratio_alerted": false
     },
     "node3": {
-      "details": "HTTP 200 in 420 ms",
+      "details": "HTTP 200 in 523 ms",
       "epoch": 333,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-19T20:10:55+00:00",
+      "last_checked_at": "2026-07-19T23:40:15+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
@@ -42,10 +42,10 @@
       "weight_ratio_alerted": false
     },
     "node4": {
-      "details": "HTTP 200 in 276 ms",
+      "details": "HTTP 200 in 193 ms",
       "epoch": 333,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-19T20:10:55+00:00",
+      "last_checked_at": "2026-07-19T23:40:15+00:00",
       "participant_present": false,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "participant_check_skipped",
