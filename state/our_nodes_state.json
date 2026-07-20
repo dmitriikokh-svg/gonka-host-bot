@@ -1,51 +1,51 @@
 {
-  "checked_at": "2026-07-19T23:40:15+00:00",
-  "epoch": 333,
+  "checked_at": "2026-07-20T11:24:27+00:00",
+  "epoch": 334,
   "nodes": {
     "node1": {
-      "details": "HTTP 200 in 324 ms",
-      "epoch": 333,
+      "details": "HTTP 200 in 356 ms",
+      "epoch": 334,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-19T23:40:15+00:00",
+      "last_checked_at": "2026-07-20T11:24:27+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
       "status": "up",
-      "weight": 3933,
+      "weight": 3891,
       "weight_ratio": null,
       "weight_ratio_alerted": false
     },
     "node2": {
-      "details": "HTTP 200 in 368 ms",
-      "epoch": 333,
+      "details": "HTTP 200 in 347 ms",
+      "epoch": 334,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-19T23:40:15+00:00",
+      "last_checked_at": "2026-07-20T11:24:27+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
       "status": "up",
-      "weight": 1230,
+      "weight": 1285,
       "weight_ratio": null,
       "weight_ratio_alerted": false
     },
     "node3": {
-      "details": "HTTP 200 in 523 ms",
-      "epoch": 333,
+      "details": "HTTP 200 in 491 ms",
+      "epoch": 334,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-19T23:40:15+00:00",
+      "last_checked_at": "2026-07-20T11:24:27+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "ok",
       "status": "up",
-      "weight": 11152,
+      "weight": 9436,
       "weight_ratio": null,
       "weight_ratio_alerted": false
     },
     "node4": {
-      "details": "HTTP 200 in 193 ms",
-      "epoch": 333,
+      "details": "HTTP 200 in 160 ms",
+      "epoch": 334,
       "first_failed_at": null,
-      "last_checked_at": "2026-07-19T23:40:15+00:00",
+      "last_checked_at": "2026-07-20T11:24:27+00:00",
       "participant_present": false,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "reason": "participant_check_skipped",
@@ -55,6 +55,6 @@
       "weight_ratio_alerted": false
     }
   },
-  "participant_count": 36,
+  "participant_count": 30,
   "total_weight": 441704
 }
