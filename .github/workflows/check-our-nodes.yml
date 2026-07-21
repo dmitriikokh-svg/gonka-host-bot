@@ -7,7 +7,7 @@ on:
   workflow_dispatch: {}
 
 concurrency:
-  group: check-our-nodes
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 permissions:
@@ -34,27 +34,4 @@ jobs:
         run: python our_nodes_watcher.py
 
       - name: Commit updated state
-        run: |
-          git config user.name "gonka-bot"
-          git config user.email "gonka-bot@users.noreply.github.com"
-          git add state/our_nodes_state.json
-          if git diff --staged --quiet; then
-            echo "State did not change. Nothing to commit."
-            exit 0
-          fi
-
-          git commit -m "Update our nodes monitor state [skip ci]"
-
-          # The main branch can receive a manual commit while this scheduled
-          # run is executing. Rebase the state commit and retry the push.
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-
-            echo "Push rejected; syncing with origin/main (attempt $attempt/3)."
-            GIT_EDITOR=true git pull --rebase origin main
-          done
-
-          echo "Could not push state after 3 attempts."
-          exit 1
+        run: bash scripts/commit_state.sh "Update our nodes monitor state [skip ci]" state/our_nodes_state.json
