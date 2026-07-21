@@ -2,14 +2,14 @@ name: Check for cPoC exclusions
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "2-57/5 * * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
 concurrency:
-  group: check-exclusions
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:
@@ -32,9 +32,4 @@ jobs:
         run: python excluded_watcher.py
 
       - name: Commit updated state
-        run: |
-          git config user.name "gonka-bot"
-          git config user.email "gonka-bot@users.noreply.github.com"
-          git add state/excluded.json
-          git diff --staged --quiet || git commit -m "Update excluded-participants state [skip ci]"
-          git push
+        run: bash scripts/commit_state.sh "Update excluded-participants state [skip ci]" state/excluded.json
