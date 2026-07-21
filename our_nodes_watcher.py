@@ -12,28 +12,28 @@ runs so recovery alerts are emitted once and repeated failures stay quiet.
 
 from __future__ import annotations
 
-import html
 import ipaddress
 import json
-import os
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
+
+from bot_common import (
+    escape_html,
+    load_json,
+    save_json_atomic,
+    send_telegram_message,
+    utc_now,
+)
 
 
 ROOT = Path(__file__).resolve().parent
 CONFIG_FILE = ROOT / "config" / "our_nodes.json"
 STATE_FILE = ROOT / "state" / "our_nodes_state.json"
 RATIO_METRIC_VERSION = "confirmation_poc_ratio_v1"
-
-BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
-THREAD_ID = os.environ.get("TELEGRAM_MESSAGE_THREAD_ID")
-
 
 def load_config() -> dict:
     with CONFIG_FILE.open(encoding="utf-8") as f:
@@ -184,42 +184,20 @@ def check_endpoint(node: dict, health_path: str, timeout: int, retries: int, del
 
 
 def load_state() -> dict:
-    if not STATE_FILE.exists():
-        return {"nodes": {}}
-    with STATE_FILE.open(encoding="utf-8") as f:
-        state = json.load(f)
+    state = load_json(STATE_FILE, {"nodes": {}})
+    if not isinstance(state, dict):
+        raise ValueError("our-nodes state must be a JSON object")
     if not isinstance(state.get("nodes"), dict):
         return {"nodes": {}}
     return state
 
 
 def save_state(state: dict) -> None:
-    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    temp_file = STATE_FILE.with_suffix(".json.tmp")
-    with temp_file.open("w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2, ensure_ascii=False, sort_keys=True)
-        f.write("\n")
-    temp_file.replace(STATE_FILE)
-
-
-def utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    save_json_atomic(STATE_FILE, state, sort_keys=True)
 
 
 def escape_text(value) -> str:
-    return html.escape(str(value), quote=False)
-
-
-def send_telegram_message(text: str) -> None:
-    payload = {"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"}
-    if THREAD_ID:
-        payload["message_thread_id"] = int(THREAD_ID)
-    response = requests.post(
-        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-        json=payload,
-        timeout=15,
-    )
-    response.raise_for_status()
+    return escape_html(value)
 
 
 def build_alert(node: dict, result: dict, now: str) -> str:
@@ -267,6 +245,24 @@ def build_weight_recovery(node: dict, result: dict, epoch: int | None) -> str:
         f"Confirmation PoC ratio: <b>{result['weight_ratio']:.2f}%</b>\n"
         f"Вес ноды: {result['weight']}\n"
         f"Эпоха: {escape_text(epoch_text)}"
+    )
+
+
+def build_metric_unavailable(node: dict, missing_runs: int) -> str:
+    return (
+        "🟡 <b>Метрика Confirmation PoC ratio недоступна</b>\n\n"
+        f"Нода: <code>{escape_text(node['name'])}</code> "
+        f"(<code>{escape_text(node['participant_address'])}</code>)\n"
+        f"Последовательных проверок без значения: {missing_runs}\n"
+        "Проверка доступности ноды продолжает работать отдельно."
+    )
+
+
+def build_metric_available(node: dict, ratio: float) -> str:
+    return (
+        "🟢 <b>Метрика Confirmation PoC ratio снова доступна</b>\n\n"
+        f"Нода: <code>{escape_text(node['name'])}</code>\n"
+        f"Текущее значение: <b>{ratio:.2f}%</b>"
     )
 
 
@@ -333,6 +329,31 @@ def inspect_node(
     }
 
 
+def evaluate_metric_availability(
+    previous: dict,
+    ratio: float | None,
+    *,
+    enabled: bool,
+    alert_after_runs: int,
+) -> tuple[int, bool, str | None]:
+    """Return missing runs, alert state and an optional transition event."""
+    if not enabled:
+        return 0, False, None
+
+    previous_runs = int(previous.get("ratio_missing_runs", 0) or 0)
+    was_alerted = bool(previous.get("ratio_unavailable_alerted", False))
+
+    if ratio is None:
+        missing_runs = previous_runs + 1
+        if missing_runs >= alert_after_runs and not was_alerted:
+            return missing_runs, True, "unavailable"
+        return missing_runs, was_alerted, None
+
+    if was_alerted:
+        return 0, False, "available"
+    return 0, False, None
+
+
 def main() -> None:
     config = load_config()
     participant_urls = config.get("participants_urls")
@@ -347,6 +368,11 @@ def main() -> None:
     ratio_recovery_threshold = float(
         config.get("weight_ratio_recovery_above_percent", ratio_alert_threshold)
     )
+    metric_unavailable_after = int(
+        config.get("metric_unavailable_alert_after_runs", 2)
+    )
+    if metric_unavailable_after < 1:
+        raise ValueError("metric unavailable alert threshold must be at least 1")
     if ratio_recovery_threshold < ratio_alert_threshold:
         raise ValueError("weight ratio recovery threshold must be >= alert threshold")
     state = load_state()
@@ -375,6 +401,22 @@ def main() -> None:
         )
         ratio = result.get("weight_ratio")
         ratio_alerted = previous_ratio_alerted
+        metric_monitoring_enabled = bool(
+            node.get("ratio_monitoring_enabled", node.get("participant_required", True))
+        )
+        missing_runs, metric_unavailable_alerted, metric_event = (
+            evaluate_metric_availability(
+                previous,
+                ratio,
+                enabled=metric_monitoring_enabled,
+                alert_after_runs=metric_unavailable_after,
+            )
+        )
+        if metric_event == "unavailable":
+            alerts.append(build_metric_unavailable(node, missing_runs))
+        elif metric_event == "available":
+            alerts.append(build_metric_available(node, ratio))
+
         if ratio is not None:
             if not previous_ratio_alerted and ratio < ratio_alert_threshold:
                 alerts.append(build_weight_alert(node, result, epoch))
@@ -395,6 +437,8 @@ def main() -> None:
             "weight": result.get("weight"),
             "weight_ratio": result.get("weight_ratio"),
             "weight_ratio_alerted": ratio_alerted,
+            "ratio_missing_runs": missing_runs,
+            "ratio_unavailable_alerted": metric_unavailable_alerted,
             "ratio_metric_version": RATIO_METRIC_VERSION,
             "epoch": epoch,
             "reason": result.get("reason"),
