@@ -2,14 +2,14 @@ name: Check for new Gonka hosts
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "7,37 * * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
 concurrency:
-  group: check-new-hosts
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:
@@ -32,15 +32,4 @@ jobs:
         run: python new_host_bot.py
 
       - name: Commit updated state
-        run: |
-          git config user.name "gonka-bot"
-          git config user.email "gonka-bot@users.noreply.github.com"
-      
-          git add state/hosts.json
-      
-          if [ -f state/host_log.csv ]; then
-            git add state/host_log.csv
-          fi
-      
-          git diff --staged --quiet || git commit -m "Update hosts state [skip ci]"
-          git push
+        run: bash scripts/commit_state.sh "Update hosts state [skip ci]" state/hosts.json state/host_log.csv
