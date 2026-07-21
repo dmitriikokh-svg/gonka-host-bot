@@ -1,4 +1,5 @@
 {
+  "owner": "Dmitrii Kokh",
   "participants_urls": [
     "http://node1.gonka.ai:8000/v1/epochs/current/participants",
     "http://node2.gonka.ai:8000/v1/epochs/current/participants",
@@ -14,27 +15,31 @@
   "retry_delay_seconds": 2,
   "weight_ratio_alert_below_percent": 25.0,
   "weight_ratio_recovery_above_percent": 27.0,
+  "metric_unavailable_alert_after_runs": 2,
   "nodes": [
     {
       "name": "node1",
       "participant_address": "gonka1y2a9p56kv044327uycmqdexl7zs82fs5ryv5le",
       "endpoint": "http://node1.gonka.ai:8000",
       "role": "host",
-      "critical": true
+      "critical": true,
+      "ratio_monitoring_enabled": true
     },
     {
       "name": "node2",
       "participant_address": "gonka1dkl4mah5erqggvhqkpc8j3qs5tyuetgdy552cp",
       "endpoint": "http://node2.gonka.ai:8000",
       "role": "host-validator",
-      "critical": true
+      "critical": true,
+      "ratio_monitoring_enabled": true
     },
     {
       "name": "node3",
       "participant_address": "gonka1kx9mca3xm8u8ypzfuhmxey66u0ufxhs7nm6wc5",
       "endpoint": "https://node3.gonka.ai",
       "role": "host",
-      "critical": true
+      "critical": true,
+      "ratio_monitoring_enabled": true
     },
     {
       "name": "node4",
@@ -42,6 +47,7 @@
       "endpoint": "https://node4.gonka.ai",
       "role": "read-only network node",
       "critical": true,
+      "ratio_monitoring_enabled": false,
       "participant_required": false,
       "address_source": "node4 validator dashboard"
     }
