@@ -1,0 +1,28 @@
+{
+  "owner": "Dmitrii Kokh",
+  "denom": "ngonka",
+  "decimals": 9,
+  "low_balance_below_gnk": 100,
+  "recovery_at_or_above_gnk": 100,
+  "reminder_interval_hours": 24,
+  "unavailable_alert_after_runs": 3,
+  "request_timeout_seconds": 10,
+  "attempts_per_source": 1,
+  "balance_url_templates": [
+    "https://node3.gonka.ai/chain-api/cosmos/bank/v1beta1/balances/{address}",
+    "http://node2.gonka.ai:8000/chain-api/cosmos/bank/v1beta1/balances/{address}",
+    "http://node1.gonka.ai:8000/chain-api/cosmos/bank/v1beta1/balances/{address}"
+  ],
+  "accounts": [
+    {
+      "name": "gw2",
+      "address": "gonka1w66aw6jayepglwgz66qtunetr5nyw9ls7evq5g",
+      "enabled": true
+    },
+    {
+      "name": "node4",
+      "address": "gonka1sy7ug80wrnm6gk47creak0j5eagjpf7maqcqwk",
+      "enabled": true
+    }
+  ]
+}
