@@ -9,6 +9,8 @@
 - `excluded_watcher.py` — новые исключения после cPoC.
 - `our_nodes_watcher.py` — доступность собственных нод, присутствие среди
   участников и Confirmation PoC ratio.
+- `escrow_balance_watcher.py` — балансы ключей для создания эскроу, алерт
+  строго ниже 100 GNK, восстановление и суточное напоминание.
 - `upgrade_adoption_watcher.py` — распространение целевой API-версии по весу.
 - `glamsterdam_watcher.py` — дата и статус Ethereum Glamsterdam.
 
@@ -24,7 +26,11 @@ workflow-скриптом `scripts/commit_state.sh`.
 - `TARGET_API_VERSION` — repository variable.
 - `ADOPTION_THRESHOLD` — repository variable.
 
-Конфигурация собственных нод находится в `config/our_nodes.json`.
+Конфигурация собственных нод находится в `config/our_nodes.json`, а ключей для
+эскроу — в `config/escrow_balances.json`. Баланс хранится в базовом denom
+`ngonka`: 1 GNK = 1 000 000 000 ngonka. Ручной запуск workflow
+`Check escrow balances` по умолчанию отправляет проверочную сводку; плановые
+запуски пишут в Telegram только алерты, восстановления и напоминания.
 
 ## Локальная проверка
 
