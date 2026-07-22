@@ -1,0 +1,45 @@
+name: Check escrow balances
+
+on:
+  schedule:
+    # Twice an hour, away from the top of the hour.
+    - cron: "11,41 * * * *"
+  workflow_dispatch:
+    inputs:
+      send_summary:
+        description: Send a one-time Telegram summary for this manual run
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check-escrow-balances:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check escrow balances
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+          SEND_BALANCE_SUMMARY: ${{ github.event_name == 'workflow_dispatch' && inputs.send_summary || false }}
+        run: python escrow_balance_watcher.py
+
+      - name: Commit updated state
+        if: always()
+        run: bash scripts/commit_state.sh "Update escrow balance state [skip ci]" state/escrow_balances.json
