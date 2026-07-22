@@ -2,12 +2,12 @@
   "accounts": {
     "gw2": {
       "address": "gonka1w66aw6jayepglwgz66qtunetr5nyw9ls7evq5g",
-      "balance_base": "1814630438450",
-      "balance_gnk": "1814.63043845",
+      "balance_base": "1792586438450",
+      "balance_gnk": "1792.58643845",
       "denom": "ngonka",
-      "last_checked_at": "2026-07-22T14:15:22+00:00",
+      "last_checked_at": "2026-07-22T18:45:08+00:00",
       "last_error": null,
-      "last_success_at": "2026-07-22T14:15:22+00:00",
+      "last_success_at": "2026-07-22T18:45:08+00:00",
       "source_url": "https://node3.gonka.ai/chain-api/cosmos/bank/v1beta1/balances/gonka1w66aw6jayepglwgz66qtunetr5nyw9ls7evq5g",
       "status": "ok",
       "unavailable_alerted": false,
@@ -16,12 +16,12 @@
     },
     "node4": {
       "address": "gonka1sy7ug80wrnm6gk47creak0j5eagjpf7maqcqwk",
-      "balance_base": "1819820000000",
-      "balance_gnk": "1819.82",
+      "balance_base": "1801802000000",
+      "balance_gnk": "1801.802",
       "denom": "ngonka",
-      "last_checked_at": "2026-07-22T14:15:22+00:00",
+      "last_checked_at": "2026-07-22T18:45:08+00:00",
       "last_error": null,
-      "last_success_at": "2026-07-22T14:15:22+00:00",
+      "last_success_at": "2026-07-22T18:45:08+00:00",
       "source_url": "https://node3.gonka.ai/chain-api/cosmos/bank/v1beta1/balances/gonka1sy7ug80wrnm6gk47creak0j5eagjpf7maqcqwk",
       "status": "ok",
       "unavailable_alerted": false,
@@ -29,5 +29,5 @@
       "unavailable_since": null
     }
   },
-  "checked_at": "2026-07-22T14:15:22+00:00"
+  "checked_at": "2026-07-22T18:45:08+00:00"
 }
