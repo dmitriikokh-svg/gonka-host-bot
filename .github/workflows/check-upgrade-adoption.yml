@@ -29,6 +29,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
           TARGET_API_VERSION: ${{ vars.TARGET_API_VERSION }}
           ADOPTION_THRESHOLD: ${{ vars.ADOPTION_THRESHOLD }}
         run: python upgrade_adoption_watcher.py
