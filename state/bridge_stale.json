@@ -1,0 +1,9 @@
+{
+  "checked_at": null,
+  "dkg_phase": null,
+  "epoch": null,
+  "ethereum_finalized_block": null,
+  "participants": {},
+  "signals": {},
+  "sources": {}
+}
