@@ -11,37 +11,50 @@ since cPoC rounds happen much more frequently than new hosts joining.
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
-import requests
+from bot_common import (
+    escape_html,
+    fetch_json_with_fallback,
+    load_json,
+    save_json_atomic,
+    send_telegram_message,
+)
 
-PARTICIPANTS_URL = "http://node2.gonka.ai:8000/v1/epochs/current/participants"
-STATE_FILE = "state/excluded.json"
+ROOT = Path(__file__).resolve().parent
+PARTICIPANTS_URLS = (
+    "https://node3.gonka.ai/v1/epochs/current/participants",
+    "http://node2.gonka.ai:8000/v1/epochs/current/participants",
+    "http://node1.gonka.ai:8000/v1/epochs/current/participants",
+)
+STATE_FILE = ROOT / "state" / "excluded.json"
 
-BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-
-def fetch_excluded():
-    resp = requests.get(PARTICIPANTS_URL, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-
-    if not isinstance(data, dict) or "excluded_participants" not in data:
+def validate_excluded_response(data):
+    entries = data.get("excluded_participants") if isinstance(data, dict) else None
+    if not isinstance(entries, list):
         preview = json.dumps(data, indent=2, ensure_ascii=False)[:3000]
         raise ValueError(
-            "Could not find 'excluded_participants' in the response.\n"
+            "Could not find an excluded_participants list in the response.\n"
             f"Preview (truncated):\n{preview}"
         )
 
+
+def fetch_excluded():
+    data, source = fetch_json_with_fallback(
+        PARTICIPANTS_URLS,
+        timeout=30,
+        validator=validate_excluded_response,
+    )
+    print(f"Participants source: {source}")
     return data["excluded_participants"] or []
 
 
 def participant_id(entry):
     """Extract a stable, readable identifier for one excluded-participant entry."""
     if isinstance(entry, dict):
-        for key in ("participant_id", "address", "id", "inference_url"):
+        for key in ("index", "participant_id", "address", "id", "inference_url"):
             if key in entry:
                 return str(entry[key])
     if isinstance(entry, str):
@@ -51,26 +64,16 @@ def participant_id(entry):
 
 
 def load_previous_ids():
-    if not os.path.exists(STATE_FILE):
+    value = load_json(STATE_FILE)
+    if value is None:
         return None  # signals "first run"
-    with open(STATE_FILE, "r") as f:
-        return set(json.load(f))
+    if not isinstance(value, list):
+        raise ValueError("excluded state must be a JSON list")
+    return set(value)
 
 
 def save_state(ids):
-    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
-    with open(STATE_FILE, "w") as f:
-        json.dump(sorted(ids), f, indent=2, ensure_ascii=False)
-
-
-def send_telegram_message(text):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    resp = requests.post(
-        url,
-        json={"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"},
-        timeout=15,
-    )
-    resp.raise_for_status()
+    save_json_atomic(STATE_FILE, sorted(ids))
 
 
 def main():
@@ -86,7 +89,7 @@ def main():
     new_ids = current_ids - previous_ids
 
     if new_ids:
-        lines = "\n".join(f"\u2022 <code>{i}</code>" for i in sorted(new_ids))
+        lines = "\n".join(f"\u2022 <code>{escape_html(i)}</code>" for i in sorted(new_ids))
         message = (
             f"\u26A0\uFE0F \u041d\u043e\u0432\u043e\u0435 \u0438\u0441\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 "
             f"\u043f\u043e\u0441\u043b\u0435 cPoC ({len(new_ids)}):\n{lines}"
