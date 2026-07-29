@@ -10,43 +10,64 @@ back to -- not just a live "current snapshot" diff.
 
 import csv
 import json
-import os
 import sys
-import html
 from datetime import datetime, timezone
+from pathlib import Path
 
-import requests
+from bot_common import (
+    escape_html,
+    fetch_json_with_fallback,
+    load_json,
+    save_json_atomic,
+    send_telegram_message,
+)
 
-PARTICIPANTS_URL = "http://node2.gonka.ai:8000/v1/epochs/current/participants"
-EPOCH_URL = "https://node3.gonka.ai/v1/epochs/latest"
-STATE_FILE = "state/hosts.json"
-LOG_FILE = "state/host_log.csv"
+ROOT = Path(__file__).resolve().parent
+PARTICIPANTS_URLS = (
+    "https://node3.gonka.ai/v1/epochs/current/participants",
+    "http://node2.gonka.ai:8000/v1/epochs/current/participants",
+    "http://node1.gonka.ai:8000/v1/epochs/current/participants",
+)
+EPOCH_URLS = (
+    "https://node3.gonka.ai/v1/epochs/latest",
+    "http://node2.gonka.ai:8000/v1/epochs/latest",
+    "http://node1.gonka.ai:8000/v1/epochs/latest",
+)
+STATE_FILE = ROOT / "state" / "hosts.json"
+LOG_FILE = ROOT / "state" / "host_log.csv"
 
-BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-
-def fetch_participants():
-    resp = requests.get(PARTICIPANTS_URL, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-
-    entries = data.get("active_participants", {}).get("participants")
+def validate_participants_response(data):
+    entries = (
+        data.get("active_participants", {}).get("participants")
+        if isinstance(data, dict)
+        else None
+    )
     if not isinstance(entries, list):
         preview = json.dumps(data, indent=2, ensure_ascii=False)[:3000]
         raise ValueError(
             "Could not find participants list under active_participants.participants.\n"
             f"Preview:\n{preview}"
         )
-    return entries
+
+
+def fetch_participants():
+    data, source = fetch_json_with_fallback(
+        PARTICIPANTS_URLS,
+        timeout=30,
+        validator=validate_participants_response,
+    )
+    print(f"Participants source: {source}")
+    return data["active_participants"]["participants"]
 
 
 def fetch_current_epoch():
     try:
-        resp = requests.get(EPOCH_URL, timeout=15)
-        resp.raise_for_status()
-        return resp.json().get("latest_epoch", {}).get("index")
-    except Exception:
+        data, source = fetch_json_with_fallback(EPOCH_URLS, timeout=15)
+        print(f"Epoch source: {source}")
+        return data.get("latest_epoch", {}).get("index")
+    except Exception as exc:  # noqa: BLE001 - epoch is optional for this alert
+        print(f"WARNING: could not fetch epoch: {type(exc).__name__}: {exc}")
         return None
 
 
@@ -65,22 +86,22 @@ def participant_url(entry):
 
 
 def load_previous_ids():
-    if not os.path.exists(STATE_FILE):
+    value = load_json(STATE_FILE)
+    if value is None:
         return None
-    with open(STATE_FILE, "r") as f:
-        return set(json.load(f))
+    if not isinstance(value, list):
+        raise ValueError("hosts state must be a JSON list")
+    return set(value)
 
 
 def save_state(ids):
-    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
-    with open(STATE_FILE, "w") as f:
-        json.dump(sorted(ids), f, indent=2, ensure_ascii=False)
+    save_json_atomic(STATE_FILE, sorted(ids))
 
 
 def append_to_log(rows):
     """rows: list of (node_id, epoch_index, inference_url) tuples."""
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
-    is_new_file = not os.path.exists(LOG_FILE)
+    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    is_new_file = not LOG_FILE.exists()
     with open(LOG_FILE, "a", newline="") as f:
         writer = csv.writer(f)
         if is_new_file:
@@ -88,16 +109,6 @@ def append_to_log(rows):
         now = datetime.now(timezone.utc).isoformat()
         for node_id, epoch, url in rows:
             writer.writerow([node_id, epoch, now, url])
-
-
-def send_telegram_message(text):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    resp = requests.post(
-        url,
-        json={"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"},
-        timeout=15,
-    )
-    resp.raise_for_status()
 
 
 def main():
@@ -118,7 +129,7 @@ def main():
         log_rows = [(nid, epoch, participant_url(by_id[nid])) for nid in new_ids]
         append_to_log(log_rows)
 
-        lines = "\n".join(f"• <code>{html.escape(i)}</code>" for i in sorted(new_ids))
+        lines = "\n".join(f"• <code>{escape_html(i)}</code>" for i in sorted(new_ids))
         epoch_note = f" (\u044d\u043f\u043e\u0445\u0430 {epoch})" if epoch is not None else ""
         message = f"\U0001F195 \u041d\u043e\u0432\u044b\u0439 \u0445\u043e\u0441\u0442(\u044b) \u0432 \u0441\u0435\u0442\u0438 Gonka ({len(new_ids)}){epoch_note}:\n{lines}"
         send_telegram_message(message)
