@@ -15,24 +15,26 @@ because our bridge runs Geth + Prysm (Ethereum execution/consensus
 clients) which will need updating before Glamsterdam activates on mainnet.
 """
 
-import json
-import os
 import re
 import sys
+from pathlib import Path
 
-import requests
+from bot_common import (
+    escape_html,
+    fetch_text_with_fallback,
+    load_json,
+    save_json_atomic,
+    send_telegram_message,
+)
 
 UPGRADES_TS_URL = "https://raw.githubusercontent.com/ethereum/forkcast/main/src/data/upgrades.ts"
-STATE_FILE = "state/glamsterdam_upgrade.json"
-
-BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
+ROOT = Path(__file__).resolve().parent
+STATE_FILE = ROOT / "state" / "glamsterdam_upgrade.json"
 
 
 def fetch_glamsterdam_fields():
-    resp = requests.get(UPGRADES_TS_URL, timeout=30)
-    resp.raise_for_status()
-    text = resp.text
+    text, source = fetch_text_with_fallback([UPGRADES_TS_URL], timeout=30)
+    print(f"Forkcast source: {source}")
 
     start = text.find("id: 'glamsterdam'")
     if start == -1:
@@ -61,26 +63,14 @@ def fetch_glamsterdam_fields():
 
 
 def load_previous_state():
-    if not os.path.exists(STATE_FILE):
-        return None
-    with open(STATE_FILE, "r") as f:
-        return json.load(f)
+    value = load_json(STATE_FILE)
+    if value is not None and not isinstance(value, dict):
+        raise ValueError("Glamsterdam state must be a JSON object")
+    return value
 
 
 def save_state(fields):
-    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
-    with open(STATE_FILE, "w") as f:
-        json.dump(fields, f, indent=2, ensure_ascii=False)
-
-
-def send_telegram_message(text):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    resp = requests.post(
-        url,
-        json={"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"},
-        timeout=15,
-    )
-    resp.raise_for_status()
+    save_json_atomic(STATE_FILE, fields)
 
 
 def main():
@@ -100,14 +90,16 @@ def main():
         if date_changed:
             lines.append(
                 f"\u0414\u0430\u0442\u0430 \u0430\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u0438: "
-                f"{previous.get('activationDate')} \u2192 <b>{current['activationDate']}</b>"
+                f"{escape_html(previous.get('activationDate'))} \u2192 "
+                f"<b>{escape_html(current['activationDate'])}</b>"
             )
         if status_changed:
             lines.append(
-                f"\u0421\u0442\u0430\u0442\u0443\u0441: {previous.get('status')} \u2192 <b>{current['status']}</b>"
+                f"\u0421\u0442\u0430\u0442\u0443\u0441: {escape_html(previous.get('status'))} \u2192 "
+                f"<b>{escape_html(current['status'])}</b>"
             )
         if current.get("tagline"):
-            lines.append(f"<i>{current['tagline']}</i>")
+            lines.append(f"<i>{escape_html(current['tagline'])}</i>")
         lines.append("https://forkcast.org/upgrade/glamsterdam/")
 
         send_telegram_message("\n".join(lines))
