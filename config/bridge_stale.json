@@ -1,0 +1,29 @@
+{
+  "owner": "Dmitrii Kokh",
+  "origin_chain": "ethereum",
+  "inactive_slots_warning_percent": 35,
+  "stale_slots_warning_percent": 35,
+  "unknown_slots_warning_percent": 35,
+  "source_unavailable_alert_after_runs": 3,
+  "request_timeout_seconds": 8,
+  "attempts_per_source": 1,
+  "attempts_per_node": 1,
+  "max_parallel_node_checks": 10,
+  "chain_api_bases": [
+    "http://204.12.168.157:1317",
+    "https://node3.gonka.ai/chain-api",
+    "http://node2.gonka.ai:8000/chain-api",
+    "http://node1.gonka.ai:8000/chain-api"
+  ],
+  "epoch_urls": [
+    "https://node3.gonka.ai/v1/epochs/latest",
+    "http://node2.gonka.ai:8000/v1/epochs/latest",
+    "http://node1.gonka.ai:8000/v1/epochs/latest"
+  ],
+  "ethereum_rpc_urls": [
+    "https://ethereum-rpc.publicnode.com",
+    "https://cloudflare-eth.com",
+    "https://1rpc.io/eth",
+    "https://eth.llamarpc.com"
+  ]
+}
