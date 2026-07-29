@@ -3,9 +3,9 @@
   "threshold": 267800,
   "adopted_weight": 0,
   "network_total_weight": 421060,
-  "unknown_weight": 75785,
-  "unreachable_count": 4,
+  "unknown_weight": 2695,
+  "unreachable_count": 3,
   "threshold_reached": false,
-  "unknown_band": "degraded",
+  "unknown_band": "normal",
   "unknown_participants": 0
 }
