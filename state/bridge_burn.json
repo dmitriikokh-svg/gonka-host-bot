@@ -1,0 +1,9 @@
+{
+  "checked_at": null,
+  "critical_alerted": false,
+  "critical_since": null,
+  "ethereum_finalized_block": null,
+  "last_scanned_finalized_block": null,
+  "queue": {},
+  "sources": {}
+}
