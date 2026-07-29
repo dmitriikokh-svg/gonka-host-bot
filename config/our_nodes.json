@@ -13,8 +13,8 @@
   "request_timeout_seconds": 10,
   "health_retries": 3,
   "retry_delay_seconds": 2,
-  "weight_ratio_alert_below_percent": 25.0,
-  "weight_ratio_recovery_above_percent": 27.0,
+  "weight_ratio_alert_below_percent": 30.0,
+  "weight_ratio_recovery_above_percent": 30.0,
   "metric_unavailable_alert_after_runs": 2,
   "nodes": [
     {
