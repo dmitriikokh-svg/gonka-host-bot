@@ -1,0 +1,25 @@
+{
+  "owner": "Dmitrii Kokh",
+  "origin_chain": "ethereum",
+  "wgnk_contract": "0x972a7A92D92796a98801A8818bcF91f1648f2F68",
+  "initial_check_after_minutes": 5,
+  "warning_after_minutes": 10,
+  "critical_overdue_transactions": 2,
+  "bootstrap_lookback_blocks": 128,
+  "max_blocks_per_log_request": 500,
+  "source_unavailable_alert_after_runs": 3,
+  "request_timeout_seconds": 15,
+  "attempts_per_source": 1,
+  "ethereum_rpc_urls": [
+    "https://ethereum-rpc.publicnode.com",
+    "https://cloudflare-eth.com",
+    "https://1rpc.io/eth",
+    "https://eth.llamarpc.com"
+  ],
+  "gonka_transaction_url_templates": [
+    "http://204.12.168.157:1317/productscience/inference/inference/bridge_transaction/{origin_chain}/{block_number}/{receipt_index}",
+    "https://node3.gonka.ai/chain-api/productscience/inference/inference/bridge_transaction/{origin_chain}/{block_number}/{receipt_index}",
+    "http://node2.gonka.ai:8000/chain-api/productscience/inference/inference/bridge_transaction/{origin_chain}/{block_number}/{receipt_index}",
+    "http://node1.gonka.ai:8000/chain-api/productscience/inference/inference/bridge_transaction/{origin_chain}/{block_number}/{receipt_index}"
+  ]
+}
