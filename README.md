@@ -13,6 +13,8 @@
   строго ниже 100 GNK, восстановление и суточное напоминание.
 - `bridge_burn_watcher.py` — финализированные burn-транзакции WGNK в Ethereum,
   их очередь и статус обработки bridge на стороне Gonka.
+- `bridge_stale_watcher.py` — риски BLS/bridge: концентрация slots,
+  inactive/invalidated slots и отставание bridge latest от Ethereum finalized.
 - `upgrade_adoption_watcher.py` — распространение целевой API-версии по весу.
 - `glamsterdam_watcher.py` — дата и статус Ethereum Glamsterdam.
 
@@ -31,8 +33,9 @@ workflow-скриптом `scripts/commit_state.sh`.
 - `ADOPTION_THRESHOLD` — repository variable.
 
 Конфигурация собственных нод находится в `config/our_nodes.json`, ключей для
-эскроу — в `config/escrow_balances.json`, а bridge burn — в
-`config/bridge_burn.json`. Баланс хранится в базовом denom
+эскроу — в `config/escrow_balances.json`, bridge burn — в
+`config/bridge_burn.json`, а BLS/bridge stale — в
+`config/bridge_stale.json`. Баланс хранится в базовом denom
 `ngonka`: 1 GNK = 1 000 000 000 ngonka. Ручной запуск workflow
 `Check escrow balances` по умолчанию отправляет проверочную сводку; плановые
 запуски пишут в Telegram только алерты, восстановления и напоминания.
@@ -45,9 +48,23 @@ Workflow `Check bridge WGNK burns` запланирован каждые пят�
 создаёт warning; две просроченные транзакции создают один critical. Ошибка всех
 Gonka API отслеживается отдельно и не считается зависшей транзакцией.
 
-Текущий bridge workflow покрывает только WGNK burn (unwrap). Входящие USDT/USDC,
-BLS slots, invalidation и stale block check будут добавлены отдельными этапами
-после подтверждения адресов и точных правил.
+Workflow `Check bridge stale and BLS risk` запускается каждые 15 минут. Он
+читает реальное распределение BLS slots текущей подписанной эпохи и применяет
+четыре независимых правила:
+
+- warning, если Top-3 контролируют большинство: `total_slots // 2 + 1`;
+- warning, если 35% или больше BLS slots принадлежат адресам, отсутствующим в
+  Cosmos `group_members` этой эпохи (не могут голосовать в bridge);
+- warning, если ноды с 35% или больше BLS slots сообщают `bridge_latest`, не
+  равный одному зафиксированному для запуска Ethereum finalized block;
+- отдельный warning, если bridge API недоступен у нод с 35% или больше slots.
+
+Недоступный API классифицируется как `unknown`, а не как `stale`. Значения
+`valid_dealers` из BLS-ответа относятся к DKG и не используются как признак
+inactive/invalidated. Ручной запуск workflow по умолчанию отправляет сводку.
+
+Текущий transaction workflow покрывает WGNK burn (unwrap). Входящие USDT/USDC
+нужно добавлять отдельно после определения bridge receiver/event на Ethereum.
 
 ## Локальная проверка
 
