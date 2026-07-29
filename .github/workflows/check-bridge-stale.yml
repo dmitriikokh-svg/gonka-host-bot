@@ -1,0 +1,46 @@
+name: Check bridge stale and BLS risk
+
+on:
+  schedule:
+    # Every 15 minutes, offset from other monitoring workflows.
+    - cron: "4,19,34,49 * * * *"
+  workflow_dispatch:
+    inputs:
+      send_summary:
+        description: Send a one-time Telegram summary for this manual run
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check-bridge-stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check BLS and bridge stale risk
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+          ETHEREUM_RPC_URLS: ${{ secrets.ETHEREUM_RPC_URLS }}
+          SEND_BRIDGE_STALE_SUMMARY: ${{ github.event_name == 'workflow_dispatch' && inputs.send_summary || false }}
+        run: python bridge_stale_watcher.py
+
+      - name: Commit updated state
+        if: always()
+        run: bash scripts/commit_state.sh "Update bridge stale state [skip ci]" state/bridge_stale.json
