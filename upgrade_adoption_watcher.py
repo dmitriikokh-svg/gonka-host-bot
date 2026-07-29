@@ -17,44 +17,66 @@ import concurrent.futures
 import json
 import os
 import sys
+from pathlib import Path
 
 import requests
 import ipaddress
 import socket
 from urllib.parse import urlparse, urlunparse
 
-PARTICIPANTS_URL = "http://node2.gonka.ai:8000/v1/epochs/current/participants"
-EPOCH_URL = "https://node3.gonka.ai/v1/epochs/latest"
-STATE_FILE = "state/upgrade_adoption.json"
+from bot_common import (
+    fetch_json_with_fallback,
+    load_json,
+    save_json_atomic,
+    send_telegram_message,
+)
+
+ROOT = Path(__file__).resolve().parent
+PARTICIPANTS_URLS = (
+    "https://node3.gonka.ai/v1/epochs/current/participants",
+    "http://node2.gonka.ai:8000/v1/epochs/current/participants",
+    "http://node1.gonka.ai:8000/v1/epochs/current/participants",
+)
+EPOCH_URLS = (
+    "https://node3.gonka.ai/v1/epochs/latest",
+    "http://node2.gonka.ai:8000/v1/epochs/latest",
+    "http://node1.gonka.ai:8000/v1/epochs/latest",
+)
+STATE_FILE = ROOT / "state" / "upgrade_adoption.json"
 VERSION_CHECK_TIMEOUT = 5
 MAX_WORKERS = 20
 
-BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
-TARGET_VERSION = os.environ["TARGET_API_VERSION"]
-THRESHOLD = int(os.environ["ADOPTION_THRESHOLD"])
 
-
-def fetch_active_participants():
-    resp = requests.get(PARTICIPANTS_URL, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-
-    entries = data.get("active_participants", {}).get("participants")
+def validate_participants_response(data):
+    entries = (
+        data.get("active_participants", {}).get("participants")
+        if isinstance(data, dict)
+        else None
+    )
     if not isinstance(entries, list):
         preview = json.dumps(data, indent=2, ensure_ascii=False)[:3000]
         raise ValueError(
             "Could not find participants list under active_participants.participants.\n"
             f"Preview:\n{preview}"
         )
-    return entries
+
+
+def fetch_active_participants():
+    data, source = fetch_json_with_fallback(
+        PARTICIPANTS_URLS,
+        timeout=30,
+        validator=validate_participants_response,
+    )
+    print(f"Participants source: {source}")
+    return data["active_participants"]["participants"]
 
 def fetch_current_epoch():
     try:
-        resp = requests.get(EPOCH_URL, timeout=15)
-        resp.raise_for_status()
-        return resp.json().get("latest_epoch", {}).get("index")
-    except Exception:
+        data, source = fetch_json_with_fallback(EPOCH_URLS, timeout=15)
+        print(f"Epoch source: {source}")
+        return data.get("latest_epoch", {}).get("index")
+    except Exception as exc:  # noqa: BLE001 - epoch is informational
+        print(f"WARNING: could not fetch epoch: {type(exc).__name__}: {exc}")
         return None
 
 def participant_identity(entry):
@@ -206,6 +228,8 @@ def normalize_version(v):
 
 
 def main():
+    target_version = os.environ["TARGET_API_VERSION"]
+    threshold = int(os.environ["ADOPTION_THRESHOLD"])
     entries = fetch_active_participants()
 
     if entries:
@@ -304,7 +328,7 @@ def main():
             continue
 
         if normalize_version(version) == normalize_version(
-            TARGET_VERSION
+            target_version
         ):
             adopted_weight += participant["weight"]
 
@@ -314,26 +338,19 @@ def main():
         else 0
     )
 
-    threshold_reached = (
-        adopted_weight >= THRESHOLD
-        and unknown_weight == 0
-    )
-
     print(
         f"Adoption: {adopted_weight}/{network_total_weight} "
         f"({pct:.1f}%), "
-        f"threshold {THRESHOLD}, "
+        f"threshold {threshold}, "
         f"unreachable hosts: {unreachable}, "
         f"unknown weight: {unknown_weight}"
     )
 
-    previous = None
+    previous = load_json(STATE_FILE)
+    if previous is not None and not isinstance(previous, dict):
+        raise ValueError("upgrade-adoption state must be a JSON object")
 
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE) as f:
-            previous = json.load(f)
-
-    threshold_reached = adopted_weight >= THRESHOLD
+    threshold_reached = adopted_weight >= threshold
 
     unknown_pct = (
         unknown_weight / network_total_weight * 100
@@ -358,8 +375,8 @@ def main():
     
     changed = (
         previous is None
-        or previous.get("target_version") != TARGET_VERSION
-        or previous.get("threshold") != THRESHOLD
+        or previous.get("target_version") != target_version
+        or previous.get("threshold") != threshold
         or previous.get("threshold_reached") != threshold_reached
         or previous.get("unknown_band") != unknown_band
     )
@@ -373,62 +390,43 @@ def main():
 
     if changed:
         status_line = (
-            "✅ Порог достигнут!"
+            "✅ Порог достигнут!\n"
             if crossed_threshold_now
             else ""
         )
 
         message = (
             f"📊 Прогресс апгрейда до "
-            f"{TARGET_VERSION}{epoch_note}:\n"
+            f"{target_version}{epoch_note}:\n"
             f"{adopted_weight} / {network_total_weight} "
             f"веса ({pct:.1f}%)\n"
-            f"Порог: {THRESHOLD}\n"
+            f"Порог: {threshold}\n"
             f"Недоступных хостов: {unreachable}\n"
             f"Неизвестный вес: {unknown_weight}\n"
             f"{status_line}"
             f"Участников без веса: {unknown_participants}\n"
         )
 
-        telegram_url = (
-            f"https://api.telegram.org/"
-            f"bot{BOT_TOKEN}/sendMessage"
-        )
-
-        requests.post(
-            telegram_url,
-            json={
-                "chat_id": CHAT_ID,
-                "text": message,
-            },
-            timeout=15,
-        ).raise_for_status()
+        send_telegram_message(message, parse_mode=None)
 
         print("Sent Telegram update.")
     else:
         print("No change since last run, no message sent.")
 
-    os.makedirs(
-        os.path.dirname(STATE_FILE),
-        exist_ok=True,
+    save_json_atomic(
+        STATE_FILE,
+        {
+            "target_version": target_version,
+            "threshold": threshold,
+            "adopted_weight": adopted_weight,
+            "network_total_weight": network_total_weight,
+            "unknown_weight": unknown_weight,
+            "unreachable_count": unreachable,
+            "threshold_reached": threshold_reached,
+            "unknown_band": unknown_band,
+            "unknown_participants": unknown_participants,
+        },
     )
-
-    with open(STATE_FILE, "w") as f:
-        json.dump(
-            {
-                "target_version": TARGET_VERSION,
-                "threshold": THRESHOLD,
-                "adopted_weight": adopted_weight,
-                "network_total_weight": network_total_weight,
-                "unknown_weight": unknown_weight,
-                "unreachable_count": unreachable,
-                "threshold_reached": threshold_reached,
-                "unknown_band": unknown_band,
-                "unknown_participants": unknown_participants,
-            },
-            f,
-            indent=2,
-        )
 
 
 if __name__ == "__main__":
