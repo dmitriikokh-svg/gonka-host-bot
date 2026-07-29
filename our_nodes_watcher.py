@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import math
 import sys
 import time
 from pathlib import Path
@@ -143,9 +144,10 @@ def participant_confirmation_ratio(entry: dict | None):
         value = float(value)
     except (TypeError, ValueError):
         return None
-    if value < 0:
+    if not math.isfinite(value) or value < 0:
         return None
-    return value * 100 if value <= 1 else value
+    percentage = value * 100 if value <= 1 else value
+    return percentage if percentage <= 100 else None
 
 
 def check_endpoint(node: dict, health_path: str, timeout: int, retries: int, delay: int) -> dict:
@@ -368,6 +370,10 @@ def main() -> None:
     ratio_recovery_threshold = float(
         config.get("weight_ratio_recovery_above_percent", ratio_alert_threshold)
     )
+    if not 0 <= ratio_alert_threshold <= 100:
+        raise ValueError("weight ratio alert threshold must be between 0 and 100")
+    if not 0 <= ratio_recovery_threshold <= 100:
+        raise ValueError("weight ratio recovery threshold must be between 0 and 100")
     metric_unavailable_after = int(
         config.get("metric_unavailable_alert_after_runs", 2)
     )
@@ -418,10 +424,10 @@ def main() -> None:
             alerts.append(build_metric_available(node, ratio))
 
         if ratio is not None:
-            if not previous_ratio_alerted and ratio < ratio_alert_threshold:
+            if not previous_ratio_alerted and ratio <= ratio_alert_threshold:
                 alerts.append(build_weight_alert(node, result, epoch))
                 ratio_alerted = True
-            elif previous_ratio_alerted and ratio >= ratio_recovery_threshold:
+            elif previous_ratio_alerted and ratio > ratio_recovery_threshold:
                 alerts.append(build_weight_recovery(node, result, epoch))
                 ratio_alerted = False
 
