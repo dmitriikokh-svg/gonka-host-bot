@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-07-29T20:16:14+00:00",
+  "checked_at": "2026-07-29T23:45:37+00:00",
   "dkg_phase": "DKG_PHASE_SIGNED",
   "epoch": 343,
   "ethereum_finalized_block": 25640744,
@@ -219,11 +219,11 @@
     },
     "gonka_chain": {
       "alerted": false,
-      "failed_runs": 0,
-      "failed_since": null,
-      "last_error": null,
+      "failed_runs": 1,
+      "failed_since": "2026-07-29T23:45:37+00:00",
+      "last_error": "all sources failed: http://204.12.168.157:1317/productscience/inference/bls/epoch_data/344 attempt 1/1: HTTPError: 404 Client Error: Not Found for url: http://204.12.168.157:1317/productscience/inference/bls/epoch_data/344 | https://node3.gonka.ai/chain-api/productscience/inference/bls/epoch_data/344 attempt 1/1: HTTPError: 404 Client Error: Not Found for url: https://node3.gonka.ai/chain-api/productscience/inference/bls/epoch_data/344 | http://node2.gonka.ai:8000/chain-api/productscience/inference/bls/epoch_data/344 attempt 1/1: HTTPError: 404 Client Error: Not Found for url: http://node2.gonka.ai:8000/chain-api/productscience/inference/bls/epoch_data/344 | http://node1.gonka.ai:8000/chain-api/productscience/inference/bls/epoch_data/344 attempt 1/1: HTTPError: 404 Client Error: Not Found for url: http://node1.gonka.ai:8000/chain-api/productscience/inference/bls/epoch_data/344",
       "last_success_at": "2026-07-29T20:16:14+00:00",
-      "status": "available"
+      "status": "unavailable"
     }
   }
 }
