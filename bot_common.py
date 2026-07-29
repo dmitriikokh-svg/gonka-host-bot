@@ -150,13 +150,26 @@ def send_telegram_message(
 ) -> None:
     token = os.environ["TELEGRAM_BOT_TOKEN"]
     chat_id = os.environ["TELEGRAM_CHAT_ID"]
-    thread_id = os.environ.get("TELEGRAM_MESSAGE_THREAD_ID")
+    thread_id = os.environ.get("TELEGRAM_MESSAGE_THREAD_ID", "").strip()
+    if not thread_id:
+        raise RuntimeError(
+            "TELEGRAM_MESSAGE_THREAD_ID is required; refusing to send outside "
+            "the configured Telegram topic"
+        )
+    try:
+        parsed_thread_id = int(thread_id)
+    except ValueError as exc:
+        raise ValueError("TELEGRAM_MESSAGE_THREAD_ID must be an integer") from exc
+    if parsed_thread_id <= 0:
+        raise ValueError("TELEGRAM_MESSAGE_THREAD_ID must be positive")
 
-    payload: dict[str, Any] = {"chat_id": chat_id, "text": text}
+    payload: dict[str, Any] = {
+        "chat_id": chat_id,
+        "message_thread_id": parsed_thread_id,
+        "text": text,
+    }
     if parse_mode:
         payload["parse_mode"] = parse_mode
-    if thread_id:
-        payload["message_thread_id"] = int(thread_id)
 
     response = session.post(
         f"https://api.telegram.org/bot{token}/sendMessage",
