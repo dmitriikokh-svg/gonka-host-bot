@@ -1,0 +1,46 @@
+name: Check bridge WGNK burns
+
+on:
+  schedule:
+    # Every 5 minutes, offset from the top of the hour.
+    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
+  workflow_dispatch:
+    inputs:
+      send_summary:
+        description: Send a one-time Telegram summary for this manual run
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check-bridge-burn:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check finalized WGNK burns
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+          ETHEREUM_RPC_URLS: ${{ secrets.ETHEREUM_RPC_URLS }}
+          SEND_BRIDGE_SUMMARY: ${{ github.event_name == 'workflow_dispatch' && inputs.send_summary || false }}
+        run: python bridge_burn_watcher.py
+
+      - name: Commit updated state
+        if: always()
+        run: bash scripts/commit_state.sh "Update bridge burn state [skip ci]" state/bridge_burn.json
