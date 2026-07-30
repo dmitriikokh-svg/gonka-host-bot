@@ -467,8 +467,7 @@ def source_success(state: dict, source: str, now: str) -> list[str]:
     if previous.get("alerted"):
         messages.append(
             "🟢 <b>Источник bridge-мониторинга снова доступен</b>\n\n"
-            f"Источник: <code>{escape_html(source)}</code>\n"
-            f"Owner: {escape_html(state.get('owner', 'Dmitrii Kokh'))}"
+            f"Источник: <code>{escape_html(source)}</code>"
         )
     state["sources"][source] = {
         "status": "available",
@@ -497,8 +496,7 @@ def source_failure(
             "🟡 <b>Источник bridge-мониторинга недоступен</b>\n\n"
             f"Источник: <code>{escape_html(source)}</code>\n"
             f"Последовательных неудачных проверок: {runs}\n"
-            "Недоступность API не считается застрявшей bridge-транзакцией.\n"
-            f"Owner: {escape_html(config['owner'])}"
+            "Недоступность API не считается застрявшей bridge-транзакцией."
         )
         alerted = True
     state["sources"][source] = {
@@ -560,7 +558,6 @@ def process_queue(state: dict, config: dict, now_text: str) -> list[str]:
                     messages.append(
                         "🟢 <b>Bridge-транзакция завершена</b>\n\n"
                         + tx_details(item, now)
-                        + f"\nOwner: {escape_html(config['owner'])}"
                     )
                 completed_keys.append(key)
             else:
@@ -620,7 +617,6 @@ def evaluate_alerts(state: dict, config: dict, now_text: str) -> list[str]:
                 f"Просрочено транзакций: <b>{len(overdue)}</b>\n"
                 f"Порог: <code>{threshold}</code>\n\n"
                 + compact_tx_list(overdue, now)
-                + f"\n\nOwner: {escape_html(config['owner'])}"
             )
             state["critical_since"] = now_text
         state["critical_alerted"] = True
@@ -637,15 +633,13 @@ def evaluate_alerts(state: dict, config: dict, now_text: str) -> list[str]:
                 "🟡 <b>Критическое состояние bridge-очереди снято</b>\n\n"
                 "Осталась одна просроченная транзакция:\n"
                 + compact_tx_list(overdue, now)
-                + f"\n\nOwner: {escape_html(config['owner'])}"
             )
             for item in overdue:
                 item["alert_level"] = "warning"
         else:
             messages.append(
                 "🟢 <b>Bridge-очередь восстановилась</b>\n\n"
-                "Просроченных burn-транзакций больше нет.\n"
-                f"Owner: {escape_html(config['owner'])}"
+                "Просроченных burn-транзакций больше нет."
             )
 
     for item in overdue:
@@ -653,7 +647,6 @@ def evaluate_alerts(state: dict, config: dict, now_text: str) -> list[str]:
             messages.append(
                 "🟡 <b>Bridge-транзакция не завершена вовремя</b>\n\n"
                 + tx_details(item, now)
-                + f"\nOwner: {escape_html(config['owner'])}"
             )
             item["alert_level"] = "warning"
             item["alerted_at"] = now_text
@@ -669,8 +662,7 @@ def build_summary(config: dict, state: dict) -> str:
         f"Последний просканированный блок: <code>{escape_html(state.get('last_scanned_finalized_block'))}</code>\n"
         f"В очереди: <b>{len(queued)}</b>\n"
         f"Просрочено: <b>{len(overdue)}</b>\n"
-        f"Контракт: <code>{escape_html(config['wgnk_contract'])}</code>\n"
-        f"Owner: {escape_html(config['owner'])}"
+        f"Контракт: <code>{escape_html(config['wgnk_contract'])}</code>"
     )
 
 
