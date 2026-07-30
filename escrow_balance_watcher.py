@@ -196,13 +196,12 @@ def account_thresholds(config: dict, account: dict) -> tuple[Decimal, Decimal]:
     return low, recovery
 
 
-def base_message(account: dict, owner: str, balance: Decimal, threshold: Decimal) -> str:
+def base_message(account: dict, balance: Decimal, threshold: Decimal) -> str:
     return (
         f"Ключ: <code>{escape_html(account['name'])}</code>\n"
         f"Адрес: <code>{escape_html(account['address'])}</code>\n"
         f"Баланс: <b>{escape_html(format_gnk(balance))} GNK</b>\n"
-        f"Порог: <code>&lt; {escape_html(format_gnk(threshold))} GNK</code>\n"
-        f"Owner: {escape_html(owner)}"
+        f"Порог: <code>&lt; {escape_html(format_gnk(threshold))} GNK</code>"
     )
 
 
@@ -249,14 +248,14 @@ def apply_success(
         if not low_alert_active:
             messages.append(
                 "🔴 <b>Низкий баланс эскроу-ключа</b>\n\n"
-                + base_message(account, config["owner"], balance, low_threshold)
+                + base_message(account, balance, low_threshold)
             )
             record["low_since"] = now
             record["last_low_alert_at"] = now
         elif reminder_due:
             messages.append(
                 "🔴 <b>Напоминание: баланс эскроу-ключа всё ещё низкий</b>\n\n"
-                + base_message(account, config["owner"], balance, low_threshold)
+                + base_message(account, balance, low_threshold)
                 + f"\nНизкий баланс с: {escape_html(record.get('low_since', 'unknown'))}"
             )
             record["last_low_alert_at"] = now
@@ -265,7 +264,7 @@ def apply_success(
     elif low_alert_active and is_recovered:
         messages.append(
             "🟢 <b>Баланс эскроу-ключа восстановлен</b>\n\n"
-            + base_message(account, config["owner"], balance, low_threshold)
+            + base_message(account, balance, low_threshold)
         )
         record["low_alerted"] = False
         record["low_since"] = None
@@ -314,8 +313,7 @@ def apply_failure(
             f"Ключ: <code>{escape_html(account['name'])}</code>\n"
             f"Адрес: <code>{escape_html(account['address'])}</code>\n"
             f"Последовательных неудачных проверок: {runs}\n"
-            "Последний известный баланс сохранён и не считается нулевым.\n"
-            f"Owner: {escape_html(config['owner'])}"
+            "Последний известный баланс сохранён и не считается нулевым."
         )
         alerted = True
 
@@ -365,7 +363,6 @@ def build_summary(config: dict, state: dict) -> str:
             f"• <code>{escape_html(account['name'])}</code>: "
             f"<b>{escape_html(value)}</b> ({escape_html(record.get('status', 'unknown'))})"
         )
-    lines.extend(["", f"Owner: {escape_html(config['owner'])}"])
     return "\n".join(lines)
 
 
