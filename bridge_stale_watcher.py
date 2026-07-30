@@ -15,12 +15,13 @@ import copy
 import ipaddress
 import json
 import os
+import socket
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urlparse, urlunparse
 
 import requests
 
@@ -312,19 +313,35 @@ def normalized_public_node_url(raw_url: str) -> str:
     parsed = urlparse(value)
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
         raise ValueError(f"invalid validator endpoint: {raw_url!r}")
+    if parsed.username or parsed.password:
+        raise ValueError("validator endpoint must not contain credentials")
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise ValueError(f"invalid validator endpoint port: {raw_url!r}") from exc
     try:
         address = ipaddress.ip_address(parsed.hostname)
     except ValueError:
         address = None
-    if address and (
-        address.is_private
-        or address.is_loopback
-        or address.is_link_local
-        or address.is_multicast
-        or address.is_unspecified
-    ):
+    if address and not address.is_global:
         raise ValueError(f"non-public validator endpoint: {raw_url!r}")
-    return value.rstrip("/")
+    if address is None:
+        try:
+            resolved = {
+                ipaddress.ip_address(info[4][0])
+                for info in socket.getaddrinfo(
+                    parsed.hostname,
+                    port or (443 if parsed.scheme == "https" else 80),
+                    type=socket.SOCK_STREAM,
+                )
+            }
+        except socket.gaierror as exc:
+            raise ValueError(f"validator endpoint does not resolve: {raw_url!r}") from exc
+        if not resolved or any(not item.is_global for item in resolved):
+            raise ValueError(f"validator endpoint resolves to a non-public IP: {raw_url!r}")
+    return urlunparse(
+        (parsed.scheme, parsed.netloc, parsed.path.rstrip("/"), "", "", "")
+    )
 
 
 def probe_bridge_latest(config: dict, node_url: str) -> tuple[int, str]:
@@ -462,8 +479,7 @@ def apply_signal(
         messages.append(
             f"🟢 <b>{escape_html(recovery_title)}</b>\n\n"
             f"Текущее значение: <b>{value_slots}/{total_slots} slots</b> "
-            f"({format_percent(slot_share(value_slots, total_slots))})\n"
-            f"Owner: {escape_html(state.get('owner', 'Dmitrii Kokh'))}"
+            f"({format_percent(slot_share(value_slots, total_slots))})"
         )
     state["signals"][name] = {
         "active": active,
@@ -497,7 +513,7 @@ def evaluate_snapshot(
         f"Top-3 контролируют: <b>{top_three_slots}/{total} slots</b>\n"
         f"Порог большинства: <code>{majority}</code>\n\n"
         + compact_items(top_three, limit=3)
-        + f"\n\nЭпоха: <code>{bls['epoch']}</code>\nOwner: {escape_html(config['owner'])}"
+        + f"\n\nЭпоха: <code>{bls['epoch']}</code>"
     )
     messages.extend(
         apply_signal(
@@ -523,7 +539,7 @@ def evaluate_snapshot(
         f"({format_percent(slot_share(inactive_slots, total))})\n"
         f"Порог: <code>&gt;= {inactive_threshold}%</code>\n\n"
         + (compact_items(inactive) if inactive else "Нет участников")
-        + f"\n\nЭпоха: <code>{bls['epoch']}</code>\nOwner: {escape_html(config['owner'])}"
+        + f"\n\nЭпоха: <code>{bls['epoch']}</code>"
     )
     messages.extend(
         apply_signal(
@@ -577,7 +593,7 @@ def evaluate_snapshot(
             f"Порог: <code>&gt;= {threshold}%</code>\n"
             f"Ethereum finalized: <code>{finalized}</code>\n\n"
             + (compact_items(items) if items else "Нет участников")
-            + f"\n\nЭпоха: <code>{bls['epoch']}</code>\nOwner: {escape_html(config['owner'])}"
+            + f"\n\nЭпоха: <code>{bls['epoch']}</code>"
         )
         messages.extend(
             apply_signal(
@@ -610,7 +626,6 @@ def build_summary(state: dict, config: dict) -> str:
         f"DKG phase: <code>{escape_html(state.get('dkg_phase'))}</code>\n"
         f"Ethereum finalized: <code>{escape_html(state.get('ethereum_finalized_block'))}</code>\n\n"
         + "\n".join(signal_lines)
-        + f"\n\nOwner: {escape_html(config['owner'])}"
     )
 
 
