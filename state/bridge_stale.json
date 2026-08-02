@@ -1,13 +1,13 @@
 {
-  "checked_at": "2026-08-01T23:17:43+00:00",
+  "checked_at": "2026-08-02T07:52:00+00:00",
   "dkg_phase": "DKG_PHASE_SIGNED",
   "epoch": 347,
-  "ethereum_finalized_block": 25663168,
+  "ethereum_finalized_block": 25665754,
   "owner": "Dmitrii Kokh",
   "participants": {
     "gonka10mmdjau4dnj8krs7sh7t7635ttnmq9u3vqgz09": {
       "address": "gonka10mmdjau4dnj8krs7sh7t7635ttnmq9u3vqgz09",
-      "bridge_latest": 25663168,
+      "bridge_latest": 25665754,
       "classification": "healthy",
       "eligible": true,
       "endpoint": "http://89.149.242.149:8000",
@@ -19,7 +19,7 @@
     },
     "gonka10thh6z0wvq9c05j4z3f9qtpxxedruqn5ae350k": {
       "address": "gonka10thh6z0wvq9c05j4z3f9qtpxxedruqn5ae350k",
-      "bridge_latest": 25663168,
+      "bridge_latest": 25665754,
       "classification": "healthy",
       "eligible": true,
       "endpoint": "http://94.130.143.155:8000",
@@ -31,7 +31,7 @@
     },
     "gonka15p7s7w2hx0y8095lddd4ummm2y0kwpwljk00aq": {
       "address": "gonka15p7s7w2hx0y8095lddd4ummm2y0kwpwljk00aq",
-      "bridge_latest": 25593797,
+      "bridge_latest": 25665722,
       "classification": "stale",
       "eligible": true,
       "endpoint": "http://125.93.200.207:8000",
@@ -43,19 +43,14 @@
     },
     "gonka168rtjfkszuhcggg4dfyse4yh7xn9zwfglnkns2": {
       "address": "gonka168rtjfkszuhcggg4dfyse4yh7xn9zwfglnkns2",
-      "bridge_latest": 25663168,
-      "classification": "healthy",
-      "eligible": true,
-      "endpoint": "http://network000.kaitaku.ai:8000",
-      "participant_status": "ACTIVE",
-      "reason": "equal_to_finalized",
+      "eligible": false,
       "slot_end_index": 4,
       "slot_start_index": 4,
       "slots": 1
     },
     "gonka16dgkvx7mh609ntkzknckwaskgq9lcdp86j0skk": {
       "address": "gonka16dgkvx7mh609ntkzknckwaskgq9lcdp86j0skk",
-      "bridge_latest": 25663168,
+      "bridge_latest": 25665754,
       "classification": "healthy",
       "eligible": true,
       "endpoint": "http://78.46.56.56:8000",
@@ -67,12 +62,12 @@
     },
     "gonka1830lqug50lse998x2lakk4pj5ypfumz5pasz0y": {
       "address": "gonka1830lqug50lse998x2lakk4pj5ypfumz5pasz0y",
-      "bridge_latest": null,
-      "classification": "unknown",
+      "bridge_latest": 25665754,
+      "classification": "healthy",
       "eligible": true,
-      "endpoint": null,
+      "endpoint": "http://195.201.192.170:8000",
       "participant_status": "ACTIVE",
-      "reason": "SourcesUnavailable: attempt 1: HTTPError: 503 Server Error: Service Temporarily Unavailable for url: http://195.201.192.170:8000/v1/bridge/block/latest?chain=ethereum",
+      "reason": "equal_to_finalized",
       "slot_end_index": 16,
       "slot_start_index": 15,
       "slots": 2
@@ -91,7 +86,7 @@
     },
     "gonka1aw77zuy536tufqd56zfq6ev3234u5ftty0zkte": {
       "address": "gonka1aw77zuy536tufqd56zfq6ev3234u5ftty0zkte",
-      "bridge_latest": 25663168,
+      "bridge_latest": 25665754,
       "classification": "healthy",
       "eligible": true,
       "endpoint": "http://78.46.78.83:8000",
@@ -103,7 +98,7 @@
     },
     "gonka1dkl4mah5erqggvhqkpc8j3qs5tyuetgdy552cp": {
       "address": "gonka1dkl4mah5erqggvhqkpc8j3qs5tyuetgdy552cp",
-      "bridge_latest": 25663168,
+      "bridge_latest": 25665754,
       "classification": "healthy",
       "eligible": true,
       "endpoint": "http://node2.gonka.ai:8000",
@@ -115,19 +110,19 @@
     },
     "gonka1f0u3y2wneer8zhz3ypw4x54h38cpa0qsy8ts3e": {
       "address": "gonka1f0u3y2wneer8zhz3ypw4x54h38cpa0qsy8ts3e",
-      "bridge_latest": null,
-      "classification": "unknown",
+      "bridge_latest": 25665754,
+      "classification": "healthy",
       "eligible": true,
-      "endpoint": null,
+      "endpoint": "http://95.217.122.154:8000",
       "participant_status": "ACTIVE",
-      "reason": "SourcesUnavailable: attempt 1: HTTPError: 503 Server Error: Service Temporarily Unavailable for url: http://95.217.122.154:8000/v1/bridge/block/latest?chain=ethereum",
+      "reason": "equal_to_finalized",
       "slot_end_index": 31,
       "slot_start_index": 28,
       "slots": 4
     },
     "gonka1gvrrhjmy4w4mayvs2s5l23edj8ertcmtd2v4zr": {
       "address": "gonka1gvrrhjmy4w4mayvs2s5l23edj8ertcmtd2v4zr",
-      "bridge_latest": 25663168,
+      "bridge_latest": 25665754,
       "classification": "healthy",
       "eligible": true,
       "endpoint": "http://54.38.118.143:8000",
@@ -139,12 +134,7 @@
     },
     "gonka1hwvel7n3zuk6wruefuzc356l9myske9stckwnz": {
       "address": "gonka1hwvel7n3zuk6wruefuzc356l9myske9stckwnz",
-      "bridge_latest": 25663168,
-      "classification": "healthy",
-      "eligible": true,
-      "endpoint": "http://148.113.47.71:8000",
-      "participant_status": "ACTIVE",
-      "reason": "equal_to_finalized",
+      "eligible": false,
       "slot_end_index": 51,
       "slot_start_index": 48,
       "slots": 4
@@ -163,7 +153,7 @@
     },
     "gonka1kx9mca3xm8u8ypzfuhmxey66u0ufxhs7nm6wc5": {
       "address": "gonka1kx9mca3xm8u8ypzfuhmxey66u0ufxhs7nm6wc5",
-      "bridge_latest": 25663168,
+      "bridge_latest": 25665754,
       "classification": "healthy",
       "eligible": true,
       "endpoint": "https://node3.gonka.ai",
@@ -187,12 +177,7 @@
     },
     "gonka1tja3g2da45efhe2p83gk3whtussmgmtsdlgprt": {
       "address": "gonka1tja3g2da45efhe2p83gk3whtussmgmtsdlgprt",
-      "bridge_latest": 25663168,
-      "classification": "healthy",
-      "eligible": true,
-      "endpoint": "http://148.113.47.235:8000",
-      "participant_status": "ACTIVE",
-      "reason": "equal_to_finalized",
+      "eligible": false,
       "slot_end_index": 89,
       "slot_start_index": 85,
       "slots": 5
@@ -211,7 +196,7 @@
     },
     "gonka1y2a9p56kv044327uycmqdexl7zs82fs5ryv5le": {
       "address": "gonka1y2a9p56kv044327uycmqdexl7zs82fs5ryv5le",
-      "bridge_latest": 25663168,
+      "bridge_latest": 25665754,
       "classification": "healthy",
       "eligible": true,
       "endpoint": "http://node1.gonka.ai:8000",
@@ -223,7 +208,7 @@
     },
     "gonka1zktn8j65wlys8a8e38hqhf4y3x6m4x04zskkrx": {
       "address": "gonka1zktn8j65wlys8a8e38hqhf4y3x6m4x04zskkrx",
-      "bridge_latest": 25663168,
+      "bridge_latest": 25665754,
       "classification": "healthy",
       "eligible": true,
       "endpoint": "http://65.108.198.21:8000",
@@ -238,7 +223,7 @@
     "concentration": {
       "active": false,
       "active_since": null,
-      "last_checked_at": "2026-08-01T23:17:43+00:00",
+      "last_checked_at": "2026-08-02T07:52:00+00:00",
       "threshold": ">=51",
       "total_slots": 100,
       "value_slots": 41
@@ -246,15 +231,15 @@
     "inactive": {
       "active": false,
       "active_since": null,
-      "last_checked_at": "2026-08-01T23:17:43+00:00",
+      "last_checked_at": "2026-08-02T07:52:00+00:00",
       "threshold": ">=35%",
       "total_slots": 100,
-      "value_slots": 0
+      "value_slots": 10
     },
     "stale": {
       "active": false,
       "active_since": null,
-      "last_checked_at": "2026-08-01T23:17:43+00:00",
+      "last_checked_at": "2026-08-02T07:52:00+00:00",
       "threshold": ">=35%",
       "total_slots": 100,
       "value_slots": 15
@@ -262,10 +247,10 @@
     "unknown": {
       "active": false,
       "active_since": null,
-      "last_checked_at": "2026-08-01T23:17:43+00:00",
+      "last_checked_at": "2026-08-02T07:52:00+00:00",
       "threshold": ">=35%",
       "total_slots": 100,
-      "value_slots": 19
+      "value_slots": 13
     }
   },
   "sources": {
@@ -274,7 +259,7 @@
       "failed_runs": 0,
       "failed_since": null,
       "last_error": null,
-      "last_success_at": "2026-08-01T23:17:43+00:00",
+      "last_success_at": "2026-08-02T07:52:00+00:00",
       "status": "available"
     },
     "gonka_chain": {
@@ -282,7 +267,7 @@
       "failed_runs": 0,
       "failed_since": null,
       "last_error": null,
-      "last_success_at": "2026-08-01T23:17:43+00:00",
+      "last_success_at": "2026-08-02T07:52:00+00:00",
       "status": "available"
     }
   }
