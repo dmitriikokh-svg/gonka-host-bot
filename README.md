@@ -26,7 +26,9 @@ workflow-скриптом `scripts/commit_state.sh`.
 
 - `TELEGRAM_BOT_TOKEN` — secret.
 - `TELEGRAM_CHAT_ID` — secret.
-- `TELEGRAM_MESSAGE_THREAD_ID` — необязательный secret для Telegram topic.
+- `TELEGRAM_MESSAGE_THREAD_ID` — обязательный secret для Telegram topic. Если
+  он отсутствует или некорректен, бот не отправляет сообщение в General, а
+  завершает проверку ошибкой.
 - `ETHEREUM_RPC_URLS` — необязательный secret: один или несколько Ethereum RPC
   через запятую. Они используются раньше публичных резервных RPC.
 - `TARGET_API_VERSION` — repository variable.
@@ -48,20 +50,24 @@ Workflow `Check bridge WGNK burns` запланирован каждые пят�
 создаёт warning; две просроченные транзакции создают один critical. Ошибка всех
 Gonka API отслеживается отдельно и не считается зависшей транзакцией.
 
-Workflow `Check bridge stale and BLS risk` запускается каждые 15 минут. Он
+Workflow `Check bridge stale and BLS risk` запускается каждые 5 минут. Он
 читает реальное распределение BLS slots текущей подписанной эпохи и применяет
-четыре независимых правила:
+пять независимых правил:
 
 - warning, если Top-3 контролируют большинство: `total_slots // 2 + 1`;
 - warning, если 35% или больше BLS slots принадлежат адресам, отсутствующим в
   Cosmos `group_members` этой эпохи (не могут голосовать в bridge);
 - warning, если ноды с 35% или больше BLS slots сообщают `bridge_latest`, не
   равный одному зафиксированному для запуска Ethereum finalized block;
-- отдельный warning, если bridge API недоступен у нод с 35% или больше slots.
+- отдельный warning, если bridge API недоступен у нод с 35% или больше slots;
+- индивидуальный warning, если любой участник Top-10 по BLS slots недоступен
+  или inactive две последовательные проверки, даже если суммарный порог 35%
+  не достигнут; после восстановления отправляется recovery.
 
 Недоступный API классифицируется как `unknown`, а не как `stale`. Значения
 `valid_dealers` из BLS-ответа относятся к DKG и не используются как признак
-inactive/invalidated. Ручной запуск workflow по умолчанию отправляет сводку.
+inactive/invalidated. Top-10 availability проверяется независимо от доступности
+Ethereum RPC. Ручной запуск workflow по умолчанию отправляет сводку.
 
 Текущий transaction workflow покрывает WGNK burn (unwrap). Входящие USDT/USDC
 нужно добавлять отдельно после определения bridge receiver/event на Ethereum.
