@@ -4,6 +4,8 @@
   "inactive_slots_warning_percent": 35,
   "stale_slots_warning_percent": 35,
   "unknown_slots_warning_percent": 35,
+  "top_peers_count": 10,
+  "top_peer_unavailable_alert_after_runs": 2,
   "source_unavailable_alert_after_runs": 3,
   "request_timeout_seconds": 8,
   "attempts_per_source": 1,
