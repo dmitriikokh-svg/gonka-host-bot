@@ -7,6 +7,8 @@ The watcher joins four independent snapshots for the same epoch:
   * each eligible validator's reported latest bridge block.
 
 An unreachable validator API is recorded as unknown and never as stale.
+Top BLS peers have an additional individual availability rule, so one
+important peer cannot be hidden below the aggregate unknown-slots threshold.
 """
 
 from __future__ import annotations
@@ -101,6 +103,8 @@ def load_config() -> dict:
     positive_int(config, "attempts_per_source")
     positive_int(config, "attempts_per_node")
     positive_int(config, "max_parallel_node_checks")
+    positive_int(config, "top_peers_count")
+    positive_int(config, "top_peer_unavailable_alert_after_runs")
     return config
 
 
@@ -113,6 +117,7 @@ def default_state() -> dict:
         "signals": {},
         "sources": {},
         "participants": {},
+        "top_peers": {},
     }
 
 
@@ -120,7 +125,7 @@ def load_state() -> dict:
     state = load_json(STATE_FILE, default_state())
     if not isinstance(state, dict):
         raise ValueError("bridge stale state must be a JSON object")
-    for field in ("signals", "sources", "participants"):
+    for field in ("signals", "sources", "participants", "top_peers"):
         if not isinstance(state.get(field), dict):
             state[field] = {}
     return state
@@ -375,7 +380,11 @@ def probe_bridge_latest(config: dict, node_url: str) -> tuple[int, str]:
     raise SourcesUnavailable(" | ".join(errors))
 
 
-def inspect_participant(config: dict, participant: dict, finalized: int) -> dict:
+def inspect_participant(
+    config: dict,
+    participant: dict,
+    finalized: int | None,
+) -> dict:
     result = {
         "address": participant["address"],
         "slots": participant["slots"],
@@ -393,10 +402,18 @@ def inspect_participant(config: dict, participant: dict, finalized: int) -> dict
         latest, endpoint = probe_bridge_latest(config, node_url)
         result["bridge_latest"] = latest
         result["endpoint"] = endpoint
-        # The ticket owner explicitly requested literal equality with the one
-        # frozen finalized block used for the whole run.
-        result["classification"] = "healthy" if latest == finalized else "stale"
-        result["reason"] = "equal_to_finalized" if latest == finalized else "not_equal_to_finalized"
+        if finalized is None:
+            # API availability is useful on its own for the Top-peer rule and
+            # must not depend on an Ethereum RPC being reachable.
+            result["classification"] = "reachable"
+            result["reason"] = "bridge_api_reachable"
+        else:
+            # The ticket owner explicitly requested literal equality with the
+            # one frozen finalized block used for the whole run.
+            result["classification"] = "healthy" if latest == finalized else "stale"
+            result["reason"] = (
+                "equal_to_finalized" if latest == finalized else "not_equal_to_finalized"
+            )
     except Exception as exc:  # noqa: BLE001 - a node failure is unknown, not fatal
         result["reason"] = f"{type(exc).__name__}: {str(exc)[:500]}"
     return result
@@ -405,7 +422,7 @@ def inspect_participant(config: dict, participant: dict, finalized: int) -> dict
 def inspect_eligible_participants(
     config: dict,
     participants: list[dict],
-    finalized: int,
+    finalized: int | None,
 ) -> dict[str, dict]:
     if not participants:
         return {}
@@ -489,6 +506,139 @@ def apply_signal(
         "active_since": previous.get("active_since") if was_active and active else (now if active else None),
         "last_checked_at": now,
     }
+    return messages
+
+
+def top_peer_line(item: dict) -> str:
+    reason_labels = {
+        "bridge_api_unavailable": "bridge API недоступен",
+        "inactive_after_cpoc": "inactive/исключён после CPoC",
+    }
+    reason = reason_labels.get(
+        item.get("failure_reason"),
+        item.get("failure_reason", "unknown"),
+    )
+    return (
+        f"• <b>#{item['rank']}</b> <code>{escape_html(item['address'])}</code>: "
+        f"<b>{item['slots']} slots</b>, {escape_html(reason)}, "
+        f"проверок подряд: <b>{item['consecutive_failed_runs']}</b>"
+    )
+
+
+def evaluate_top_peers(
+    state: dict,
+    config: dict,
+    bls: dict,
+    eligible: set[str],
+    inspected: dict[str, dict],
+    now: str,
+) -> list[str]:
+    """Alert when any Top-N BLS peer is unavailable in consecutive runs."""
+
+    count = positive_int(config, "top_peers_count")
+    alert_after = positive_int(config, "top_peer_unavailable_alert_after_runs")
+    sorted_participants = sorted(
+        bls["participants"],
+        key=lambda item: (-item["slots"], item["address"]),
+    )
+    top_peers = sorted_participants[:count]
+    previous_peers = state.get("top_peers", {})
+    if not isinstance(previous_peers, dict):
+        previous_peers = {}
+
+    current: dict[str, dict] = {}
+    new_alerts: list[dict] = []
+    recoveries: list[dict] = []
+    scope_closures: list[dict] = []
+
+    for rank, participant in enumerate(top_peers, start=1):
+        address = participant["address"]
+        previous = previous_peers.get(address, {})
+        if not isinstance(previous, dict):
+            previous = {}
+
+        observation = inspected.get(address, {})
+        if address not in eligible:
+            failure_reason = "inactive_after_cpoc"
+        elif observation.get("classification") == "unknown" or not observation:
+            failure_reason = "bridge_api_unavailable"
+        else:
+            failure_reason = None
+
+        was_failed = bool(previous.get("failure_reason"))
+        was_alerted = bool(previous.get("alerted"))
+        failed = failure_reason is not None
+        consecutive = (
+            int(previous.get("consecutive_failed_runs", 0)) + 1
+            if failed and was_failed
+            else (1 if failed else 0)
+        )
+        alerted = was_alerted if failed else False
+        first_failed_at = (
+            previous.get("first_failed_at")
+            if failed and was_failed
+            else (now if failed else None)
+        )
+
+        entry = {
+            "address": address,
+            "rank": rank,
+            "slots": participant["slots"],
+            "epoch": bls["epoch"],
+            "failure_reason": failure_reason,
+            "consecutive_failed_runs": consecutive,
+            "alerted": alerted,
+            "first_failed_at": first_failed_at,
+            "last_checked_at": now,
+        }
+
+        if failed and consecutive >= alert_after and not was_alerted:
+            entry["alerted"] = True
+            entry["alerted_at"] = now
+            new_alerts.append(entry)
+        elif failed and was_alerted:
+            entry["alerted_at"] = previous.get("alerted_at")
+        elif not failed and was_alerted:
+            recoveries.append(entry)
+
+        current[address] = entry
+
+    current_addresses = set(current)
+    for address, previous in previous_peers.items():
+        if address in current_addresses or not isinstance(previous, dict):
+            continue
+        if previous.get("alerted"):
+            scope_closures.append(previous)
+
+    state["top_peers"] = current
+    messages: list[str] = []
+    if new_alerts:
+        messages.append(
+            f"🟡 <b>Недоступны bridge peers из Top-{count} по BLS slots</b>\n\n"
+            f"Порог последовательных сбоев: <code>{alert_after}</code>.\n\n"
+            + "\n".join(top_peer_line(item) for item in new_alerts)
+            + f"\n\nЭпоха: <code>{bls['epoch']}</code>"
+        )
+    if recoveries:
+        messages.append(
+            f"🟢 <b>Доступность Top-{count} bridge peers восстановилась</b>\n\n"
+            + "\n".join(
+                f"• <code>{escape_html(item['address'])}</code>: "
+                f"<b>#{item['rank']}</b>, {item['slots']} slots"
+                for item in recoveries
+            )
+            + f"\n\nЭпоха: <code>{bls['epoch']}</code>"
+        )
+    if scope_closures:
+        messages.append(
+            f"🟢 <b>Индивидуальный Top-{count} bridge alert закрыт</b>\n\n"
+            f"Следующие участники больше не входят в текущий Top-{count} по BLS slots:\n"
+            + "\n".join(
+                f"• <code>{escape_html(item['address'])}</code>"
+                for item in scope_closures
+            )
+            + f"\n\nЭпоха: <code>{bls['epoch']}</code>"
+        )
     return messages
 
 
@@ -620,12 +770,25 @@ def build_summary(state: dict, config: dict) -> str:
             f"• <code>{name}</code>: <b>{status}</b>, "
             f"{signal.get('value_slots', 'unknown')}/{signal.get('total_slots', 'unknown')} slots"
         )
+    top_peers = state.get("top_peers", {})
+    top_peer_alerts = sum(
+        1 for value in top_peers.values() if isinstance(value, dict) and value.get("alerted")
+    )
+    top_peer_pending = sum(
+        1
+        for value in top_peers.values()
+        if isinstance(value, dict)
+        and value.get("failure_reason")
+        and not value.get("alerted")
+    )
     return (
         "🟢 <b>Проверка Bridge Stale Check A</b>\n\n"
         f"Эпоха: <code>{escape_html(state.get('epoch'))}</code>\n"
         f"DKG phase: <code>{escape_html(state.get('dkg_phase'))}</code>\n"
         f"Ethereum finalized: <code>{escape_html(state.get('ethereum_finalized_block'))}</code>\n\n"
         + "\n".join(signal_lines)
+        + f"\n• <code>top_peers</code>: <b>{top_peer_alerts} alert</b>, "
+        f"{top_peer_pending} pending"
     )
 
 
@@ -673,30 +836,44 @@ def run() -> dict:
             if isinstance(previous_finalized, int) and not isinstance(previous_finalized, bool)
             else None
         )
+        finalized = None
         try:
             finalized, _source = fetch_finalized_block(config, minimum_block=minimum)
             state["ethereum_finalized_block"] = finalized
             messages.extend(source_success(state, "ethereum", now))
+        except (SourcesUnavailable, ValueError, TypeError) as exc:
+            messages.extend(source_failure(state, config, "ethereum", exc, now))
 
-            eligible_participants = [
-                item for item in bls["participants"] if item["address"] in eligible
-            ]
-            inspected = inspect_eligible_participants(
-                config,
-                eligible_participants,
-                finalized,
-            )
-            state["participants"] = {
-                item["address"]: {
-                    **copy.deepcopy(inspected.get(item["address"], {})),
-                    "address": item["address"],
-                    "slots": item["slots"],
-                    "eligible": item["address"] in eligible,
-                    "slot_start_index": item["slot_start_index"],
-                    "slot_end_index": item["slot_end_index"],
-                }
-                for item in bls["participants"]
+        eligible_participants = [
+            item for item in bls["participants"] if item["address"] in eligible
+        ]
+        inspected = inspect_eligible_participants(
+            config,
+            eligible_participants,
+            finalized,
+        )
+        state["participants"] = {
+            item["address"]: {
+                **copy.deepcopy(inspected.get(item["address"], {})),
+                "address": item["address"],
+                "slots": item["slots"],
+                "eligible": item["address"] in eligible,
+                "slot_start_index": item["slot_start_index"],
+                "slot_end_index": item["slot_end_index"],
             }
+            for item in bls["participants"]
+        }
+        messages.extend(
+            evaluate_top_peers(
+                state,
+                config,
+                bls,
+                eligible,
+                inspected,
+                now,
+            )
+        )
+        if finalized is not None:
             messages.extend(
                 evaluate_snapshot(
                     state,
@@ -708,8 +885,6 @@ def run() -> dict:
                     now,
                 )
             )
-        except (SourcesUnavailable, ValueError, TypeError) as exc:
-            messages.extend(source_failure(state, config, "ethereum", exc, now))
     else:
         print(f"Epoch {epoch}: BLS phase {bls['dkg_phase']}; checks wait for {SIGNED_PHASE}")
 
