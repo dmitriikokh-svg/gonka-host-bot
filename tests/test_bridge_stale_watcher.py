@@ -15,6 +15,8 @@ def config(**overrides):
         "inactive_slots_warning_percent": 35,
         "stale_slots_warning_percent": 35,
         "unknown_slots_warning_percent": 35,
+        "top_peers_count": 10,
+        "top_peer_unavailable_alert_after_runs": 2,
         "source_unavailable_alert_after_runs": 3,
         "request_timeout_seconds": 8,
         "attempts_per_source": 1,
@@ -107,6 +109,15 @@ class BlsParsingTests(unittest.TestCase):
 
 
 class ParticipantClassificationTests(unittest.TestCase):
+    def test_private_and_credentialed_validator_urls_are_rejected(self):
+        for value in (
+            "http://127.0.0.1:8000",
+            "http://169.254.169.254",
+            "https://user:password@validator.example",
+        ):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                watcher.normalized_public_node_url(value)
+
     def test_only_literal_equality_is_healthy(self):
         participant = bls_snapshot([100])["participants"][0]
         with (
@@ -141,6 +152,35 @@ class ParticipantClassificationTests(unittest.TestCase):
             result = watcher.inspect_participant(config(), participant, 1000)
         self.assertEqual(result["classification"], "unknown")
         self.assertIsNone(result["bridge_latest"])
+
+    def test_api_availability_is_checked_without_ethereum_finalized(self):
+        participant = bls_snapshot([100])["participants"][0]
+        with (
+            patch.object(
+                watcher,
+                "fetch_participant_info",
+                return_value=("https://validator.example", "ACTIVE"),
+            ),
+            patch.object(watcher, "probe_bridge_latest", return_value=(1000, "validator")),
+        ):
+            result = watcher.inspect_participant(config(), participant, None)
+
+        self.assertEqual(result["classification"], "reachable")
+        self.assertEqual(result["bridge_latest"], 1000)
+
+
+class StateMigrationTests(unittest.TestCase):
+    def test_existing_state_without_top_peers_is_loaded_safely(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_file = Path(directory) / "bridge_stale.json"
+            state_file.write_text(
+                '{"signals": {}, "sources": {}, "participants": {}}',
+                encoding="utf-8",
+            )
+            with patch.object(watcher, "STATE_FILE", state_file):
+                state = watcher.load_state()
+
+        self.assertEqual(state["top_peers"], {})
 
 
 class SignalTests(unittest.TestCase):
@@ -207,6 +247,159 @@ class SignalTests(unittest.TestCase):
         self.assertEqual(state["signals"]["stale"]["value_slots"], 35)
         self.assertTrue(state["signals"]["unknown"]["active"])
         self.assertEqual(state["signals"]["unknown"]["value_slots"], 40)
+
+
+class TopPeerSignalTests(unittest.TestCase):
+    def setUp(self):
+        self.now = "2026-07-29T00:00:00+00:00"
+        self.later = "2026-07-29T00:05:00+00:00"
+        self.snapshot = bls_snapshot([20, 18, 16, 14, 12, 8, 5, 3, 2, 2, 1])
+        self.eligible = {item["address"] for item in self.snapshot["participants"]}
+
+    def test_top_peer_unknown_alerts_on_second_run_only_and_then_recovers(self):
+        observations = inspected(
+            self.snapshot,
+            ["unknown"] + ["healthy"] * (len(self.snapshot["participants"]) - 1),
+        )
+        state = watcher.default_state()
+
+        first = watcher.evaluate_top_peers(
+            state,
+            config(),
+            self.snapshot,
+            self.eligible,
+            observations,
+            self.now,
+        )
+        second = watcher.evaluate_top_peers(
+            state,
+            config(),
+            self.snapshot,
+            self.eligible,
+            observations,
+            self.later,
+        )
+        third = watcher.evaluate_top_peers(
+            state,
+            config(),
+            self.snapshot,
+            self.eligible,
+            observations,
+            self.later,
+        )
+
+        address = self.snapshot["participants"][0]["address"]
+        self.assertEqual(first, [])
+        self.assertEqual(len(second), 1)
+        self.assertIn("Top-10", second[0])
+        self.assertIn(address, second[0])
+        self.assertEqual(third, [])
+        self.assertTrue(state["top_peers"][address]["alerted"])
+
+        healthy = inspected(self.snapshot, ["healthy"] * len(self.snapshot["participants"]))
+        recovered = watcher.evaluate_top_peers(
+            state,
+            config(),
+            self.snapshot,
+            self.eligible,
+            healthy,
+            self.later,
+        )
+        self.assertEqual(len(recovered), 1)
+        self.assertIn("восстановилась", recovered[0])
+        self.assertFalse(state["top_peers"][address]["alerted"])
+
+    def test_inactive_top_peer_alerts_but_unknown_peer_below_top_ten_does_not(self):
+        top_address = self.snapshot["participants"][1]["address"]
+        below_top_address = self.snapshot["participants"][10]["address"]
+        eligible = self.eligible - {top_address}
+        observations = inspected(
+            self.snapshot,
+            ["healthy"] * 10 + ["unknown"],
+        )
+        state = watcher.default_state()
+
+        watcher.evaluate_top_peers(
+            state,
+            config(),
+            self.snapshot,
+            eligible,
+            observations,
+            self.now,
+        )
+        messages = watcher.evaluate_top_peers(
+            state,
+            config(),
+            self.snapshot,
+            eligible,
+            observations,
+            self.later,
+        )
+
+        self.assertEqual(len(messages), 1)
+        self.assertIn(top_address, messages[0])
+        self.assertNotIn(below_top_address, messages[0])
+        self.assertIn("inactive", messages[0])
+        self.assertNotIn(below_top_address, state["top_peers"])
+
+    def test_multiple_failed_top_peers_are_aggregated_in_one_message(self):
+        observations = inspected(
+            self.snapshot,
+            ["unknown", "unknown"]
+            + ["healthy"] * (len(self.snapshot["participants"]) - 2),
+        )
+        state = watcher.default_state()
+        watcher.evaluate_top_peers(
+            state,
+            config(),
+            self.snapshot,
+            self.eligible,
+            observations,
+            self.now,
+        )
+        messages = watcher.evaluate_top_peers(
+            state,
+            config(),
+            self.snapshot,
+            self.eligible,
+            observations,
+            self.later,
+        )
+
+        self.assertEqual(len(messages), 1)
+        self.assertIn(self.snapshot["participants"][0]["address"], messages[0])
+        self.assertIn(self.snapshot["participants"][1]["address"], messages[0])
+
+    def test_alert_is_closed_when_peer_leaves_top_ten(self):
+        observations = inspected(
+            self.snapshot,
+            ["unknown"] + ["healthy"] * (len(self.snapshot["participants"]) - 1),
+        )
+        state = watcher.default_state()
+        watcher.evaluate_top_peers(
+            state,
+            config(top_peer_unavailable_alert_after_runs=1),
+            self.snapshot,
+            self.eligible,
+            observations,
+            self.now,
+        )
+
+        changed = bls_snapshot([1, 22, 20, 18, 14, 10, 5, 4, 3, 2, 2])
+        changed_eligible = {item["address"] for item in changed["participants"]}
+        changed_observations = inspected(changed, ["healthy"] * len(changed["participants"]))
+        messages = watcher.evaluate_top_peers(
+            state,
+            config(top_peer_unavailable_alert_after_runs=1),
+            changed,
+            changed_eligible,
+            changed_observations,
+            self.later,
+        )
+
+        self.assertEqual(len(messages), 1)
+        self.assertIn("больше не входят", messages[0])
+        self.assertNotIn(self.snapshot["participants"][0]["address"], state["top_peers"])
 
 
 class RunIntegrationTests(unittest.TestCase):
