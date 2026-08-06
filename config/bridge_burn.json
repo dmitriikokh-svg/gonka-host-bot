@@ -10,6 +10,7 @@
   "source_unavailable_alert_after_runs": 3,
   "request_timeout_seconds": 15,
   "attempts_per_source": 1,
+  "completed_history_limit": 20,
   "ethereum_rpc_urls": [
     "https://ethereum-rpc.publicnode.com",
     "https://cloudflare-eth.com",
