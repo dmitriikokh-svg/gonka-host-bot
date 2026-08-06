@@ -16,7 +16,8 @@ def config(**overrides):
         "stale_slots_warning_percent": 35,
         "unknown_slots_warning_percent": 35,
         "top_peers_count": 10,
-        "top_peer_unavailable_alert_after_runs": 2,
+        "top_peer_missing_signatures_warning_count": 2,
+        "top_peer_inactive_alert_after_runs": 2,
         "source_unavailable_alert_after_runs": 3,
         "request_timeout_seconds": 8,
         "attempts_per_source": 1,
@@ -170,6 +171,21 @@ class ParticipantClassificationTests(unittest.TestCase):
 
 
 class StateMigrationTests(unittest.TestCase):
+    def test_old_config_without_top_peer_fields_uses_safe_defaults(self):
+        old_config = config()
+        old_config.pop("top_peers_count")
+        old_config.pop("top_peer_missing_signatures_warning_count")
+        old_config.pop("top_peer_inactive_alert_after_runs")
+        with (
+            patch.object(watcher, "load_json", return_value=old_config),
+            patch.object(watcher, "CONFIG_FILE", Path("unused.json")),
+        ):
+            loaded = watcher.load_config()
+
+        self.assertEqual(loaded["top_peers_count"], 10)
+        self.assertEqual(loaded["top_peer_missing_signatures_warning_count"], 2)
+        self.assertEqual(loaded["top_peer_inactive_alert_after_runs"], 2)
+
     def test_existing_state_without_top_peers_is_loaded_safely(self):
         with tempfile.TemporaryDirectory() as directory:
             state_file = Path(directory) / "bridge_stale.json"
@@ -181,6 +197,22 @@ class StateMigrationTests(unittest.TestCase):
                 state = watcher.load_state()
 
         self.assertEqual(state["top_peers"], {})
+        self.assertEqual(state["top_peer_rule_version"], watcher.TOP_PEER_RULE_VERSION)
+
+    def test_old_http_based_top_peer_alert_is_discarded_without_recovery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_file = Path(directory) / "bridge_stale.json"
+            state_file.write_text(
+                '{"signals": {}, "sources": {}, "participants": {}, '
+                '"top_peers": {"gonka1old": {"alerted": true, '
+                '"failure_reason": "bridge_api_unavailable"}}}',
+                encoding="utf-8",
+            )
+            with patch.object(watcher, "STATE_FILE", state_file):
+                state = watcher.load_state()
+
+        self.assertEqual(state["top_peers"], {})
+        self.assertEqual(state["top_peer_rule_version"], watcher.TOP_PEER_RULE_VERSION)
 
 
 class SignalTests(unittest.TestCase):
@@ -256,11 +288,42 @@ class TopPeerSignalTests(unittest.TestCase):
         self.snapshot = bls_snapshot([20, 18, 16, 14, 12, 8, 5, 3, 2, 2, 1])
         self.eligible = {item["address"] for item in self.snapshot["participants"]}
 
-    def test_top_peer_unknown_alerts_on_second_run_only_and_then_recovers(self):
-        observations = inspected(
+    def history(self, *validator_sets):
+        return [
+            {
+                "key": f"ethereum/{100 + index}/0",
+                "origin_chain": "ethereum",
+                "block_number": 100 + index,
+                "receipt_index": 0,
+                "status": "BRIDGE_COMPLETED",
+                "epoch_index": self.snapshot["epoch"],
+                "validators": list(validators),
+            }
+            for index, validators in enumerate(validator_sets)
+        ]
+
+    def test_no_transaction_evidence_does_not_alert(self):
+        state = watcher.default_state()
+        messages = watcher.evaluate_top_peers(
+            state,
+            config(),
             self.snapshot,
-            ["unknown"] + ["healthy"] * (len(self.snapshot["participants"]) - 1),
+            self.eligible,
+            [],
+            self.now,
         )
+        self.assertEqual(messages, [])
+        self.assertTrue(
+            all(
+                item["evidence_status"] == "insufficient_transactions"
+                for item in state["top_peers"].values()
+            )
+        )
+
+    def test_missing_two_signatures_alerts_once_and_new_signature_recovers(self):
+        address = self.snapshot["participants"][0]["address"]
+        other_signers = self.eligible - {address}
+        history = self.history(other_signers, other_signers)
         state = watcher.default_state()
 
         first = watcher.evaluate_top_peers(
@@ -268,7 +331,7 @@ class TopPeerSignalTests(unittest.TestCase):
             config(),
             self.snapshot,
             self.eligible,
-            observations,
+            history,
             self.now,
         )
         second = watcher.evaluate_top_peers(
@@ -276,47 +339,35 @@ class TopPeerSignalTests(unittest.TestCase):
             config(),
             self.snapshot,
             self.eligible,
-            observations,
+            history,
             self.later,
         )
-        third = watcher.evaluate_top_peers(
-            state,
-            config(),
-            self.snapshot,
-            self.eligible,
-            observations,
-            self.later,
-        )
-
-        address = self.snapshot["participants"][0]["address"]
-        self.assertEqual(first, [])
-        self.assertEqual(len(second), 1)
-        self.assertIn("Top-10", second[0])
-        self.assertIn(address, second[0])
-        self.assertEqual(third, [])
+        self.assertEqual(len(first), 1)
+        self.assertIn("Top-10", first[0])
+        self.assertIn(address, first[0])
+        self.assertIn("HTTP 503", first[0])
+        self.assertEqual(second, [])
         self.assertTrue(state["top_peers"][address]["alerted"])
 
-        healthy = inspected(self.snapshot, ["healthy"] * len(self.snapshot["participants"]))
+        recovered_history = history + self.history({address})
+        recovered_history[-1]["block_number"] = 200
+        recovered_history[-1]["key"] = "ethereum/200/0"
         recovered = watcher.evaluate_top_peers(
             state,
             config(),
             self.snapshot,
             self.eligible,
-            healthy,
+            recovered_history,
             self.later,
         )
         self.assertEqual(len(recovered), 1)
-        self.assertIn("восстановилась", recovered[0])
+        self.assertIn("восстановились", recovered[0])
         self.assertFalse(state["top_peers"][address]["alerted"])
 
-    def test_inactive_top_peer_alerts_but_unknown_peer_below_top_ten_does_not(self):
+    def test_inactive_top_peer_alerts_on_second_check_but_peer_below_top_ten_does_not(self):
         top_address = self.snapshot["participants"][1]["address"]
         below_top_address = self.snapshot["participants"][10]["address"]
         eligible = self.eligible - {top_address}
-        observations = inspected(
-            self.snapshot,
-            ["healthy"] * 10 + ["unknown"],
-        )
         state = watcher.default_state()
 
         watcher.evaluate_top_peers(
@@ -324,7 +375,7 @@ class TopPeerSignalTests(unittest.TestCase):
             config(),
             self.snapshot,
             eligible,
-            observations,
+            [],
             self.now,
         )
         messages = watcher.evaluate_top_peers(
@@ -332,7 +383,7 @@ class TopPeerSignalTests(unittest.TestCase):
             config(),
             self.snapshot,
             eligible,
-            observations,
+            [],
             self.later,
         )
 
@@ -343,26 +394,16 @@ class TopPeerSignalTests(unittest.TestCase):
         self.assertNotIn(below_top_address, state["top_peers"])
 
     def test_multiple_failed_top_peers_are_aggregated_in_one_message(self):
-        observations = inspected(
-            self.snapshot,
-            ["unknown", "unknown"]
-            + ["healthy"] * (len(self.snapshot["participants"]) - 2),
-        )
+        first = self.snapshot["participants"][0]["address"]
+        second = self.snapshot["participants"][1]["address"]
+        other_signers = self.eligible - {first, second}
         state = watcher.default_state()
-        watcher.evaluate_top_peers(
-            state,
-            config(),
-            self.snapshot,
-            self.eligible,
-            observations,
-            self.now,
-        )
         messages = watcher.evaluate_top_peers(
             state,
             config(),
             self.snapshot,
             self.eligible,
-            observations,
+            self.history(other_signers, other_signers),
             self.later,
         )
 
@@ -371,29 +412,26 @@ class TopPeerSignalTests(unittest.TestCase):
         self.assertIn(self.snapshot["participants"][1]["address"], messages[0])
 
     def test_alert_is_closed_when_peer_leaves_top_ten(self):
-        observations = inspected(
-            self.snapshot,
-            ["unknown"] + ["healthy"] * (len(self.snapshot["participants"]) - 1),
-        )
+        address = self.snapshot["participants"][0]["address"]
+        other_signers = self.eligible - {address}
         state = watcher.default_state()
         watcher.evaluate_top_peers(
             state,
-            config(top_peer_unavailable_alert_after_runs=1),
+            config(),
             self.snapshot,
             self.eligible,
-            observations,
+            self.history(other_signers, other_signers),
             self.now,
         )
 
         changed = bls_snapshot([1, 22, 20, 18, 14, 10, 5, 4, 3, 2, 2])
         changed_eligible = {item["address"] for item in changed["participants"]}
-        changed_observations = inspected(changed, ["healthy"] * len(changed["participants"]))
         messages = watcher.evaluate_top_peers(
             state,
-            config(top_peer_unavailable_alert_after_runs=1),
+            config(),
             changed,
             changed_eligible,
-            changed_observations,
+            [],
             self.later,
         )
 
