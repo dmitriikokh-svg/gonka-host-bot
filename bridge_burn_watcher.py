@@ -117,6 +117,8 @@ def load_config() -> dict:
     positive_int(config, "source_unavailable_alert_after_runs")
     positive_int(config, "request_timeout_seconds")
     positive_int(config, "attempts_per_source")
+    config.setdefault("completed_history_limit", 20)
+    positive_int(config, "completed_history_limit", minimum=2)
     return config
 
 
@@ -126,6 +128,7 @@ def default_state() -> dict:
         "ethereum_finalized_block": None,
         "last_scanned_finalized_block": None,
         "queue": {},
+        "completed_history": [],
         "sources": {},
         "critical_alerted": False,
         "critical_since": None,
@@ -139,6 +142,8 @@ def load_state() -> dict:
     for field, default in (("queue", {}), ("sources", {})):
         if not isinstance(state.get(field), dict):
             state[field] = copy.deepcopy(default)
+    if not isinstance(state.get("completed_history"), list):
+        state["completed_history"] = []
     state.setdefault("critical_alerted", False)
     state.setdefault("critical_since", None)
     return state
@@ -379,18 +384,44 @@ def parse_bridge_observation(payload: Any) -> dict:
     if any(not isinstance(tx, dict) for tx in transactions):
         raise ValueError("bridge transaction list contains a malformed item")
     if not transactions:
-        return {"status": "MISSING", "validators": []}
+        return {
+            "status": "MISSING",
+            "validators": [],
+            "completed_validators": [],
+            "epoch_index": None,
+        }
 
     statuses: list[str] = []
     validators: set[str] = set()
+    normalized: list[dict] = []
     for transaction in transactions:
         status = transaction.get("status")
+        normalized_status = status.upper() if isinstance(status, str) and status else "UNKNOWN"
         if isinstance(status, str) and status:
-            statuses.append(status.upper())
+            statuses.append(normalized_status)
         raw_validators = transaction.get("validators") or []
         if not isinstance(raw_validators, list):
             raise ValueError("bridge validators must be a list")
-        validators.update(value for value in raw_validators if isinstance(value, str))
+        parsed_validators = {
+            value for value in raw_validators if isinstance(value, str) and value
+        }
+        validators.update(parsed_validators)
+        raw_epoch = transaction.get("epochIndex")
+        if raw_epoch is None:
+            raw_epoch = transaction.get("epoch_index")
+        try:
+            epoch_index = int(raw_epoch) if raw_epoch is not None else None
+        except (TypeError, ValueError):
+            epoch_index = None
+        if epoch_index is not None and epoch_index < 0:
+            epoch_index = None
+        normalized.append(
+            {
+                "status": normalized_status,
+                "validators": parsed_validators,
+                "epoch_index": epoch_index,
+            }
+        )
 
     if "BRIDGE_COMPLETED" in statuses:
         status = "BRIDGE_COMPLETED"
@@ -400,7 +431,29 @@ def parse_bridge_observation(payload: Any) -> dict:
         status = statuses[0]
     else:
         status = "UNKNOWN"
-    return {"status": status, "validators": sorted(validators)}
+
+    matching = [item for item in normalized if item["status"] == status]
+    epoch_values = [
+        item["epoch_index"] for item in matching if item["epoch_index"] is not None
+    ]
+    epoch_index = max(epoch_values) if epoch_values else None
+    selected = [
+        item
+        for item in matching
+        if epoch_index is None or item["epoch_index"] == epoch_index
+    ]
+    completed_validators = {
+        validator
+        for item in selected
+        if item["status"] == "BRIDGE_COMPLETED"
+        for validator in item["validators"]
+    }
+    return {
+        "status": status,
+        "validators": sorted(validators),
+        "completed_validators": sorted(completed_validators),
+        "epoch_index": epoch_index,
+    }
 
 
 def fetch_bridge_observation(
@@ -452,6 +505,60 @@ def fetch_bridge_observation(
     best["validators"] = sorted(all_validators)
     successful_sources = ", ".join(dict.fromkeys(label for _value, label in observations))
     return best, successful_sources or best_source
+
+
+def remember_completed_transaction(
+    state: dict,
+    config: dict,
+    key: str,
+    item: dict,
+    observation: dict,
+    now: str,
+) -> None:
+    """Persist signer evidence before a completed queue item is removed."""
+
+    history = state.setdefault("completed_history", [])
+    if not isinstance(history, list):
+        history = []
+        state["completed_history"] = history
+    validators = observation.get("completed_validators")
+    if not isinstance(validators, list):
+        validators = observation.get("validators", [])
+    record = {
+        "key": key,
+        "origin_chain": item.get("origin_chain", config["origin_chain"]),
+        "block_number": item["block_number"],
+        "receipt_index": item["receipt_index"],
+        "transaction_hash": item["transaction_hash"],
+        "status": "BRIDGE_COMPLETED",
+        "epoch_index": observation.get("epoch_index"),
+        "validators": sorted(
+            {value for value in validators if isinstance(value, str) and value}
+        ),
+        "completed_at": now,
+    }
+    history[:] = [
+        value
+        for value in history
+        if not isinstance(value, dict) or value.get("key") != key
+    ]
+    history.append(record)
+
+    def history_position(value: Any) -> tuple[int, int]:
+        if not isinstance(value, dict):
+            return (-1, -1)
+        try:
+            return (
+                int(value.get("block_number", -1)),
+                int(value.get("receipt_index", -1)),
+            )
+        except (TypeError, ValueError):
+            return (-1, -1)
+
+    history.sort(
+        key=history_position
+    )
+    del history[:-positive_int(config, "completed_history_limit", minimum=2)]
 
 
 def age_minutes(item: dict, now: datetime) -> int:
@@ -554,6 +661,14 @@ def process_queue(state: dict, config: dict, now_text: str) -> list[str]:
                 }
             )
             if observation["status"] == "BRIDGE_COMPLETED":
+                remember_completed_transaction(
+                    state,
+                    config,
+                    key,
+                    item,
+                    observation,
+                    now_text,
+                )
                 if item.get("alert_level") == "warning":
                     messages.append(
                         "🟢 <b>Bridge-транзакция завершена</b>\n\n"
