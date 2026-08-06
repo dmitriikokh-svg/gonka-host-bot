@@ -7,8 +7,8 @@ The watcher joins four independent snapshots for the same epoch:
   * each eligible validator's reported latest bridge block.
 
 An unreachable validator API is recorded as unknown and never as stale.
-Top BLS peers have an additional individual availability rule, so one
-important peer cannot be hidden below the aggregate unknown-slots threshold.
+For Top BLS peers, actual signatures in completed bridge transactions are the
+primary liveness evidence; HTTP 503 alone never marks a peer as failed.
 """
 
 from __future__ import annotations
@@ -47,7 +47,9 @@ from bridge_burn_watcher import (
 ROOT = Path(__file__).resolve().parent
 CONFIG_FILE = ROOT / "config" / "bridge_stale.json"
 STATE_FILE = ROOT / "state" / "bridge_stale.json"
+BRIDGE_BURN_STATE_FILE = ROOT / "state" / "bridge_burn.json"
 SIGNED_PHASE = "DKG_PHASE_SIGNED"
+TOP_PEER_RULE_VERSION = "bridge_signatures_v1"
 
 
 def positive_int(config: dict, field: str, *, minimum: int = 1) -> int:
@@ -81,6 +83,11 @@ def load_config() -> dict:
     config = load_json(CONFIG_FILE)
     if not isinstance(config, dict):
         raise ValueError("bridge stale config must be a JSON object")
+    # Keep deployments safe when the watcher and its config are uploaded in
+    # separate manual commits. Explicit config values still take precedence.
+    config.setdefault("top_peers_count", 10)
+    config.setdefault("top_peer_missing_signatures_warning_count", 2)
+    config.setdefault("top_peer_inactive_alert_after_runs", 2)
     if not isinstance(config.get("owner"), str) or not config["owner"].strip():
         raise ValueError("owner is required")
     if not isinstance(config.get("origin_chain"), str) or not config["origin_chain"].strip():
@@ -104,7 +111,8 @@ def load_config() -> dict:
     positive_int(config, "attempts_per_node")
     positive_int(config, "max_parallel_node_checks")
     positive_int(config, "top_peers_count")
-    positive_int(config, "top_peer_unavailable_alert_after_runs")
+    positive_int(config, "top_peer_missing_signatures_warning_count", minimum=2)
+    positive_int(config, "top_peer_inactive_alert_after_runs")
     return config
 
 
@@ -118,6 +126,7 @@ def default_state() -> dict:
         "sources": {},
         "participants": {},
         "top_peers": {},
+        "top_peer_rule_version": TOP_PEER_RULE_VERSION,
     }
 
 
@@ -128,6 +137,11 @@ def load_state() -> dict:
     for field in ("signals", "sources", "participants", "top_peers"):
         if not isinstance(state.get(field), dict):
             state[field] = {}
+    if state.get("top_peer_rule_version") != TOP_PEER_RULE_VERSION:
+        # Do not carry alerts produced by the old HTTP-availability rule into
+        # the signature-based rule and do not emit a false recovery for them.
+        state["top_peers"] = {}
+        state["top_peer_rule_version"] = TOP_PEER_RULE_VERSION
     return state
 
 
@@ -509,19 +523,76 @@ def apply_signal(
     return messages
 
 
+def load_completed_bridge_history() -> list[dict]:
+    """Load completed bridge transactions used as signer evidence."""
+
+    try:
+        burn_state = load_json(BRIDGE_BURN_STATE_FILE, {"completed_history": []})
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return []
+    if not isinstance(burn_state, dict):
+        return []
+    history = burn_state.get("completed_history", [])
+    return [item for item in history if isinstance(item, dict)] if isinstance(history, list) else []
+
+
+def current_epoch_signature_evidence(
+    history: list[dict],
+    epoch: int,
+    limit: int,
+) -> list[dict]:
+    """Return the newest distinct completed transactions for one epoch."""
+
+    parsed: dict[str, dict] = {}
+    for item in history:
+        if item.get("status") != "BRIDGE_COMPLETED":
+            continue
+        try:
+            item_epoch = int(item.get("epoch_index"))
+            block = int(item.get("block_number"))
+            receipt = int(item.get("receipt_index"))
+        except (TypeError, ValueError):
+            continue
+        validators = item.get("validators")
+        if item_epoch != epoch or not isinstance(validators, list):
+            continue
+        key = item.get("key")
+        if not isinstance(key, str) or not key:
+            key = f"{item.get('origin_chain', 'ethereum')}/{block}/{receipt}"
+        parsed[key] = {
+            "key": key,
+            "block_number": block,
+            "receipt_index": receipt,
+            "validators": sorted(
+                {value for value in validators if isinstance(value, str) and value}
+            ),
+        }
+    return sorted(
+        parsed.values(),
+        key=lambda item: (item["block_number"], item["receipt_index"]),
+        reverse=True,
+    )[:limit]
+
+
 def top_peer_line(item: dict) -> str:
     reason_labels = {
-        "bridge_api_unavailable": "bridge API недоступен",
+        "missing_bridge_signatures": (
+            f"нет подписи в последних {item.get('evidence_count', 0)} bridge-транзакциях"
+        ),
         "inactive_after_cpoc": "inactive/исключён после CPoC",
     }
     reason = reason_labels.get(
         item.get("failure_reason"),
         item.get("failure_reason", "unknown"),
     )
+    suffix = (
+        f", проверок подряд: <b>{item['consecutive_failed_runs']}</b>"
+        if item.get("failure_reason") == "inactive_after_cpoc"
+        else ""
+    )
     return (
         f"• <b>#{item['rank']}</b> <code>{escape_html(item['address'])}</code>: "
-        f"<b>{item['slots']} slots</b>, {escape_html(reason)}, "
-        f"проверок подряд: <b>{item['consecutive_failed_runs']}</b>"
+        f"<b>{item['slots']} slots</b>, {escape_html(reason)}{suffix}"
     )
 
 
@@ -530,13 +601,23 @@ def evaluate_top_peers(
     config: dict,
     bls: dict,
     eligible: set[str],
-    inspected: dict[str, dict],
+    completed_history: list[dict],
     now: str,
 ) -> list[str]:
-    """Alert when any Top-N BLS peer is unavailable in consecutive runs."""
+    """Alert when a Top-N peer is inactive or misses two bridge signatures."""
 
     count = positive_int(config, "top_peers_count")
-    alert_after = positive_int(config, "top_peer_unavailable_alert_after_runs")
+    missing_threshold = positive_int(
+        config,
+        "top_peer_missing_signatures_warning_count",
+        minimum=2,
+    )
+    inactive_alert_after = positive_int(config, "top_peer_inactive_alert_after_runs")
+    evidence = current_epoch_signature_evidence(
+        completed_history,
+        bls["epoch"],
+        missing_threshold,
+    )
     sorted_participants = sorted(
         bls["participants"],
         key=lambda item: (-item["slots"], item["address"]),
@@ -556,23 +637,35 @@ def evaluate_top_peers(
         previous = previous_peers.get(address, {})
         if not isinstance(previous, dict):
             previous = {}
+        if previous.get("epoch") != bls["epoch"]:
+            previous = {}
 
-        observation = inspected.get(address, {})
         if address not in eligible:
             failure_reason = "inactive_after_cpoc"
-        elif observation.get("classification") == "unknown" or not observation:
-            failure_reason = "bridge_api_unavailable"
+            evidence_status = "not_eligible"
+        elif len(evidence) < missing_threshold:
+            failure_reason = None
+            evidence_status = "insufficient_transactions"
+        elif all(address not in item["validators"] for item in evidence):
+            failure_reason = "missing_bridge_signatures"
+            evidence_status = "missing_signatures"
         else:
             failure_reason = None
+            evidence_status = "signed"
 
         was_failed = bool(previous.get("failure_reason"))
         was_alerted = bool(previous.get("alerted"))
         failed = failure_reason is not None
-        consecutive = (
-            int(previous.get("consecutive_failed_runs", 0)) + 1
-            if failed and was_failed
-            else (1 if failed else 0)
-        )
+        if failure_reason == "inactive_after_cpoc":
+            consecutive = (
+                int(previous.get("consecutive_failed_runs", 0)) + 1
+                if was_failed and previous.get("failure_reason") == failure_reason
+                else 1
+            )
+        elif failure_reason == "missing_bridge_signatures":
+            consecutive = missing_threshold
+        else:
+            consecutive = 0
         alerted = was_alerted if failed else False
         first_failed_at = (
             previous.get("first_failed_at")
@@ -586,13 +679,23 @@ def evaluate_top_peers(
             "slots": participant["slots"],
             "epoch": bls["epoch"],
             "failure_reason": failure_reason,
+            "evidence_status": evidence_status,
+            "evidence_count": len(evidence),
+            "evidence_transactions": [item["key"] for item in evidence],
             "consecutive_failed_runs": consecutive,
             "alerted": alerted,
             "first_failed_at": first_failed_at,
             "last_checked_at": now,
         }
 
-        if failed and consecutive >= alert_after and not was_alerted:
+        threshold_met = (
+            failure_reason == "missing_bridge_signatures"
+            or (
+                failure_reason == "inactive_after_cpoc"
+                and consecutive >= inactive_alert_after
+            )
+        )
+        if failed and threshold_met and not was_alerted:
             entry["alerted"] = True
             entry["alerted_at"] = now
             new_alerts.append(entry)
@@ -611,17 +714,19 @@ def evaluate_top_peers(
             scope_closures.append(previous)
 
     state["top_peers"] = current
+    state["top_peer_rule_version"] = TOP_PEER_RULE_VERSION
     messages: list[str] = []
     if new_alerts:
         messages.append(
-            f"🟡 <b>Недоступны bridge peers из Top-{count} по BLS slots</b>\n\n"
-            f"Порог последовательных сбоев: <code>{alert_after}</code>.\n\n"
+            f"🟡 <b>Проблема с bridge peers из Top-{count} по BLS slots</b>\n\n"
             + "\n".join(top_peer_line(item) for item in new_alerts)
-            + f"\n\nЭпоха: <code>{bls['epoch']}</code>"
+            + f"\n\nЭпоха: <code>{bls['epoch']}</code>\n"
+            "Источник liveness: подписи validators в завершённых bridge-транзакциях. "
+            "HTTP 503 сам по себе не считается отказом bridge."
         )
     if recoveries:
         messages.append(
-            f"🟢 <b>Доступность Top-{count} bridge peers восстановилась</b>\n\n"
+            f"🟢 <b>Top-{count} bridge peers восстановились</b>\n\n"
             + "\n".join(
                 f"• <code>{escape_html(item['address'])}</code>: "
                 f"<b>#{item['rank']}</b>, {item['slots']} slots"
@@ -781,6 +886,12 @@ def build_summary(state: dict, config: dict) -> str:
         and value.get("failure_reason")
         and not value.get("alerted")
     )
+    top_peer_waiting = sum(
+        1
+        for value in top_peers.values()
+        if isinstance(value, dict)
+        and value.get("evidence_status") == "insufficient_transactions"
+    )
     return (
         "🟢 <b>Проверка Bridge Stale Check A</b>\n\n"
         f"Эпоха: <code>{escape_html(state.get('epoch'))}</code>\n"
@@ -788,7 +899,7 @@ def build_summary(state: dict, config: dict) -> str:
         f"Ethereum finalized: <code>{escape_html(state.get('ethereum_finalized_block'))}</code>\n\n"
         + "\n".join(signal_lines)
         + f"\n• <code>top_peers</code>: <b>{top_peer_alerts} alert</b>, "
-        f"{top_peer_pending} pending"
+        f"{top_peer_pending} pending, {top_peer_waiting} waiting for tx evidence"
     )
 
 
@@ -869,7 +980,7 @@ def run() -> dict:
                 config,
                 bls,
                 eligible,
-                inspected,
+                load_completed_bridge_history(),
                 now,
             )
         )
