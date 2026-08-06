@@ -25,6 +25,7 @@ def config(**overrides):
         "source_unavailable_alert_after_runs": 3,
         "request_timeout_seconds": 15,
         "attempts_per_source": 1,
+        "completed_history_limit": 20,
         "ethereum_rpc_urls": ["https://rpc.example"],
         "gonka_transaction_url_templates": [
             "https://gonka.example/{origin_chain}/{block_number}/{receipt_index}"
@@ -107,11 +108,33 @@ class BridgeResponseTests(unittest.TestCase):
         )
         self.assertEqual(observation["status"], "BRIDGE_COMPLETED")
         self.assertEqual(observation["validators"], ["gonka1a", "gonka1b"])
+        self.assertEqual(observation["completed_validators"], ["gonka1b"])
+        self.assertIsNone(observation["epoch_index"])
+
+    def test_completed_epoch_and_signers_are_parsed(self):
+        observation = watcher.parse_bridge_observation(
+            {
+                "bridge_transactions": [
+                    {
+                        "status": "BRIDGE_COMPLETED",
+                        "epoch_index": "342",
+                        "validators": ["gonka1b", "gonka1a"],
+                    }
+                ]
+            }
+        )
+        self.assertEqual(observation["epoch_index"], 342)
+        self.assertEqual(observation["completed_validators"], ["gonka1a", "gonka1b"])
 
     def test_valid_empty_response_means_missing(self):
         self.assertEqual(
             watcher.parse_bridge_observation({"bridgeTransactions": []}),
-            {"status": "MISSING", "validators": []},
+            {
+                "status": "MISSING",
+                "validators": [],
+                "completed_validators": [],
+                "epoch_index": None,
+            },
         )
 
 
@@ -147,12 +170,54 @@ class QueueAlertTests(unittest.TestCase):
             [],
         )
 
-        completed = ({"status": "BRIDGE_COMPLETED", "validators": ["gonka1a"]}, "archive")
+        completed = (
+            {
+                "status": "BRIDGE_COMPLETED",
+                "validators": ["gonka1a"],
+                "completed_validators": ["gonka1a"],
+                "epoch_index": 342,
+            },
+            "archive",
+        )
         with patch.object(watcher, "fetch_bridge_observation", return_value=completed):
             messages = watcher.process_queue(state, cfg, "2026-07-29T00:15:00+00:00")
         self.assertEqual(len(messages), 1)
         self.assertIn("завершена", messages[0])
         self.assertEqual(state["queue"], {})
+        self.assertEqual(len(state["completed_history"]), 1)
+        evidence = state["completed_history"][0]
+        self.assertEqual(evidence["epoch_index"], 342)
+        self.assertEqual(evidence["validators"], ["gonka1a"])
+
+    def test_completed_signer_history_is_deduplicated_and_bounded(self):
+        state = watcher.default_state()
+        cfg = config(completed_history_limit=2)
+        observation = {
+            "status": "BRIDGE_COMPLETED",
+            "validators": ["gonka1fallback"],
+            "completed_validators": ["gonka1signer"],
+            "epoch_index": 342,
+        }
+        for block in (101, 102, 103):
+            item = queued_item(block)
+            key = f"ethereum/{item['block_number']}/{item['receipt_index']}"
+            watcher.remember_completed_transaction(
+                state, cfg, key, item, observation, "2026-07-29T00:15:00+00:00"
+            )
+        watcher.remember_completed_transaction(
+            state,
+            cfg,
+            state["completed_history"][-1]["key"],
+            queued_item(103),
+            observation,
+            "2026-07-29T00:16:00+00:00",
+        )
+        self.assertEqual(len(state["completed_history"]), 2)
+        self.assertEqual(
+            [item["block_number"] for item in state["completed_history"]],
+            [102, 103],
+        )
+        self.assertEqual(state["completed_history"][-1]["validators"], ["gonka1signer"])
 
     def test_missing_is_treated_as_overdue_after_successful_query(self):
         state = self.state_with_items(101)
