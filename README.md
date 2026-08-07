@@ -29,6 +29,8 @@ workflow-скриптом `scripts/commit_state.sh`.
 - `TELEGRAM_MESSAGE_THREAD_ID` — обязательный secret для Telegram topic. Если
   он отсутствует или некорректен, бот не отправляет сообщение в General, а
   завершает проверку ошибкой.
+- `TELEGRAM_SECONDARY_CHAT_ID` — необязательный secret второго канала. Если он
+  задан, каждое уведомление отправляется также в этот канал без topic.
 - `ETHEREUM_RPC_URLS` — необязательный secret: один или несколько Ethereum RPC
   через запятую. Они используются раньше публичных резервных RPC.
 - `TARGET_API_VERSION` — repository variable.
