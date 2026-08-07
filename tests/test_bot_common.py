@@ -115,7 +115,7 @@ class SourceFallbackTests(unittest.TestCase):
 
 
 class TelegramTests(unittest.TestCase):
-    def test_thread_id_is_optional_and_loaded_lazily(self):
+    def test_thread_id_is_required_and_loaded_lazily(self):
         session = FakeSession([])
         environment = {
             "TELEGRAM_BOT_TOKEN": "test-token",
@@ -128,6 +128,65 @@ class TelegramTests(unittest.TestCase):
         _, kwargs = session.post_calls[0]
         self.assertEqual(kwargs["json"]["message_thread_id"], 42)
         self.assertEqual(kwargs["json"]["parse_mode"], "HTML")
+
+    def test_message_is_sent_to_primary_topic_and_secondary_channel(self):
+        session = FakeSession([])
+        environment = {
+            "TELEGRAM_BOT_TOKEN": "test-token",
+            "TELEGRAM_CHAT_ID": "primary-chat",
+            "TELEGRAM_MESSAGE_THREAD_ID": "42",
+            "TELEGRAM_SECONDARY_CHAT_ID": "secondary-chat",
+        }
+        with patch.dict(os.environ, environment, clear=True):
+            send_telegram_message("hello", session=session)
+
+        self.assertEqual(len(session.post_calls), 2)
+        primary = session.post_calls[0][1]["json"]
+        secondary = session.post_calls[1][1]["json"]
+        self.assertEqual(primary["chat_id"], "primary-chat")
+        self.assertEqual(primary["message_thread_id"], 42)
+        self.assertEqual(secondary["chat_id"], "secondary-chat")
+        self.assertNotIn("message_thread_id", secondary)
+
+    def test_duplicate_secondary_chat_is_not_sent_twice(self):
+        session = FakeSession([])
+        environment = {
+            "TELEGRAM_BOT_TOKEN": "test-token",
+            "TELEGRAM_CHAT_ID": "same-chat",
+            "TELEGRAM_MESSAGE_THREAD_ID": "42",
+            "TELEGRAM_SECONDARY_CHAT_ID": "same-chat",
+        }
+        with patch.dict(os.environ, environment, clear=True):
+            send_telegram_message("hello", session=session)
+
+        self.assertEqual(len(session.post_calls), 1)
+
+    def test_missing_thread_id_refuses_to_send_to_general(self):
+        session = FakeSession([])
+        environment = {
+            "TELEGRAM_BOT_TOKEN": "test-token",
+            "TELEGRAM_CHAT_ID": "test-chat",
+        }
+        with (
+            patch.dict(os.environ, environment, clear=True),
+            self.assertRaisesRegex(RuntimeError, "refusing to send outside"),
+        ):
+            send_telegram_message("hello", session=session)
+        self.assertEqual(session.post_calls, [])
+
+    def test_invalid_thread_id_is_rejected_before_request(self):
+        session = FakeSession([])
+        environment = {
+            "TELEGRAM_BOT_TOKEN": "test-token",
+            "TELEGRAM_CHAT_ID": "test-chat",
+            "TELEGRAM_MESSAGE_THREAD_ID": "not-a-number",
+        }
+        with (
+            patch.dict(os.environ, environment, clear=True),
+            self.assertRaisesRegex(ValueError, "must be an integer"),
+        ):
+            send_telegram_message("hello", session=session)
+        self.assertEqual(session.post_calls, [])
 
 
 if __name__ == "__main__":
