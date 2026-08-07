@@ -1,30 +1,30 @@
 {
-  "checked_at": "2026-08-07T11:59:51+00:00",
-  "epoch": 352,
+  "checked_at": "2026-08-07T13:42:20+00:00",
+  "epoch": 353,
   "nodes": {
     "node1": {
-      "details": "HTTP 200 in 351 ms",
-      "epoch": 352,
+      "details": "HTTP 200 in 259 ms",
+      "epoch": 353,
       "first_failed_at": null,
-      "last_checked_at": "2026-08-07T11:59:51+00:00",
+      "last_checked_at": "2026-08-07T13:42:20+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
-      "ratio_missing_runs": 81,
+      "ratio_missing_runs": 82,
       "ratio_unavailable_alerted": true,
       "reason": "ok",
       "status": "up",
-      "weight": 3770,
+      "weight": 3797,
       "weight_ratio": null,
       "weight_ratio_alerted": false
     },
     "node2": {
-      "details": "HTTP 200 in 381 ms",
-      "epoch": 352,
+      "details": "HTTP 200 in 245 ms",
+      "epoch": 353,
       "first_failed_at": null,
-      "last_checked_at": "2026-08-07T11:59:51+00:00",
+      "last_checked_at": "2026-08-07T13:42:20+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
-      "ratio_missing_runs": 81,
+      "ratio_missing_runs": 82,
       "ratio_unavailable_alerted": true,
       "reason": "ok",
       "status": "up",
@@ -33,25 +33,25 @@
       "weight_ratio_alerted": false
     },
     "node3": {
-      "details": "HTTP 200 in 529 ms",
-      "epoch": 352,
+      "details": "HTTP 200 in 340 ms",
+      "epoch": 353,
       "first_failed_at": null,
-      "last_checked_at": "2026-08-07T11:59:51+00:00",
+      "last_checked_at": "2026-08-07T13:42:20+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
-      "ratio_missing_runs": 81,
+      "ratio_missing_runs": 82,
       "ratio_unavailable_alerted": true,
       "reason": "ok",
       "status": "up",
-      "weight": 7608,
+      "weight": 7595,
       "weight_ratio": null,
       "weight_ratio_alerted": false
     },
     "node4": {
-      "details": "HTTP 200 in 189 ms",
-      "epoch": 352,
+      "details": "HTTP 200 in 130 ms",
+      "epoch": 353,
       "first_failed_at": null,
-      "last_checked_at": "2026-08-07T11:59:51+00:00",
+      "last_checked_at": "2026-08-07T13:42:20+00:00",
       "participant_present": false,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "ratio_missing_runs": 0,
@@ -63,6 +63,6 @@
       "weight_ratio_alerted": false
     }
   },
-  "participant_count": 27,
+  "participant_count": 24,
   "total_weight": 441704
 }
