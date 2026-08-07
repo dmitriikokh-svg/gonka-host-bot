@@ -1,15 +1,15 @@
 {
-  "checked_at": "2026-08-06T15:32:40+00:00",
+  "checked_at": "2026-08-07T00:18:00+00:00",
   "epoch": 352,
   "nodes": {
     "node1": {
-      "details": "HTTP 200 in 364 ms",
+      "details": "HTTP 200 in 283 ms",
       "epoch": 352,
       "first_failed_at": null,
-      "last_checked_at": "2026-08-06T15:32:40+00:00",
+      "last_checked_at": "2026-08-07T00:18:00+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
-      "ratio_missing_runs": 74,
+      "ratio_missing_runs": 75,
       "ratio_unavailable_alerted": true,
       "reason": "ok",
       "status": "up",
@@ -18,13 +18,13 @@
       "weight_ratio_alerted": false
     },
     "node2": {
-      "details": "HTTP 200 in 366 ms",
+      "details": "HTTP 200 in 246 ms",
       "epoch": 352,
       "first_failed_at": null,
-      "last_checked_at": "2026-08-06T15:32:40+00:00",
+      "last_checked_at": "2026-08-07T00:18:00+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
-      "ratio_missing_runs": 74,
+      "ratio_missing_runs": 75,
       "ratio_unavailable_alerted": true,
       "reason": "ok",
       "status": "up",
@@ -33,13 +33,13 @@
       "weight_ratio_alerted": false
     },
     "node3": {
-      "details": "HTTP 200 in 504 ms",
+      "details": "HTTP 200 in 321 ms",
       "epoch": 352,
       "first_failed_at": null,
-      "last_checked_at": "2026-08-06T15:32:40+00:00",
+      "last_checked_at": "2026-08-07T00:18:00+00:00",
       "participant_present": true,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
-      "ratio_missing_runs": 74,
+      "ratio_missing_runs": 75,
       "ratio_unavailable_alerted": true,
       "reason": "ok",
       "status": "up",
@@ -48,10 +48,10 @@
       "weight_ratio_alerted": false
     },
     "node4": {
-      "details": "HTTP 200 in 370 ms",
+      "details": "HTTP 200 in 126 ms",
       "epoch": 352,
       "first_failed_at": null,
-      "last_checked_at": "2026-08-06T15:32:40+00:00",
+      "last_checked_at": "2026-08-07T00:18:00+00:00",
       "participant_present": false,
       "ratio_metric_version": "confirmation_poc_ratio_v1",
       "ratio_missing_runs": 0,
