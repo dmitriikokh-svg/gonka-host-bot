@@ -163,17 +163,36 @@ def send_telegram_message(
     if parsed_thread_id <= 0:
         raise ValueError("TELEGRAM_MESSAGE_THREAD_ID must be positive")
 
-    payload: dict[str, Any] = {
-        "chat_id": chat_id,
-        "message_thread_id": parsed_thread_id,
-        "text": text,
-    }
-    if parse_mode:
-        payload["parse_mode"] = parse_mode
+    destinations: list[tuple[str, int | None]] = [(chat_id, parsed_thread_id)]
+    secondary_chat_id = os.environ.get("TELEGRAM_SECONDARY_CHAT_ID", "").strip()
+    if secondary_chat_id and secondary_chat_id != chat_id:
+        destinations.append((secondary_chat_id, None))
 
-    response = session.post(
-        f"https://api.telegram.org/bot{token}/sendMessage",
-        json=payload,
-        timeout=15,
-    )
-    response.raise_for_status()
+    errors: list[str] = []
+    for destination_chat_id, destination_thread_id in destinations:
+        payload: dict[str, Any] = {
+            "chat_id": destination_chat_id,
+            "text": text,
+        }
+        if destination_thread_id is not None:
+            payload["message_thread_id"] = destination_thread_id
+        if parse_mode:
+            payload["parse_mode"] = parse_mode
+
+        try:
+            response = session.post(
+                f"https://api.telegram.org/bot{token}/sendMessage",
+                json=payload,
+                timeout=15,
+            )
+            response.raise_for_status()
+        except Exception as exc:  # noqa: BLE001 - attempt every destination
+            errors.append(
+                f"chat {destination_chat_id}: {type(exc).__name__}: {exc}"
+            )
+
+    if errors:
+        raise RuntimeError(
+            "Telegram delivery failed for one or more destinations: "
+            + " | ".join(errors)
+        )
