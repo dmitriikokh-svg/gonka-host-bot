@@ -30,6 +30,121 @@ def escape_html(value: Any) -> str:
     return html.escape(str(value), quote=False)
 
 
+def participant_id(entry: Any) -> str:
+    if isinstance(entry, dict):
+        for key in ("index", "participant_id", "address", "id", "inference_url"):
+            if key in entry:
+                return str(entry[key])
+    if isinstance(entry, str):
+        return entry
+    return json.dumps(entry, sort_keys=True)
+
+
+def participant_url(entry: Any) -> Any:
+    if isinstance(entry, dict):
+        return entry.get("inference_url", "")
+    return ""
+
+
+def participant_weight(entry: Any) -> int | None:
+    if not isinstance(entry, dict):
+        return None
+    value = entry.get("weight")
+    if isinstance(value, bool):
+        return None
+    try:
+        weight = int(value)
+    except (TypeError, ValueError):
+        return None
+    return weight if weight >= 0 else None
+
+
+def participant_models(entry: Any) -> list[str]:
+    if not isinstance(entry, dict) or not isinstance(entry.get("models"), list):
+        return []
+
+    models = []
+    for value in entry["models"]:
+        if not isinstance(value, str) or not value.strip():
+            continue
+        model = value.strip().rstrip("/").rsplit("/", 1)[-1]
+        if model and model not in models:
+            models.append(model)
+    return models
+
+
+def participant_ml_node_count(entry: Any) -> int | None:
+    if not isinstance(entry, dict) or not isinstance(entry.get("ml_nodes"), list):
+        return None
+
+    count = 0
+    for group in entry["ml_nodes"]:
+        nodes = group.get("ml_nodes") if isinstance(group, dict) else None
+        if isinstance(nodes, list):
+            count += sum(1 for node in nodes if isinstance(node, dict))
+    return count
+
+
+def participant_weight_ranks(entries: Iterable[Any]) -> dict[str, int]:
+    weighted = []
+    for entry in entries:
+        weight = participant_weight(entry)
+        if weight is not None:
+            weighted.append((participant_id(entry), weight))
+
+    return {
+        node_id: 1 + sum(other_weight > weight for _, other_weight in weighted)
+        for node_id, weight in weighted
+    }
+
+
+def format_integer(value: int) -> str:
+    return f"{value:,}".replace(",", " ")
+
+
+def build_host_details(
+    entry: Any,
+    rank: int | None,
+    participant_count: int,
+    *,
+    detail_lines: Iterable[str] = (),
+) -> str:
+    node_id = participant_id(entry)
+    weight = participant_weight(entry)
+    models = participant_models(entry)
+    ml_node_count = participant_ml_node_count(entry)
+    url = participant_url(entry)
+
+    weight_text = f"<b>{format_integer(weight)}</b>" if weight is not None else "нет данных"
+    rank_text = (
+        f"<b>{rank} из {participant_count}</b>"
+        if rank is not None
+        else "нет данных"
+    )
+    models_text = (
+        ", ".join(f"<code>{escape_html(model)}</code>" for model in models)
+        if models
+        else "нет данных"
+    )
+    ml_nodes_text = (
+        f"<b>{ml_node_count}</b>" if ml_node_count is not None else "нет данных"
+    )
+    url_text = f"<code>{escape_html(url)}</code>" if url else "нет данных"
+
+    lines = [f"• <code>{escape_html(node_id)}</code>"]
+    lines.extend(f"  {line}" for line in detail_lines)
+    lines.extend(
+        (
+            f"  Вес: {weight_text}",
+            f"  Место по весу: {rank_text}",
+            f"  Модели: {models_text}",
+            f"  ML-ноды: {ml_nodes_text}",
+            f"  API: {url_text}",
+        )
+    )
+    return "\n".join(lines)
+
+
 def load_json(path: str | Path, default: Any = None) -> Any:
     path = Path(path)
     if not path.exists():

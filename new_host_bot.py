@@ -15,9 +15,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from bot_common import (
-    escape_html,
+    build_host_details,
     fetch_json_with_fallback,
     load_json,
+    participant_id,
+    participant_ml_node_count,
+    participant_models,
+    participant_url,
+    participant_weight_ranks,
     save_json_atomic,
     send_telegram_message,
 )
@@ -69,109 +74,6 @@ def fetch_current_epoch():
     except Exception as exc:  # noqa: BLE001 - epoch is optional for this alert
         print(f"WARNING: could not fetch epoch: {type(exc).__name__}: {exc}")
         return None
-
-
-def participant_id(entry):
-    # "index" is the confirmed real field name (gonka1... address).
-    for key in ("index", "participant_id", "address", "id", "inference_url"):
-        if isinstance(entry, dict) and key in entry:
-            return str(entry[key])
-    return json.dumps(entry, sort_keys=True)
-
-
-def participant_url(entry):
-    if isinstance(entry, dict):
-        return entry.get("inference_url", "")
-    return ""
-
-
-def participant_weight(entry):
-    if not isinstance(entry, dict):
-        return None
-    value = entry.get("weight")
-    if isinstance(value, bool):
-        return None
-    try:
-        weight = int(value)
-    except (TypeError, ValueError):
-        return None
-    return weight if weight >= 0 else None
-
-
-def participant_models(entry):
-    if not isinstance(entry, dict) or not isinstance(entry.get("models"), list):
-        return []
-
-    models = []
-    for value in entry["models"]:
-        if not isinstance(value, str) or not value.strip():
-            continue
-        model = value.strip().rstrip("/").rsplit("/", 1)[-1]
-        if model and model not in models:
-            models.append(model)
-    return models
-
-
-def participant_ml_node_count(entry):
-    if not isinstance(entry, dict) or not isinstance(entry.get("ml_nodes"), list):
-        return None
-
-    count = 0
-    for group in entry["ml_nodes"]:
-        nodes = group.get("ml_nodes") if isinstance(group, dict) else None
-        if isinstance(nodes, list):
-            count += sum(1 for node in nodes if isinstance(node, dict))
-    return count
-
-
-def participant_weight_ranks(entries):
-    weighted = []
-    for entry in entries:
-        weight = participant_weight(entry)
-        if weight is not None:
-            weighted.append((participant_id(entry), weight))
-
-    return {
-        node_id: 1 + sum(other_weight > weight for _, other_weight in weighted)
-        for node_id, weight in weighted
-    }
-
-
-def format_integer(value):
-    return f"{value:,}".replace(",", " ")
-
-
-def build_host_details(entry, rank, participant_count):
-    node_id = participant_id(entry)
-    weight = participant_weight(entry)
-    models = participant_models(entry)
-    ml_node_count = participant_ml_node_count(entry)
-    url = participant_url(entry)
-
-    weight_text = f"<b>{format_integer(weight)}</b>" if weight is not None else "нет данных"
-    rank_text = (
-        f"<b>{rank} из {participant_count}</b>"
-        if rank is not None
-        else "нет данных"
-    )
-    models_text = (
-        ", ".join(f"<code>{escape_html(model)}</code>" for model in models)
-        if models
-        else "нет данных"
-    )
-    ml_nodes_text = (
-        f"<b>{ml_node_count}</b>" if ml_node_count is not None else "нет данных"
-    )
-    url_text = f"<code>{escape_html(url)}</code>" if url else "нет данных"
-
-    return (
-        f"• <code>{escape_html(node_id)}</code>\n"
-        f"  Вес: {weight_text}\n"
-        f"  Место по весу: {rank_text}\n"
-        f"  Модели: {models_text}\n"
-        f"  ML-ноды: {ml_nodes_text}\n"
-        f"  API: {url_text}"
-    )
 
 
 def load_previous_ids():
