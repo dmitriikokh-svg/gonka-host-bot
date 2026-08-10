@@ -4,6 +4,8 @@
   "inactive_slots_warning_percent": 35,
   "stale_slots_warning_percent": 35,
   "unknown_slots_warning_percent": 35,
+  "bridge_latest_lag_tolerance_blocks": 64,
+  "stale_alert_after_runs": 2,
   "top_peers_count": 10,
   "top_peer_missing_signatures_warning_count": 2,
   "top_peer_inactive_alert_after_runs": 2,

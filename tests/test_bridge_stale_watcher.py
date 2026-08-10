@@ -15,6 +15,8 @@ def config(**overrides):
         "inactive_slots_warning_percent": 35,
         "stale_slots_warning_percent": 35,
         "unknown_slots_warning_percent": 35,
+        "bridge_latest_lag_tolerance_blocks": 64,
+        "stale_alert_after_runs": 2,
         "top_peers_count": 10,
         "top_peer_missing_signatures_warning_count": 2,
         "top_peer_inactive_alert_after_runs": 2,
@@ -78,11 +80,12 @@ def inspected(snapshot, classifications, finalized=1000):
     for item, classification in zip(snapshot["participants"], classifications):
         latest = finalized if classification == "healthy" else None
         if classification == "stale":
-            latest = finalized - 1
+            latest = finalized - 65
         result[item["address"]] = {
             "address": item["address"],
             "slots": item["slots"],
             "bridge_latest": latest,
+            "bridge_lag": None if latest is None else finalized - latest,
             "classification": classification,
         }
     return result
@@ -119,7 +122,34 @@ class ParticipantClassificationTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 watcher.normalized_public_node_url(value)
 
-    def test_only_literal_equality_is_healthy(self):
+    def test_lag_tolerance_boundaries_and_ahead_are_healthy(self):
+        participant = bls_snapshot([100])["participants"][0]
+        cases = (
+            (1000, "healthy", 0, "equal_to_finalized"),
+            (936, "healthy", 64, "lag_within_tolerance"),
+            (935, "stale", 65, "lag_exceeds_tolerance"),
+            (1001, "healthy", -1, "ahead_of_finalized"),
+        )
+        for latest, classification, lag, reason in cases:
+            with (
+                self.subTest(latest=latest),
+                patch.object(
+                    watcher,
+                    "fetch_participant_info",
+                    return_value=("https://validator.example", "ACTIVE"),
+                ),
+                patch.object(
+                    watcher,
+                    "probe_bridge_latest",
+                    return_value=(latest, "validator"),
+                ),
+            ):
+                result = watcher.inspect_participant(config(), participant, 1000)
+            self.assertEqual(result["classification"], classification)
+            self.assertEqual(result["bridge_lag"], lag)
+            self.assertEqual(result["reason"], reason)
+
+    def test_http_503_is_unknown_not_stale(self):
         participant = bls_snapshot([100])["participants"][0]
         with (
             patch.object(
@@ -127,32 +157,17 @@ class ParticipantClassificationTests(unittest.TestCase):
                 "fetch_participant_info",
                 return_value=("https://validator.example", "ACTIVE"),
             ),
-            patch.object(watcher, "probe_bridge_latest", return_value=(1000, "validator")),
-        ):
-            equal = watcher.inspect_participant(config(), participant, 1000)
-        self.assertEqual(equal["classification"], "healthy")
-
-        with (
             patch.object(
                 watcher,
-                "fetch_participant_info",
-                return_value=("https://validator.example", "ACTIVE"),
+                "probe_bridge_latest",
+                side_effect=watcher.SourcesUnavailable("HTTPError: 503"),
             ),
-            patch.object(watcher, "probe_bridge_latest", return_value=(1001, "validator")),
-        ):
-            ahead = watcher.inspect_participant(config(), participant, 1000)
-        self.assertEqual(ahead["classification"], "stale")
-
-    def test_unavailable_api_is_unknown_not_stale(self):
-        participant = bls_snapshot([100])["participants"][0]
-        with patch.object(
-            watcher,
-            "fetch_participant_info",
-            side_effect=watcher.SourcesUnavailable("down"),
         ):
             result = watcher.inspect_participant(config(), participant, 1000)
         self.assertEqual(result["classification"], "unknown")
         self.assertIsNone(result["bridge_latest"])
+        self.assertIsNone(result["bridge_lag"])
+        self.assertIn("503", result["reason"])
 
     def test_api_availability_is_checked_without_ethereum_finalized(self):
         participant = bls_snapshot([100])["participants"][0]
@@ -176,6 +191,8 @@ class StateMigrationTests(unittest.TestCase):
         old_config.pop("top_peers_count")
         old_config.pop("top_peer_missing_signatures_warning_count")
         old_config.pop("top_peer_inactive_alert_after_runs")
+        old_config.pop("bridge_latest_lag_tolerance_blocks")
+        old_config.pop("stale_alert_after_runs")
         with (
             patch.object(watcher, "load_json", return_value=old_config),
             patch.object(watcher, "CONFIG_FILE", Path("unused.json")),
@@ -185,6 +202,8 @@ class StateMigrationTests(unittest.TestCase):
         self.assertEqual(loaded["top_peers_count"], 10)
         self.assertEqual(loaded["top_peer_missing_signatures_warning_count"], 2)
         self.assertEqual(loaded["top_peer_inactive_alert_after_runs"], 2)
+        self.assertEqual(loaded["bridge_latest_lag_tolerance_blocks"], 64)
+        self.assertEqual(loaded["stale_alert_after_runs"], 2)
 
     def test_existing_state_without_top_peers_is_loaded_safely(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -213,6 +232,19 @@ class StateMigrationTests(unittest.TestCase):
 
         self.assertEqual(state["top_peers"], {})
         self.assertEqual(state["top_peer_rule_version"], watcher.TOP_PEER_RULE_VERSION)
+
+    def test_literal_equality_stale_state_is_discarded_without_recovery(self):
+        state = watcher.default_state()
+        state["stale_rule_version"] = "literal_equality_v1"
+        state["signals"]["stale"] = {"active": True, "value_slots": 92}
+
+        watcher.migrate_stale_rule_state(state, config())
+
+        self.assertNotIn("stale", state["signals"])
+        self.assertEqual(
+            state["stale_rule_version"],
+            watcher.stale_rule_version(config()),
+        )
 
 
 class SignalTests(unittest.TestCase):
@@ -271,14 +303,78 @@ class SignalTests(unittest.TestCase):
             ["stale", "stale", "unknown", "unknown", "unknown", "healthy", "healthy", "healthy"],
         )
         state = watcher.default_state()
-        messages = watcher.evaluate_snapshot(
+        first = watcher.evaluate_snapshot(
             state, config(), snapshot, eligible, observations, 1000, self.now
         )
-        self.assertEqual(len(messages), 2)
+        self.assertEqual(len(first), 1)
+        self.assertIn("недоступен", first[0])
+        self.assertFalse(state["signals"]["stale"]["active"])
+        self.assertTrue(state["signals"]["stale"]["condition_active"])
+        self.assertEqual(state["signals"]["stale"]["consecutive_active_runs"], 1)
+
+        second = watcher.evaluate_snapshot(
+            state, config(), snapshot, eligible, observations, 1000, self.now
+        )
+        self.assertEqual(len(second), 1)
+        self.assertIn("существенно отстаёт", second[0])
         self.assertTrue(state["signals"]["stale"]["active"])
         self.assertEqual(state["signals"]["stale"]["value_slots"], 35)
         self.assertTrue(state["signals"]["unknown"]["active"])
         self.assertEqual(state["signals"]["unknown"]["value_slots"], 40)
+
+    def test_stale_pending_resets_without_recovery_and_alert_recovers_once(self):
+        snapshot = bls_snapshot([35, 34, 31])
+        eligible = {item["address"] for item in snapshot["participants"]}
+        stale = inspected(snapshot, ["stale", "healthy", "healthy"])
+        healthy = inspected(snapshot, ["healthy", "healthy", "healthy"])
+        state = watcher.default_state()
+
+        watcher.evaluate_snapshot(
+            state, config(), snapshot, eligible, stale, 1000, self.now
+        )
+        cleared = watcher.evaluate_snapshot(
+            state, config(), snapshot, eligible, healthy, 1000, self.now
+        )
+        self.assertEqual(cleared, [])
+        self.assertFalse(state["signals"]["stale"]["active"])
+        self.assertEqual(state["signals"]["stale"]["consecutive_active_runs"], 0)
+
+        watcher.evaluate_snapshot(
+            state, config(), snapshot, eligible, stale, 1000, self.now
+        )
+        alerted = watcher.evaluate_snapshot(
+            state, config(), snapshot, eligible, stale, 1000, self.now
+        )
+        self.assertEqual(len(alerted), 1)
+        recovered = watcher.evaluate_snapshot(
+            state, config(), snapshot, eligible, healthy, 1000, self.now
+        )
+        self.assertEqual(len(recovered), 1)
+        self.assertIn("восстановилась", recovered[0])
+
+    def test_incomplete_check_clears_pending_but_preserves_existing_alert(self):
+        pending = watcher.default_state()
+        pending["signals"]["stale"] = {
+            "active": False,
+            "condition_active": True,
+            "consecutive_active_runs": 1,
+            "pending_since": self.now,
+        }
+        watcher.reset_pending_signal(pending, "stale")
+        self.assertEqual(
+            pending["signals"]["stale"]["consecutive_active_runs"],
+            0,
+        )
+        self.assertIsNone(pending["signals"]["stale"]["pending_since"])
+
+        alerted = watcher.default_state()
+        alerted["signals"]["stale"] = {
+            "active": True,
+            "consecutive_active_runs": 2,
+        }
+        watcher.reset_pending_signal(alerted, "stale")
+        self.assertTrue(alerted["signals"]["stale"]["active"])
+        self.assertEqual(alerted["signals"]["stale"]["consecutive_active_runs"], 2)
 
 
 class TopPeerSignalTests(unittest.TestCase):

@@ -50,6 +50,7 @@ STATE_FILE = ROOT / "state" / "bridge_stale.json"
 BRIDGE_BURN_STATE_FILE = ROOT / "state" / "bridge_burn.json"
 SIGNED_PHASE = "DKG_PHASE_SIGNED"
 TOP_PEER_RULE_VERSION = "bridge_signatures_v1"
+STALE_RULE_VERSION = "bridge_lag_v1"
 
 
 def positive_int(config: dict, field: str, *, minimum: int = 1) -> int:
@@ -88,6 +89,8 @@ def load_config() -> dict:
     config.setdefault("top_peers_count", 10)
     config.setdefault("top_peer_missing_signatures_warning_count", 2)
     config.setdefault("top_peer_inactive_alert_after_runs", 2)
+    config.setdefault("bridge_latest_lag_tolerance_blocks", 64)
+    config.setdefault("stale_alert_after_runs", 2)
     if not isinstance(config.get("owner"), str) or not config["owner"].strip():
         raise ValueError("owner is required")
     if not isinstance(config.get("origin_chain"), str) or not config["origin_chain"].strip():
@@ -113,6 +116,8 @@ def load_config() -> dict:
     positive_int(config, "top_peers_count")
     positive_int(config, "top_peer_missing_signatures_warning_count", minimum=2)
     positive_int(config, "top_peer_inactive_alert_after_runs")
+    positive_int(config, "bridge_latest_lag_tolerance_blocks", minimum=0)
+    positive_int(config, "stale_alert_after_runs")
     return config
 
 
@@ -127,6 +132,7 @@ def default_state() -> dict:
         "participants": {},
         "top_peers": {},
         "top_peer_rule_version": TOP_PEER_RULE_VERSION,
+        "stale_rule_version": None,
     }
 
 
@@ -143,6 +149,29 @@ def load_state() -> dict:
         state["top_peers"] = {}
         state["top_peer_rule_version"] = TOP_PEER_RULE_VERSION
     return state
+
+
+def stale_rule_version(config: dict) -> str:
+    tolerance = positive_int(
+        config,
+        "bridge_latest_lag_tolerance_blocks",
+        minimum=0,
+    )
+    alert_after = positive_int(config, "stale_alert_after_runs")
+    threshold = percent_config(config, "stale_slots_warning_percent")
+    return (
+        f"{STALE_RULE_VERSION}:tolerance={tolerance}:"
+        f"slots={threshold}:after={alert_after}"
+    )
+
+
+def migrate_stale_rule_state(state: dict, config: dict) -> None:
+    version = stale_rule_version(config)
+    if state.get("stale_rule_version") != version:
+        # The old literal-equality rule may have an active alert for a small,
+        # acceptable lag. Drop it without emitting a misleading recovery.
+        state["signals"].pop("stale", None)
+        state["stale_rule_version"] = version
 
 
 def save_state(state: dict) -> None:
@@ -403,6 +432,7 @@ def inspect_participant(
         "address": participant["address"],
         "slots": participant["slots"],
         "bridge_latest": None,
+        "bridge_lag": None,
         "endpoint": None,
         "participant_status": None,
         "classification": "unknown",
@@ -422,12 +452,25 @@ def inspect_participant(
             result["classification"] = "reachable"
             result["reason"] = "bridge_api_reachable"
         else:
-            # The ticket owner explicitly requested literal equality with the
-            # one frozen finalized block used for the whole run.
-            result["classification"] = "healthy" if latest == finalized else "stale"
-            result["reason"] = (
-                "equal_to_finalized" if latest == finalized else "not_equal_to_finalized"
+            tolerance = positive_int(
+                config,
+                "bridge_latest_lag_tolerance_blocks",
+                minimum=0,
             )
+            lag = finalized - latest
+            result["bridge_lag"] = lag
+            if lag > tolerance:
+                result["classification"] = "stale"
+                result["reason"] = "lag_exceeds_tolerance"
+            elif lag < 0:
+                result["classification"] = "healthy"
+                result["reason"] = "ahead_of_finalized"
+            elif lag == 0:
+                result["classification"] = "healthy"
+                result["reason"] = "equal_to_finalized"
+            else:
+                result["classification"] = "healthy"
+                result["reason"] = "lag_within_tolerance"
     except Exception as exc:  # noqa: BLE001 - a node failure is unknown, not fatal
         result["reason"] = f"{type(exc).__name__}: {str(exc)[:500]}"
     return result
@@ -456,6 +499,7 @@ def inspect_eligible_participants(
                     "address": participant["address"],
                     "slots": participant["slots"],
                     "bridge_latest": None,
+                    "bridge_lag": None,
                     "endpoint": None,
                     "participant_status": None,
                     "classification": "unknown",
@@ -476,9 +520,12 @@ def format_percent(value: Decimal) -> str:
 def slot_line(item: dict) -> str:
     latest = item.get("bridge_latest")
     latest_text = "unknown" if latest is None else str(latest)
+    lag = item.get("bridge_lag")
+    lag_text = "unknown" if lag is None else str(lag)
     return (
         f"• <code>{escape_html(item['address'])}</code>: "
-        f"<b>{item['slots']} slots</b>, latest=<code>{escape_html(latest_text)}</code>"
+        f"<b>{item['slots']} slots</b>, latest=<code>{escape_html(latest_text)}</code>, "
+        f"lag=<code>{escape_html(lag_text)}</code>"
     )
 
 
@@ -500,27 +547,64 @@ def apply_signal(
     now: str,
     alert_message: str,
     recovery_title: str,
+    alert_after_runs: int = 1,
 ) -> list[str]:
+    if alert_after_runs < 1:
+        raise ValueError("alert_after_runs must be at least 1")
     previous = state["signals"].get(name, {})
     was_active = bool(previous.get("active"))
+    previous_runs = previous.get("consecutive_active_runs", 0)
+    if not isinstance(previous_runs, int) or isinstance(previous_runs, bool):
+        previous_runs = 0
+    consecutive_runs = previous_runs + 1 if active else 0
+    is_active = was_active
     messages: list[str] = []
-    if active and not was_active:
+    if active and not was_active and consecutive_runs >= alert_after_runs:
         messages.append(alert_message)
+        is_active = True
     elif not active and was_active:
         messages.append(
             f"🟢 <b>{escape_html(recovery_title)}</b>\n\n"
             f"Текущее значение: <b>{value_slots}/{total_slots} slots</b> "
             f"({format_percent(slot_share(value_slots, total_slots))})"
         )
+        is_active = False
+
+    first_condition_at = previous.get("pending_since") or now
+    pending_since = previous.get("pending_since")
+    if active and not is_active:
+        pending_since = pending_since or now
+    else:
+        pending_since = None
+    if is_active:
+        active_since = (
+            previous.get("active_since") if was_active else first_condition_at
+        )
+    else:
+        active_since = None
+
     state["signals"][name] = {
-        "active": active,
+        "active": is_active,
+        "condition_active": active,
+        "consecutive_active_runs": consecutive_runs,
+        "alert_after_runs": alert_after_runs,
         "value_slots": value_slots,
         "total_slots": total_slots,
         "threshold": threshold_text,
-        "active_since": previous.get("active_since") if was_active and active else (now if active else None),
+        "pending_since": pending_since,
+        "active_since": active_since,
         "last_checked_at": now,
     }
     return messages
+
+
+def reset_pending_signal(state: dict, name: str) -> None:
+    signal = state.get("signals", {}).get(name)
+    if not isinstance(signal, dict) or signal.get("active"):
+        return
+    signal["condition_active"] = False
+    signal["consecutive_active_runs"] = 0
+    signal["pending_since"] = None
 
 
 def load_completed_bridge_history() -> list[dict]:
@@ -825,7 +909,7 @@ def evaluate_snapshot(
     for name, title, items, field, recovery in (
         (
             "stale",
-            "Bridge block не совпадает с Ethereum finalized",
+            "Bridge существенно отстаёт от Ethereum finalized",
             stale,
             "stale_slots_warning_percent",
             "Доля stale bridge slots восстановилась",
@@ -841,12 +925,27 @@ def evaluate_snapshot(
         slots = sum(item["slots"] for item in items)
         threshold = percent_config(config, field)
         active = slot_share(slots, total) >= threshold
+        alert_after_runs = (
+            positive_int(config, "stale_alert_after_runs") if name == "stale" else 1
+        )
+        tolerance_line = ""
+        if name == "stale":
+            tolerance = positive_int(
+                config,
+                "bridge_latest_lag_tolerance_blocks",
+                minimum=0,
+            )
+            tolerance_line = (
+                f"Допустимое отставание: <code>&lt;= {tolerance} блоков</code>\n"
+                f"Подтверждение: <code>{alert_after_runs} проверки подряд</code>\n"
+            )
         message = (
             f"🟡 <b>{escape_html(title)}</b>\n\n"
             f"Затронуто: <b>{slots}/{total} slots</b> "
             f"({format_percent(slot_share(slots, total))})\n"
             f"Порог: <code>&gt;= {threshold}%</code>\n"
-            f"Ethereum finalized: <code>{finalized}</code>\n\n"
+            + tolerance_line
+            + f"Ethereum finalized: <code>{finalized}</code>\n\n"
             + (compact_items(items) if items else "Нет участников")
             + f"\n\nЭпоха: <code>{bls['epoch']}</code>"
         )
@@ -861,6 +960,7 @@ def evaluate_snapshot(
                 now=now,
                 alert_message=message,
                 recovery_title=recovery,
+                alert_after_runs=alert_after_runs,
             )
         )
     return messages
@@ -870,7 +970,15 @@ def build_summary(state: dict, config: dict) -> str:
     signal_lines = []
     for name in ("concentration", "inactive", "stale", "unknown"):
         signal = state["signals"].get(name, {})
-        status = "alert" if signal.get("active") else "ok"
+        if signal.get("active"):
+            status = "alert"
+        elif signal.get("condition_active"):
+            status = (
+                f"pending {signal.get('consecutive_active_runs', 0)}/"
+                f"{signal.get('alert_after_runs', 1)}"
+            )
+        else:
+            status = "ok"
         signal_lines.append(
             f"• <code>{name}</code>: <b>{status}</b>, "
             f"{signal.get('value_slots', 'unknown')}/{signal.get('total_slots', 'unknown')} slots"
@@ -897,6 +1005,8 @@ def build_summary(state: dict, config: dict) -> str:
         f"Эпоха: <code>{escape_html(state.get('epoch'))}</code>\n"
         f"DKG phase: <code>{escape_html(state.get('dkg_phase'))}</code>\n"
         f"Ethereum finalized: <code>{escape_html(state.get('ethereum_finalized_block'))}</code>\n\n"
+        f"Допустимый bridge lag: <code>&lt;= {config['bridge_latest_lag_tolerance_blocks']} блоков</code>\n"
+        f"Stale alert after: <code>{config['stale_alert_after_runs']} checks</code>\n\n"
         + "\n".join(signal_lines)
         + f"\n• <code>top_peers</code>: <b>{top_peer_alerts} alert</b>, "
         f"{top_peer_pending} pending, {top_peer_waiting} waiting for tx evidence"
@@ -906,6 +1016,8 @@ def build_summary(state: dict, config: dict) -> str:
 def run() -> dict:
     config = load_config()
     state = load_state()
+    migrate_stale_rule_state(state, config)
+    previous_epoch = state.get("epoch")
     state["owner"] = config["owner"]
     now = utc_now()
     state["checked_at"] = now
@@ -918,9 +1030,12 @@ def run() -> dict:
         eligible = fetch_group_members(config, group_id)
         state["epoch"] = epoch
         state["dkg_phase"] = bls["dkg_phase"]
+        if previous_epoch != epoch:
+            reset_pending_signal(state, "stale")
         messages.extend(source_success(state, "gonka_chain", now))
     except (SourcesUnavailable, ValueError, TypeError) as exc:
         messages.extend(source_failure(state, config, "gonka_chain", exc, now))
+        reset_pending_signal(state, "stale")
         for message in messages:
             send_telegram_message(message)
         save_state(state)
@@ -954,6 +1069,7 @@ def run() -> dict:
             messages.extend(source_success(state, "ethereum", now))
         except (SourcesUnavailable, ValueError, TypeError) as exc:
             messages.extend(source_failure(state, config, "ethereum", exc, now))
+            reset_pending_signal(state, "stale")
 
         eligible_participants = [
             item for item in bls["participants"] if item["address"] in eligible
@@ -997,6 +1113,7 @@ def run() -> dict:
                 )
             )
     else:
+        reset_pending_signal(state, "stale")
         print(f"Epoch {epoch}: BLS phase {bls['dkg_phase']}; checks wait for {SIGNED_PHASE}")
 
     if os.environ.get("SEND_BRIDGE_STALE_SUMMARY", "").lower() in {
