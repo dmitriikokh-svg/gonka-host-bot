@@ -85,6 +85,95 @@ def participant_url(entry):
     return ""
 
 
+def participant_weight(entry):
+    if not isinstance(entry, dict):
+        return None
+    value = entry.get("weight")
+    if isinstance(value, bool):
+        return None
+    try:
+        weight = int(value)
+    except (TypeError, ValueError):
+        return None
+    return weight if weight >= 0 else None
+
+
+def participant_models(entry):
+    if not isinstance(entry, dict) or not isinstance(entry.get("models"), list):
+        return []
+
+    models = []
+    for value in entry["models"]:
+        if not isinstance(value, str) or not value.strip():
+            continue
+        model = value.strip().rstrip("/").rsplit("/", 1)[-1]
+        if model and model not in models:
+            models.append(model)
+    return models
+
+
+def participant_ml_node_count(entry):
+    if not isinstance(entry, dict) or not isinstance(entry.get("ml_nodes"), list):
+        return None
+
+    count = 0
+    for group in entry["ml_nodes"]:
+        nodes = group.get("ml_nodes") if isinstance(group, dict) else None
+        if isinstance(nodes, list):
+            count += sum(1 for node in nodes if isinstance(node, dict))
+    return count
+
+
+def participant_weight_ranks(entries):
+    weighted = []
+    for entry in entries:
+        weight = participant_weight(entry)
+        if weight is not None:
+            weighted.append((participant_id(entry), weight))
+
+    return {
+        node_id: 1 + sum(other_weight > weight for _, other_weight in weighted)
+        for node_id, weight in weighted
+    }
+
+
+def format_integer(value):
+    return f"{value:,}".replace(",", " ")
+
+
+def build_host_details(entry, rank, participant_count):
+    node_id = participant_id(entry)
+    weight = participant_weight(entry)
+    models = participant_models(entry)
+    ml_node_count = participant_ml_node_count(entry)
+    url = participant_url(entry)
+
+    weight_text = f"<b>{format_integer(weight)}</b>" if weight is not None else "нет данных"
+    rank_text = (
+        f"<b>{rank} из {participant_count}</b>"
+        if rank is not None
+        else "нет данных"
+    )
+    models_text = (
+        ", ".join(f"<code>{escape_html(model)}</code>" for model in models)
+        if models
+        else "нет данных"
+    )
+    ml_nodes_text = (
+        f"<b>{ml_node_count}</b>" if ml_node_count is not None else "нет данных"
+    )
+    url_text = f"<code>{escape_html(url)}</code>" if url else "нет данных"
+
+    return (
+        f"• <code>{escape_html(node_id)}</code>\n"
+        f"  Вес: {weight_text}\n"
+        f"  Место по весу: {rank_text}\n"
+        f"  Модели: {models_text}\n"
+        f"  ML-ноды: {ml_nodes_text}\n"
+        f"  API: {url_text}"
+    )
+
+
 def load_previous_ids():
     value = load_json(STATE_FILE)
     if value is None:
@@ -129,7 +218,11 @@ def main():
         log_rows = [(nid, epoch, participant_url(by_id[nid])) for nid in new_ids]
         append_to_log(log_rows)
 
-        lines = "\n".join(f"• <code>{escape_html(i)}</code>" for i in sorted(new_ids))
+        ranks = participant_weight_ranks(entries)
+        lines = "\n\n".join(
+            build_host_details(by_id[node_id], ranks.get(node_id), len(current_ids))
+            for node_id in sorted(new_ids)
+        )
         epoch_note = f" (\u044d\u043f\u043e\u0445\u0430 {epoch})" if epoch is not None else ""
         message = f"\U0001F195 \u041d\u043e\u0432\u044b\u0439 \u0445\u043e\u0441\u0442(\u044b) \u0432 \u0441\u0435\u0442\u0438 Gonka ({len(new_ids)}){epoch_note}:\n{lines}"
         send_telegram_message(message)
