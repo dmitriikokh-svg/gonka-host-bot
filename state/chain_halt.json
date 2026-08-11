@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "confirming_sources": 1,
+    "fresh_sources": 0,
+    "height_spread": 0,
+    "latest_block_age_seconds": 9.391,
+    "latest_block_time": "2026-08-11T08:30:27.475170Z",
+    "latest_height": 5507453,
+    "reason": "not_enough_sources",
+    "result": "insufficient",
+    "total_sources": 3
+  },
+  "checked_at": "2026-08-11T08:30:36.866653Z",
+  "halt": {
+    "active": false,
+    "first_detected_at": null,
+    "last_alert_at": null,
+    "last_recovered_at": null,
+    "last_reminder_at": null,
+    "recovery_runs": 0
+  },
+  "monitoring": {
+    "alerted": false,
+    "first_unavailable_at": "2026-08-11T08:30:36.866653Z",
+    "last_alert_at": null,
+    "last_recovered_at": null,
+    "unavailable_runs": 1
+  },
+  "sources": {
+    "node1": {
+      "attempts": 1,
+      "block_age_seconds": null,
+      "block_time": null,
+      "catching_up": null,
+      "chain_id": null,
+      "error": "attempt 1/1: ConnectTimeout: HTTPSConnectionPool(host='node1.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node1.gonka.ai', port=443) at 0x7fd76a519880>, 'Connection to node1.gonka.ai timed out. (connect timeout=8)'))",
+      "height": null,
+      "name": "node1",
+      "status": "unavailable",
+      "url": "https://node1.gonka.ai/chain-rpc/status"
+    },
+    "node2": {
+      "attempts": 1,
+      "block_age_seconds": null,
+      "block_time": null,
+      "catching_up": null,
+      "chain_id": null,
+      "error": "attempt 1/1: ConnectTimeout: HTTPSConnectionPool(host='node2.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node2.gonka.ai', port=443) at 0x7fd76a6ab710>, 'Connection to node2.gonka.ai timed out. (connect timeout=8)'))",
+      "height": null,
+      "name": "node2",
+      "status": "unavailable",
+      "url": "https://node2.gonka.ai/chain-rpc/status"
+    },
+    "node3": {
+      "attempts": 1,
+      "block_age_seconds": 9.391,
+      "block_time": "2026-08-11T08:30:27.475170Z",
+      "catching_up": false,
+      "chain_id": "gonka-mainnet",
+      "error": null,
+      "height": 5507453,
+      "name": "node3",
+      "status": "available",
+      "url": "https://node3.gonka.ai/chain-rpc/status"
+    }
+  },
+  "status": "monitoring_unavailable",
+  "version": 1
+}
