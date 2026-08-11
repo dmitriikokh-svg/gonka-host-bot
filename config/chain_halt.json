@@ -1,0 +1,27 @@
+{
+  "sources": [
+    {
+      "name": "node1",
+      "url": "https://node1.gonka.ai/chain-rpc/status"
+    },
+    {
+      "name": "node2",
+      "url": "https://node2.gonka.ai/chain-rpc/status"
+    },
+    {
+      "name": "node3",
+      "url": "https://node3.gonka.ai/chain-rpc/status"
+    }
+  ],
+  "expected_chain_id": "gonka-mainnet",
+  "minimum_confirming_sources": 2,
+  "halt_after_seconds": 60,
+  "maximum_height_spread": 2,
+  "recovery_confirmations": 2,
+  "unavailable_alert_after_runs": 3,
+  "reminder_interval_minutes": 30,
+  "request_timeout_seconds": 8,
+  "attempts_per_source": 1,
+  "poll_interval_seconds": 30,
+  "maximum_future_skew_seconds": 5
+}

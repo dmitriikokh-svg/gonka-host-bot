@@ -1,0 +1,19 @@
+[Unit]
+Description=Gonka chain halt monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gonka-monitor
+Group=gonka-monitor
+WorkingDirectory=/opt/gonka-host-bot
+EnvironmentFile=/etc/gonka-chain-halt.env
+ExecStart=/opt/gonka-host-bot/.venv/bin/python chain_halt_watcher.py
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

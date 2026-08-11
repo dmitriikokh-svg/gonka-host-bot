@@ -1,0 +1,40 @@
+name: Check Gonka chain halt
+
+on:
+  schedule:
+    # Every 5 minutes, offset from the other monitoring workflows.
+    - cron: "1-56/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: gonka-chain-halt-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check-chain-halt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check Gonka chain liveness
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+          TELEGRAM_SECONDARY_CHAT_ID: ${{ secrets.TELEGRAM_SECONDARY_CHAT_ID }}
+          CHAIN_MONITOR_MODE: once
+        run: python chain_halt_watcher.py
+
+      - name: Commit updated state
+        if: always()
+        run: bash scripts/commit_state.sh "Update chain halt state [skip ci]" state/chain_halt.json

@@ -17,6 +17,8 @@
   их очередь и статус обработки bridge на стороне Gonka.
 - `bridge_stale_watcher.py` — риски BLS/bridge: концентрация slots,
   inactive/invalidated slots и отставание bridge latest от Ethereum finalized.
+- `chain_halt_watcher.py` — независимая проверка liveness Gonka chain по
+  кворуму Tendermint RPC.
 - `upgrade_adoption_watcher.py` — распространение целевой API-версии по весу.
 - `glamsterdam_watcher.py` — дата и статус Ethereum Glamsterdam.
 
@@ -86,6 +88,45 @@ Top-10 peer: он остаётся только диагностическим �
 
 Текущий transaction workflow покрывает WGNK burn (unwrap). Входящие USDT/USDC
 нужно добавлять отдельно после определения bridge receiver/event на Ethereum.
+
+## Chain halt monitor
+
+`chain_halt_watcher.py` опрашивает все RPC из `config/chain_halt.json`
+независимо, а не как fallback-цепочку. Chain halt подтверждается,
+только если одновременно:
+
+- доступно не меньше `minimum_confirming_sources` корректных RPC;
+- все они отвечают для `expected_chain_id` и не находятся в `catching_up`;
+- возраст последнего блока у каждого больше `halt_after_seconds`;
+- разброс высот не превышает `maximum_height_spread`.
+
+Свежий блок хотя бы у одного корректного RPC означает, что сеть жива.
+Один старый или недоступный RPC не считается chain halt. Недостаток
+согласованных источников после нескольких проверок даёт отдельный
+жёлтый алерт о потере наблюдаемости. Красный алерт отправляется при
+переходе в halt, затем по интервалу идут reminders. Recovery требует
+`recovery_confirmations` свежих проверок подряд.
+
+Разовый запуск, как в GitHub Actions:
+
+```bash
+CHAIN_MONITOR_MODE=once python3 chain_halt_watcher.py
+```
+
+Постоянный процесс с интервалом 30 секунд:
+
+```bash
+CHAIN_MONITOR_MODE=daemon CHAIN_POLL_INTERVAL_SECONDS=30 \
+  python3 chain_halt_watcher.py
+```
+
+Для server-развёртывания используйте
+`deploy/chain-halt.env.example` и `deploy/gonka-chain-halt.service.example`, заменив в них
+пользователя, пути и Telegram secrets. После проверки daemon-запуска
+отключите schedule workflow `Check Gonka chain halt`, чтобы два runner
+не писали в один `state/chain_halt.json` и не дублировали алерты.
+При переезде меняются только env/config и устанавливается systemd unit;
+Python-логика однократной проверки остаётся той же.
 
 ## Локальная проверка
 
