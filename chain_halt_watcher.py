@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import re
 import signal
 import sys
 import threading
@@ -24,6 +25,7 @@ import requests
 
 from bot_common import (
     escape_html,
+    format_integer,
     load_json,
     save_json_atomic,
     send_telegram_message,
@@ -136,7 +138,13 @@ def source_base(source: dict) -> dict:
     }
 
 
-def unavailable_observation(source: dict, error: str, **details: Any) -> dict:
+def unavailable_observation(
+    source: dict,
+    error: str,
+    *,
+    error_category: str = "invalid response",
+    **details: Any,
+) -> dict:
     result = {
         **source_base(source),
         "status": "unavailable",
@@ -145,7 +153,8 @@ def unavailable_observation(source: dict, error: str, **details: Any) -> dict:
         "block_time": None,
         "block_age_seconds": None,
         "catching_up": None,
-        "error": str(error)[:500],
+        "error_category": error_category,
+        "error": str(error),
     }
     result.update(details)
     return result
@@ -206,26 +215,59 @@ def parse_status_payload(
         return unavailable_observation(
             source,
             f"unexpected chain ID: {chain_id}",
+            error_category="wrong chain ID",
             **details,
         )
     if age < -maximum_future_skew:
         return unavailable_observation(
             source,
             f"latest block time is {-age:.3f}s in the future",
+            error_category="invalid response",
             **details,
         )
     if catching_up:
         return unavailable_observation(
             source,
             "catching_up=true",
+            error_category="node syncing",
             **details,
         )
     return {
         **source_base(source),
         "status": "available",
         **details,
+        "error_category": None,
         "error": None,
     }
+
+
+def exception_category(exc: Exception) -> str:
+    """Map a technical request failure to a short operator-facing category."""
+    message = str(exc).lower()
+    type_name = type(exc).__name__.lower()
+    response = getattr(exc, "response", None)
+    status_code = getattr(response, "status_code", None)
+
+    if "timeout" in type_name or "timed out" in message or "timeout" in message:
+        return "timeout"
+    if isinstance(status_code, int) and 400 <= status_code <= 599:
+        return f"HTTP {status_code}"
+    if "connection refused" in message or "errno 61" in message or "errno 111" in message:
+        return "connection refused"
+    status_match = re.search(
+        r"(?:http(?:error)?(?: status)?[: ]+|status(?: code)?[: =]+)([45]\d\d)\b",
+        message,
+    ) or re.search(
+        r"\b([45]\d\d)\s+(?:(?:client|server)\s+error|service unavailable|bad gateway|gateway timeout|not found)\b",
+        message,
+    )
+    if status_match:
+        return f"HTTP {status_match.group(1)}"
+    if "connection" in type_name or "connection" in message:
+        return "connection error"
+    if isinstance(exc, (ValueError, TypeError)) or "json" in message:
+        return "invalid response"
+    return "request failed"
 
 
 def fetch_source(
@@ -236,6 +278,7 @@ def fetch_source(
     session=requests,
 ) -> dict:
     errors: list[str] = []
+    error_categories: list[str] = []
     attempts = config["attempts_per_source"]
     for attempt in range(1, attempts + 1):
         try:
@@ -250,7 +293,12 @@ def fetch_source(
             return observation
         except Exception as exc:  # noqa: BLE001 - source failures are isolated
             errors.append(f"attempt {attempt}/{attempts}: {type(exc).__name__}: {exc}")
-    result = unavailable_observation(source, " | ".join(errors))
+            error_categories.append(exception_category(exc))
+    result = unavailable_observation(
+        source,
+        " | ".join(errors),
+        error_category=error_categories[-1],
+    )
     result["attempts"] = attempts
     return result
 
@@ -377,20 +425,20 @@ def load_state(path: str | Path | None = None) -> dict:
 
 def format_duration(seconds: float | int | None) -> str:
     if seconds is None:
-        return "unknown"
+        return "нет данных"
     total = max(0, int(seconds))
     days, remainder = divmod(total, 86400)
     hours, remainder = divmod(remainder, 3600)
     minutes, secs = divmod(remainder, 60)
     parts = []
     if days:
-        parts.append(f"{days}d")
+        parts.append(f"{days} д.")
     if hours:
-        parts.append(f"{hours}h")
+        parts.append(f"{hours} ч.")
     if minutes:
-        parts.append(f"{minutes}m")
+        parts.append(f"{minutes} мин.")
     if secs or not parts:
-        parts.append(f"{secs}s")
+        parts.append(f"{secs} сек.")
     return " ".join(parts)
 
 
@@ -407,13 +455,16 @@ def source_lines(observations: list[dict]) -> str:
         name = escape_html(item.get("name", "unknown"))
         if item.get("status") == "available":
             lines.append(
-                f"• <code>{name}</code>: height <code>{escape_html(item['height'])}</code>, "
-                f"block age <b>{escape_html(format_duration(item['block_age_seconds']))}</b>"
+                f"• <code>{name}</code> — OK, блок "
+                f"<code>{escape_html(format_integer(int(item['height'])))}</code>, "
+                f"возраст <b>{escape_html(format_duration(item['block_age_seconds']))}</b>"
             )
         else:
+            category = item.get("error_category") or exception_category(
+                RuntimeError(item.get("error", "request failed"))
+            )
             lines.append(
-                f"• <code>{name}</code>: <b>unavailable</b> "
-                f"(<code>{escape_html(item.get('error', 'unknown error'))}</code>)"
+                f"• <code>{name}</code> — {escape_html(category)}"
             )
     return "\n".join(lines)
 
@@ -430,7 +481,7 @@ def build_halt_message(
         f"🔴 <b>{title}</b>\n\n"
         f"Новые блоки не создаются более {config['halt_after_seconds']} секунд.\n"
         f"Последняя подтверждённая высота: "
-        f"<code>{escape_html(assessment['latest_height'])}</code>\n"
+        f"<code>{escape_html(format_integer(int(assessment['latest_height'])))}</code>\n"
         f"Время последнего блока: "
         f"<code>{escape_html(assessment['latest_block_time'])}</code> UTC\n"
         f"Возраст последнего блока: "
@@ -451,7 +502,8 @@ def build_halt_recovery_message(
     return (
         "🟢 <b>Gonka chain восстановлена</b>\n\n"
         "Создание блоков возобновилось.\n"
-        f"Текущая высота: <code>{escape_html(assessment['latest_height'])}</code>\n"
+        f"Текущая высота: "
+        f"<code>{escape_html(format_integer(int(assessment['latest_height'])))}</code>\n"
         f"Время простоя (с момента обнаружения): "
         f"<b>{escape_html(format_duration(duration))}</b>\n"
         f"Подтвердившие источники: "
@@ -464,15 +516,17 @@ def build_monitoring_unavailable_message(
     observations: list[dict],
     config: dict,
 ) -> str:
+    if assessment["reason"] == "height_spread_too_large":
+        title = "Chain monitor: источники расходятся по высоте"
+    else:
+        title = "Chain monitor: недостаточно источников"
     return (
-        "🟡 <b>Chain halt monitor не может подтвердить состояние сети</b>\n\n"
-        f"Корректных источников: "
-        f"<b>{assessment['confirming_sources']}/{assessment['total_sources']}</b>; "
-        f"для halt-кворума требуется минимум "
-        f"<b>{config['minimum_confirming_sources']}</b> согласованных.\n"
-        f"Причина оценки: <code>{escape_html(assessment['reason'])}</code>.\n\n"
-        "Это потеря наблюдаемости, а не подтверждённый chain halt.\n\n"
-        f"Источники:\n{source_lines(observations)}"
+        f"🟡 <b>{title}</b>\n\n"
+        f"Доступно: <b>{assessment['confirming_sources']} из "
+        f"{assessment['total_sources']}</b>, требуется: "
+        f"<b>{config['minimum_confirming_sources']}</b>\n"
+        f"{source_lines(observations)}\n\n"
+        "Chain halt не подтверждён."
     )
 
 
@@ -591,6 +645,12 @@ def run_once(
     state_path = Path(state_file or STATE_FILE)
     state = load_state(state_path)
     observations = checker(config, check_time)
+    for observation in observations:
+        print(
+            "chain_halt_source="
+            + json.dumps(observation, ensure_ascii=False, sort_keys=True),
+            flush=True,
+        )
     next_state, messages = evaluate_check(state, config, observations, check_time)
     for message in messages:
         sender(message)

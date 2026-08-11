@@ -1,11 +1,13 @@
 import json
 import os
+import io
 import subprocess
 import sys
 import tempfile
 import threading
 import unittest
 from datetime import datetime, timedelta, timezone
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -66,6 +68,7 @@ def observation(
     age=10,
     status="available",
     error=None,
+    error_category=None,
 ):
     item = {
         "name": name,
@@ -80,6 +83,7 @@ def observation(
         ),
         "block_age_seconds": age if status == "available" else None,
         "catching_up": False if status == "available" else None,
+        "error_category": error_category,
         "error": error,
     }
     return item
@@ -123,18 +127,20 @@ class PayloadTests(unittest.TestCase):
     def test_wrong_chain_future_time_and_catching_up_are_unavailable(self):
         source = config()["sources"][0]
         cases = (
-            (payload(chain_id="other-chain"), "unexpected chain ID"),
+            (payload(chain_id="other-chain"), "unexpected chain ID", "wrong chain ID"),
             (
                 payload(block_time=watcher.iso_utc(NOW + timedelta(seconds=6))),
                 "in the future",
+                "invalid response",
             ),
-            (payload(catching_up=True), "catching_up=true"),
+            (payload(catching_up=True), "catching_up=true", "node syncing"),
         )
-        for value, error in cases:
+        for value, error, category in cases:
             with self.subTest(error=error):
                 result = watcher.parse_status_payload(value, source, config(), NOW)
                 self.assertEqual(result["status"], "unavailable")
                 self.assertIn(error, result["error"])
+                self.assertEqual(result["error_category"], category)
 
     def test_missing_or_invalid_height_is_rejected(self):
         source = config()["sources"][0]
@@ -176,6 +182,7 @@ class SourcePollingTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "unavailable")
         self.assertIn("503", result["error"])
+        self.assertEqual(result["error_category"], "HTTP 503")
 
     def test_malformed_json_is_unavailable(self):
         class Response:
@@ -197,6 +204,19 @@ class SourcePollingTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "unavailable")
         self.assertIn("malformed JSON", result["error"])
+        self.assertEqual(result["error_category"], "invalid response")
+
+    def test_request_errors_are_reduced_to_short_categories(self):
+        cases = (
+            (TimeoutError("connection timed out"), "timeout"),
+            (RuntimeError("HTTP 503 Service Unavailable"), "HTTP 503"),
+            (RuntimeError("Connection refused (errno 111)"), "connection refused"),
+            (RuntimeError("Connection reset by peer"), "connection error"),
+            (ValueError("bad payload"), "invalid response"),
+        )
+        for error, expected in cases:
+            with self.subTest(error=error):
+                self.assertEqual(watcher.exception_category(error), expected)
 
 
 class AssessmentTests(unittest.TestCase):
@@ -290,6 +310,40 @@ class StateTransitionTests(unittest.TestCase):
         self.assertEqual(len(messages), 1)
         self.assertIn("Наблюдаемость", messages[0])
 
+    def test_monitoring_message_is_concise_and_hides_full_exception(self):
+        full_error = "ConnectTimeout: HTTPSConnectionPool(host=node1): internal details"
+        values = [
+            observation(
+                "node1",
+                status="unavailable",
+                error=full_error,
+                error_category="timeout",
+            ),
+            observation(
+                "node2",
+                status="unavailable",
+                error="HTTPError: 503 Service Unavailable",
+                error_category="HTTP 503",
+            ),
+            observation("node3", height=5508777, age=7),
+        ]
+        assessment = watcher.assess_network(values, config())
+        message = watcher.build_monitoring_unavailable_message(
+            assessment, values, config()
+        )
+        self.assertIn("Chain monitor: недостаточно источников", message)
+        self.assertIn("Доступно: <b>1 из 3</b>, требуется: <b>2</b>", message)
+        self.assertIn("<code>node1</code> — timeout", message)
+        self.assertIn("<code>node2</code> — HTTP 503", message)
+        self.assertIn(
+            "<code>node3</code> — OK, блок <code>5 508 777</code>, "
+            "возраст <b>7 сек.</b>",
+            message,
+        )
+        self.assertIn("Chain halt не подтверждён.", message)
+        self.assertNotIn(full_error, message)
+        self.assertNotIn("not_enough_sources", message)
+
     def test_three_unavailable_sources_only_report_monitoring_unavailable(self):
         values = [
             observation(name, status="unavailable", error="timeout")
@@ -303,7 +357,7 @@ class StateTransitionTests(unittest.TestCase):
         self.assertEqual(state["status"], "monitoring_unavailable")
         self.assertFalse(state["halt"]["active"])
         self.assertEqual(len(messages), 1)
-        self.assertIn("не подтверждённый chain halt", messages[0])
+        self.assertIn("Chain halt не подтверждён.", messages[0])
 
     def test_partial_failure_with_healthy_quorum_does_not_raise_yellow_alert(self):
         values = self.fresh + [observation("node3", status="unavailable", error="503")]
@@ -354,6 +408,39 @@ class PersistenceAndRuntimeTests(unittest.TestCase):
             clear=True,
         ):
             self.assertEqual(watcher.runtime_settings(config()), ("daemon", 15))
+
+    def test_full_source_error_is_saved_and_printed_but_not_sent(self):
+        full_error = "ConnectTimeout: full internal diagnostic"
+        values = [
+            observation(
+                "node1",
+                status="unavailable",
+                error=full_error,
+                error_category="timeout",
+            ),
+            observation("node2", age=3),
+        ]
+        previous = watcher.default_state()
+        previous["monitoring"]["unavailable_runs"] = 2
+        with tempfile.TemporaryDirectory() as directory:
+            state_file = Path(directory) / "state.json"
+            state_file.write_text(json.dumps(previous), encoding="utf-8")
+            sent = []
+            output = io.StringIO()
+            with redirect_stdout(output):
+                watcher.run_once(
+                    config(),
+                    now=NOW,
+                    checker=lambda _config, _now: values,
+                    sender=sent.append,
+                    state_file=state_file,
+                )
+            saved = json.loads(state_file.read_text(encoding="utf-8"))
+
+        self.assertEqual(saved["sources"]["node1"]["error"], full_error)
+        self.assertIn(full_error, output.getvalue())
+        self.assertEqual(len(sent), 1)
+        self.assertNotIn(full_error, sent[0])
 
     def test_module_import_does_not_require_telegram_secrets(self):
         environment = os.environ.copy()

@@ -106,6 +106,10 @@ Top-10 peer: он остаётся только диагностическим �
 жёлтый алерт о потере наблюдаемости. Красный алерт отправляется при
 переходе в halt, затем по интервалу идут reminders. Recovery требует
 `recovery_confirmations` свежих проверок подряд.
+В Telegram ошибки RPC показываются краткими категориями, например
+`timeout`, `HTTP 503`, `invalid response`, `wrong chain ID` и `node syncing`.
+Полная диагностика сохраняется в `state/chain_halt.json` и выводится
+в workflow/systemd logs.
 
 Разовый запуск, как в GitHub Actions:
 
