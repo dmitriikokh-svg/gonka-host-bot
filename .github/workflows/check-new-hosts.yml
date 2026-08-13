@@ -34,4 +34,4 @@ jobs:
         run: python new_host_bot.py
 
       - name: Commit updated state
-        run: bash scripts/commit_state.sh "Update hosts state [skip ci]" state/hosts.json state/host_log.csv
+        run: bash scripts/commit_state.sh "Update host presence state [skip ci]" state/host_presence.json state/host_events.csv

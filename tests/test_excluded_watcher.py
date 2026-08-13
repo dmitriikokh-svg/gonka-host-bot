@@ -79,6 +79,7 @@ class NotificationTests(unittest.TestCase):
         self.assertIn("Причина: <b>не пройден Confirmation PoC</b>", message)
         self.assertIn("Блок исключения: <code>5 481 065</code>", message)
         self.assertIn("Вес: <b>7 719</b>", message)
+        self.assertIn("Доля общего веса сети: <b>43.6%</b>", message)
         self.assertIn("Место по весу: <b>2 из 2</b>", message)
         self.assertIn("<code>MiniMax-M2.7</code>", message)
         self.assertIn("<code>Kimi-K2.6</code>", message)
@@ -113,6 +114,7 @@ class NotificationTests(unittest.TestCase):
         message = send_message.call_args.args[0]
         self.assertIn("<code>gonka1excluded</code>", message)
         self.assertIn("Вес: нет данных", message)
+        self.assertIn("Доля общего веса сети: нет данных", message)
         self.assertIn("Место по весу: нет данных", message)
         self.assertIn("Модели: нет данных", message)
         self.assertIn("ML-ноды: нет данных", message)

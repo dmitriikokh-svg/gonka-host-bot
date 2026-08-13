@@ -98,6 +98,19 @@ def participant_weight_ranks(entries: Iterable[Any]) -> dict[str, int]:
     }
 
 
+def participant_total_weight(entries: Iterable[Any]) -> tuple[int, bool]:
+    """Return the sum of valid weights and whether every weight was valid."""
+    total = 0
+    complete = True
+    for entry in entries:
+        weight = participant_weight(entry)
+        if weight is None:
+            complete = False
+        else:
+            total += weight
+    return total, complete
+
+
 def format_integer(value: int) -> str:
     return f"{value:,}".replace(",", " ")
 
@@ -108,6 +121,7 @@ def build_host_details(
     participant_count: int,
     *,
     detail_lines: Iterable[str] = (),
+    total_weight: int | None = None,
 ) -> str:
     node_id = participant_id(entry)
     weight = participant_weight(entry)
@@ -116,6 +130,12 @@ def build_host_details(
     url = participant_url(entry)
 
     weight_text = f"<b>{format_integer(weight)}</b>" if weight is not None else "нет данных"
+    share = (
+        weight / total_weight * 100
+        if weight is not None and total_weight is not None and total_weight > 0
+        else None
+    )
+    share_text = f"<b>{share:.1f}%</b>" if share is not None else "нет данных"
     rank_text = (
         f"<b>{rank} из {participant_count}</b>"
         if rank is not None
@@ -136,6 +156,7 @@ def build_host_details(
     lines.extend(
         (
             f"  Вес: {weight_text}",
+            f"  Доля общего веса сети: {share_text}",
             f"  Место по весу: {rank_text}",
             f"  Модели: {models_text}",
             f"  ML-ноды: {ml_nodes_text}",

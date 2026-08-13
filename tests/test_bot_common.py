@@ -9,8 +9,10 @@ import _bootstrap  # noqa: F401 - installs an optional requests stub
 
 from bot_common import (
     SourcesUnavailable,
+    build_host_details,
     fetch_json_with_fallback,
     load_json,
+    participant_total_weight,
     save_json_atomic,
     send_telegram_message,
 )
@@ -59,6 +61,23 @@ class JsonStateTests(unittest.TestCase):
             save_json_atomic(path, {"value": "GNK"})
             self.assertEqual(json.loads(path.read_text()), {"value": "GNK"})
             self.assertFalse(path.with_name("data.json.tmp").exists())
+
+
+class ParticipantWeightTests(unittest.TestCase):
+    def test_total_weight_completeness_and_host_share(self):
+        entries = [
+            {"index": "a", "weight": 75},
+            {"index": "b", "weight": 25},
+        ]
+        self.assertEqual(participant_total_weight(entries), (100, True))
+        details = build_host_details(entries[0], 1, 2, total_weight=100)
+        self.assertIn("Доля общего веса сети: <b>75.0%</b>", details)
+
+    def test_missing_weight_marks_total_incomplete_and_old_call_stays_safe(self):
+        entries = [{"index": "a", "weight": 75}, {"index": "b"}]
+        self.assertEqual(participant_total_weight(entries), (75, False))
+        details = build_host_details(entries[0], 1, 2)
+        self.assertIn("Доля общего веса сети: нет данных", details)
 
 
 class SourceFallbackTests(unittest.TestCase):

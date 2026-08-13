@@ -21,6 +21,7 @@ from bot_common import (
     format_integer,
     load_json,
     participant_id,
+    participant_total_weight,
     participant_weight_ranks,
     save_json_atomic,
     send_telegram_message,
@@ -122,6 +123,7 @@ def main():
 
     if new_ids:
         ranks = participant_weight_ranks(active_entries)
+        total_weight, total_weight_complete = participant_total_weight(active_entries)
         participant_count = len(active_by_id)
         lines = "\n\n".join(
             build_host_details(
@@ -129,6 +131,7 @@ def main():
                 ranks.get(node_id),
                 participant_count,
                 detail_lines=exclusion_detail_lines(excluded_by_id[node_id]),
+                total_weight=total_weight if total_weight_complete else None,
             )
             for node_id in sorted(new_ids)
         )
