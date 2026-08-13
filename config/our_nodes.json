@@ -5,9 +5,10 @@
     "http://node2.gonka.ai:8000/v1/epochs/current/participants",
     "https://node3.gonka.ai/v1/epochs/current/participants"
   ],
-  "epoch_urls": [
-    "https://node3.gonka.ai/v1/epochs/latest",
-    "http://node2.gonka.ai:8000/v1/epochs/latest"
+  "epoch_group_data_urls": [
+    "https://node3.gonka.ai/chain-api/productscience/inference/inference/current_epoch_group_data",
+    "http://node2.gonka.ai:8000/chain-api/productscience/inference/inference/current_epoch_group_data",
+    "http://node1.gonka.ai:8000/chain-api/productscience/inference/inference/current_epoch_group_data"
   ],
   "health_path": "/v1/versions",
   "request_timeout_seconds": 10,
@@ -15,6 +16,7 @@
   "retry_delay_seconds": 2,
   "weight_ratio_alert_below_percent": 30.0,
   "weight_ratio_recovery_above_percent": 30.0,
+  "ratio_alert_after_runs": 2,
   "metric_unavailable_alert_after_runs": 2,
   "nodes": [
     {

@@ -10,7 +10,8 @@
 - `excluded_watcher.py` — новые исключения после cPoC с причиной, блоком,
   весом, местом, моделями, числом ML-нод и API.
 - `our_nodes_watcher.py` — доступность собственных нод, присутствие среди
-  участников и Confirmation PoC ratio.
+  участников и Confirmation PoC rate из chain group data.
+- `model_coefficients_watcher.py` — изменения коэффициентов PoC-моделей.
 - `escrow_balance_watcher.py` — балансы ключей для создания эскроу, алерт
   строго ниже 100 GNK, восстановление и суточное напоминание.
 - `bridge_burn_watcher.py` — финализированные burn-транзакции WGNK в Ethereum,
@@ -43,7 +44,8 @@ workflow-скриптом `scripts/commit_state.sh`.
 Конфигурация собственных нод находится в `config/our_nodes.json`, ключей для
 эскроу — в `config/escrow_balances.json`, bridge burn — в
 `config/bridge_burn.json`, а BLS/bridge stale — в
-`config/bridge_stale.json`. Баланс хранится в базовом denom
+`config/bridge_stale.json`. Источники коэффициентов моделей находятся в
+`config/model_coefficients.json`. Баланс хранится в базовом denom
 `ngonka`: 1 GNK = 1 000 000 000 ngonka. Ручной запуск workflow
 `Check escrow balances` по умолчанию отправляет проверочную сводку; плановые
 запуски пишут в Telegram только алерты, восстановления и напоминания.
@@ -118,6 +120,50 @@ Top-10 peer: он остаётся только диагностическим �
 Сравниваются только две соседние эпохи с полными весами и ненулевым
 предыдущим total weight.
 
+## Confirmation PoC rate
+
+`our_nodes_watcher.py` получает номер эпохи и участников из одного snapshot:
+`active_participants.epoch_group_id` и
+`active_participants.participants`. Для Confirmation PoC используется только
+chain API `current_epoch_group_data` с fallback между node3, node2 и node1.
+Соответствующая эпоха находится в `epoch_group_data.epoch_index`, а строки
+участников — в `epoch_group_data.validation_weights`; адрес строки хранится в
+`member_address`.
+
+Rate конкретного participant рассчитывается так:
+
+```text
+confirmation_weight / weight × 100%
+```
+
+Здесь `weight` — вес participant из его строки `validation_weights`, а не
+суммарный вес сети. Нулевые и отрицательные значения, дубликаты адресов и
+`confirmation_weight > weight` делают payload некорректным. Эпоха group data
+обязана совпадать с эпохой participants snapshot. Значение ниже 30% должно
+повториться в двух последовательных проверках одной эпохи; 30% или выше даёт
+recovery. При смене эпохи счётчик низких значений начинается заново.
+
+Недоступность метрики считается отдельно и не создаёт ложный low-rate alert.
+В исследованном payload нет достоверного признака завершения CPoC, поэтому
+phase gating не применяется. Telegram содержит только краткую причину, а
+полная ошибка сохраняется в `state/our_nodes_state.json` и workflow log.
+
+## Коэффициенты PoC-моделей
+
+`model_coefficients_watcher.py` раз в час читает с fallback endpoint
+`/chain-api/productscience/inference/inference/params`. Список находится в
+`params.poc_params.models`, идентификатор — в `model_id`, коэффициент — в
+`weight_scale_factor.value × 10^weight_scale_factor.exponent`. Вычисления и
+сравнение выполняются через `Decimal`, поэтому `0.78`, `0.780` и строка
+`"0.78"` эквивалентны.
+
+Первый успешный запуск создаёт `state/model_coefficients.json` как baseline
+без Telegram-сообщения. Затем одно INFO-сообщение перечисляет только
+добавленные, удалённые и изменившиеся модели. Reminders не отправляются.
+Недоступность всех params-источников даёт отдельный yellow alert после трёх
+последовательных запусков; прежний baseline при этом сохраняется. Полная
+ошибка остаётся в state и workflow log.
+
 ## Chain halt monitor
 
 `chain_halt_watcher.py` опрашивает все RPC из `config/chain_halt.json`
@@ -170,4 +216,11 @@ python3 -m unittest discover -s tests -v
 
 Мониторы используют несколько публичных источников. Ошибка одного источника
 не считается сетевым инцидентом, пока доступен резервный источник. Отсутствие
-Confirmation PoC ratio отслеживается отдельно от доступности самой ноды.
+Confirmation PoC rate отслеживается отдельно от доступности самой ноды.
+
+Локальный разовый запуск этих проверок:
+
+```bash
+python3 our_nodes_watcher.py
+python3 model_coefficients_watcher.py
+```

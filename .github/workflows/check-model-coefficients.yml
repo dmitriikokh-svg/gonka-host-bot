@@ -1,0 +1,38 @@
+name: Check PoC model coefficients
+
+on:
+  schedule:
+    # Avoid the top of the hour, when GitHub reports the highest schedule load.
+    - cron: "43 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check-model-coefficients:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check model coefficients
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+          TELEGRAM_SECONDARY_CHAT_ID: ${{ secrets.TELEGRAM_SECONDARY_CHAT_ID }}
+        run: python model_coefficients_watcher.py
+
+      - name: Commit updated state
+        run: bash scripts/commit_state.sh "Update model coefficient state [skip ci]" state/model_coefficients.json

@@ -1,0 +1,15 @@
+{
+  "params_urls": [
+    "https://node3.gonka.ai/chain-api/productscience/inference/inference/params",
+    "http://node2.gonka.ai:8000/chain-api/productscience/inference/inference/params",
+    "http://node1.gonka.ai:8000/chain-api/productscience/inference/inference/params"
+  ],
+  "epoch_group_data_urls": [
+    "https://node3.gonka.ai/chain-api/productscience/inference/inference/current_epoch_group_data",
+    "http://node2.gonka.ai:8000/chain-api/productscience/inference/inference/current_epoch_group_data",
+    "http://node1.gonka.ai:8000/chain-api/productscience/inference/inference/current_epoch_group_data"
+  ],
+  "unavailable_alert_after_runs": 3,
+  "request_timeout_seconds": 10,
+  "attempts_per_source": 1
+}
