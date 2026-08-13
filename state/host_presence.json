@@ -1,0 +1,983 @@
+{
+  "history_complete_from_epoch": 359,
+  "hosts": {
+    "gonka10mmdjau4dnj8krs7sh7t7635ttnmq9u3vqgz09": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://89.149.242.149:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.920915,
+        "weight": 3999
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka10thh6z0wvq9c05j4z3f9qtpxxedruqn5ae350k": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 325,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://94.130.143.155:8000",
+        "ml_node_count": 1,
+        "models": [
+          "Kimi-K2.6"
+        ],
+        "network_share_percent": 1.244928,
+        "weight": 5406
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 325,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1346p2h8dn4kp98c5e93k5q64g0h7vxjxnd55fh": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 358,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://78.111.80.104:8000",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 358,
+      "legacy_first_seen_epoch": 358,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka14tqh62mangwzrma2lgg2dm375rcjzn2ydy8ttm": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 325,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://51.222.248.86:8000",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 325,
+      "legacy_first_seen_epoch": 325,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka168rtjfkszuhcggg4dfyse4yh7xn9zwfglnkns2": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 343,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://network000.kaitaku.ai:8000",
+        "ml_node_count": 2,
+        "models": [
+          "Kimi-K2.6"
+        ],
+        "network_share_percent": 1.520581,
+        "weight": 6603
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 343,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka16dgkvx7mh609ntkzknckwaskgq9lcdp86j0skk": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://78.46.56.56:8000",
+        "ml_node_count": 9,
+        "models": [
+          "MiniMax-M2.7",
+          "Kimi-K2.6"
+        ],
+        "network_share_percent": 14.380691,
+        "weight": 62447
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1830lqug50lse998x2lakk4pj5ypfumz5pasz0y": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 331,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://195.201.192.170:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 1.770211,
+        "weight": 7687
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 331,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka19es57c7504vtevle5082yr6vs96y3dkshzruph": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 325,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://13.58.150.130:35953",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 325,
+      "legacy_first_seen_epoch": 325,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka1a3pkge3g33v3zdkq7qmycpjwpulms6ejt8z00f": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 325,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://213.219.205.218:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.186302,
+        "weight": 809
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 325,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1avqx987zq7q9alr9f9grtcprescgzq0wtr7fue": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 326,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://20.106.120.77:8000",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 326,
+      "legacy_first_seen_epoch": 326,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka1aw77zuy536tufqd56zfq6ev3234u5ftty0zkte": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 325,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://78.46.78.83:8000",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 325,
+      "legacy_first_seen_epoch": 325,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka1d7p03cu2y2yt3vytq9wlfm6tlz0lfhlgv9h82p": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://47.236.26.199:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.172254,
+        "weight": 748
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1dkl4mah5erqggvhqkpc8j3qs5tyuetgdy552cp": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://node2.gonka.ai:8000",
+        "ml_node_count": 2,
+        "models": [
+          "MiniMax-M2.7",
+          "DeepSeek-V4-Flash-0731"
+        ],
+        "network_share_percent": 0.298221,
+        "weight": 1295
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1f0u3y2wneer8zhz3ypw4x54h38cpa0qsy8ts3e": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 325,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://95.217.122.154:8000",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 325,
+      "legacy_first_seen_epoch": 325,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka1gvrrhjmy4w4mayvs2s5l23edj8ertcmtd2v4zr": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 345,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://54.38.118.143:8000",
+        "ml_node_count": 26,
+        "models": [
+          "MiniMax-M2.7",
+          "Kimi-K2.6"
+        ],
+        "network_share_percent": 21.741333,
+        "weight": 94410
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 345,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1gyk0aahvr3qeju4zx0nplfreej6cy4jjk8svc5": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://69.48.159.137:8000/",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.151068,
+        "weight": 656
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1hvhfcc23q0j49zjt372ymgkfsk9mnkqjj3l42x": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 358,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://130.131.64.76:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 1.273483,
+        "weight": 5530
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 358,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1keng5s9hjp6wcn3r6m5u4ag6sz9rfaslr7847e": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 328,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://31.22.104.54:8000",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 328,
+      "legacy_first_seen_epoch": 328,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka1kuzzqujxd9sf4w9pf2hqxayke5p4ptu8wpayyn": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 329,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://95.217.35.48:8000",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 329,
+      "legacy_first_seen_epoch": 329,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka1kvmerzu64094dt9t62ea0cp75larh39ulzldum": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://78.46.89.87:8000",
+        "ml_node_count": 10,
+        "models": [
+          "MiniMax-M2.7",
+          "Kimi-K2.6"
+        ],
+        "network_share_percent": 15.634139,
+        "weight": 67890
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1kx9mca3xm8u8ypzfuhmxey66u0ufxhs7nm6wc5": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 330,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "https://node3.gonka.ai",
+        "ml_node_count": 5,
+        "models": [
+          "MiniMax-M2.7",
+          "DeepSeek-V4-Flash-0731",
+          "Kimi-K2.6"
+        ],
+        "network_share_percent": 1.774817,
+        "weight": 7707
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 330,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1l6emtgat9xn9yr8q9lcg2ph6qkqgnkdg8xwa3d": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://32.198.122.2:8000",
+        "ml_node_count": 8,
+        "models": [
+          "MiniMax-M2.7",
+          "Kimi-K2.6"
+        ],
+        "network_share_percent": 19.758338,
+        "weight": 85799
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1m58jds005cttwq2vt0p7yk6vy2aqg254cqqppf": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://84.32.185.226:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.245255,
+        "weight": 1065
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1m8cgzvdycp839elfxhtvgy2cuz9s2hd45gpl48": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 332,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://52.162.235.221:8000",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 332,
+      "legacy_first_seen_epoch": 332,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka1p2lhgng7tcqju7emk989s5fpdr7k2c3ek6h26m": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://47.236.19.22:18000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.16857,
+        "weight": 732
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1qwfrtz9c7kcrfkrrlne2pkcye74mj6ce33xdkl": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://84.32.59.212:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.219693,
+        "weight": 954
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1scskt6wpnjnumsah6kjphmdu87vjgvcxmn4rxv": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 336,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://57.131.17.61:8000",
+        "ml_node_count": 15,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 8.886059,
+        "weight": 38587
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 336,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1t0psqlz8fzhlqnaresvk5vxfmgv0te23mnwdad": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 356,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://159.69.59.139:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 2.111495,
+        "weight": 9169
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 356,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1tlvg4kjx7ljd5thgd5fkgh39q6lu8cmxupktgg": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://gnk.antifreeze.dev:8000",
+        "ml_node_count": 2,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.894662,
+        "weight": 3885
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1ts6k67zt064z87rx9hztm93cd3yh5mkqje6z4c": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://88.99.213.222:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 2.1313,
+        "weight": 9255
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 359,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1w0ya47r0j80ytrrnflgslegppcdkt0eh093fes": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 326,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://20.169.16.78:8000",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 326,
+      "legacy_first_seen_epoch": 326,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka1w29nvdy6caqtrw30whz9h6ghl0xszwh3egndah": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 330,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://79.174.63.25:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.090042,
+        "weight": 391
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 330,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1y2a9p56kv044327uycmqdexl7zs82fs5ryv5le": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 338,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://node1.gonka.ai:8000",
+        "ml_node_count": 3,
+        "models": [
+          "MiniMax-M2.7",
+          "DeepSeek-V4-Flash-0731",
+          "Kimi-K2.6"
+        ],
+        "network_share_percent": 0.868179,
+        "weight": 3770
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 338,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1yal0ysgzc860zt3y8cds8656tnueusgymftvkw": {
+      "absence_detected_epoch": 359,
+      "absence_from_epoch": null,
+      "absence_history_complete": false,
+      "active": false,
+      "first_seen_epoch": 331,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://94.130.152.246:8000",
+        "ml_node_count": null,
+        "models": [],
+        "network_share_percent": null,
+        "weight": null
+      },
+      "last_seen_epoch": 331,
+      "legacy_first_seen_epoch": 331,
+      "legacy_known": true,
+      "periods": []
+    },
+    "gonka1ym3np7guxart483yfdxnlztuazx22cjt0e4a2p": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 359,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://46.4.101.189:8000",
+        "ml_node_count": 2,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.698458,
+        "weight": 3033
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1z6xwdunt3cxqmexjffez053m62le88g98tsj8s": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 331,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://95.216.25.29:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 1.983917,
+        "weight": 8615
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 331,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1zktn8j65wlys8a8e38hqhf4y3x6m4x04zskkrx": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 346,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://65.108.198.21:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 0.875088,
+        "weight": 3800
+      },
+      "last_seen_epoch": 359,
+      "legacy_first_seen_epoch": 346,
+      "legacy_known": true,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    }
+  },
+  "last_host_count": 26,
+  "last_processed_epoch": 359,
+  "last_total_weight": 434242,
+  "last_total_weight_complete": true,
+  "observation_gaps": [],
+  "schema_version": 1
+}
