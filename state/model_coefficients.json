@@ -1,0 +1,17 @@
+{
+  "checked_at": "2026-08-13T15:41:38+00:00",
+  "epoch": 359,
+  "epoch_source": "https://node3.gonka.ai/chain-api/productscience/inference/inference/current_epoch_group_data",
+  "last_error": null,
+  "last_error_reason": null,
+  "models": {
+    "MiniMaxAI/MiniMax-M2.7": "0.3024",
+    "deepseek-ai/DeepSeek-V4-Flash-0731": "0.214",
+    "moonshotai/Kimi-K2.6": "0.945",
+    "zai-org/GLM-5.2-FP8": "2.5935"
+  },
+  "schema_version": 1,
+  "source": "https://node3.gonka.ai/chain-api/productscience/inference/inference/params",
+  "unavailable_alerted": false,
+  "unavailable_runs": 0
+}
