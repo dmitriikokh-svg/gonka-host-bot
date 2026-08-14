@@ -57,6 +57,23 @@ class RepositoryReferenceTests(unittest.TestCase):
             with self.subTest(path=str(path.relative_to(ROOT))):
                 json.loads(path.read_text(encoding="utf-8"))
 
+    def test_deploy_services_reference_existing_examples_and_entrypoints(self):
+        for service_path in sorted((ROOT / "deploy").glob("*.service.example")):
+            text = service_path.read_text(encoding="utf-8")
+            environment = re.search(
+                r"^EnvironmentFile=/etc/gonka-(.+)\.env$", text, re.MULTILINE
+            )
+            entrypoint = re.search(
+                r"^ExecStart=\S+\s+([^/\s]+\.py)$", text, re.MULTILINE
+            )
+            with self.subTest(service=service_path.name):
+                self.assertIsNotNone(environment)
+                self.assertTrue(
+                    (ROOT / "deploy" / f"{environment.group(1)}.env.example").is_file()
+                )
+                self.assertIsNotNone(entrypoint)
+                self.assertTrue((ROOT / entrypoint.group(1)).is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

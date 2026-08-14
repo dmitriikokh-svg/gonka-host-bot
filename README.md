@@ -20,6 +20,8 @@
   inactive/invalidated slots и отставание bridge latest от Ethereum finalized.
 - `chain_halt_watcher.py` — независимая проверка liveness Gonka chain по
   кворуму Tendermint RPC.
+- `chain_load_watcher.py` — аномальный объём raw transaction bytes в последних
+  блоках и риск чрезмерной chain load/state inflation.
 - `upgrade_adoption_watcher.py` — распространение целевой API-версии по весу.
 - `glamsterdam_watcher.py` — дата и статус Ethereum Glamsterdam.
 
@@ -206,6 +208,62 @@ CHAIN_MONITOR_MODE=daemon CHAIN_POLL_INTERVAL_SECONDS=30 \
 не писали в один `state/chain_halt.json` и не дублировали алерты.
 При переезде меняются только env/config и устанавливается systemd unit;
 Python-логика однократной проверки остаётся той же.
+
+## Chain load monitor
+
+`chain_load_watcher.py` фиксирует latest height через Tendermint `/status`,
+затем получает окно последних `window_blocks` блоков через `/block?height=...`.
+Каждая транзакция строго декодируется из base64, после чего считается только
+длина исходных protobuf bytes:
+
+```text
+sum_tx_bytes = Σ len(base64_decode(tx))
+```
+
+Размер JSON/base64 и gas в эту метрику не входят. Порог `warning_bytes` равен
+50 000 000 decimal bytes, а условие превышения строгое:
+`sum_tx_bytes > warning_bytes`. Первое новое окно выше порога даёт warning,
+второе подряд — critical. Recovery требует два новых корректных окна на уровне
+порога или ниже. Повторный poll той же или более старой высоты не меняет
+счётчики и не дублирует алерты.
+
+Весь snapshot собирается с одного RPC. Если источник отказал на любом блоке,
+его частичный результат отбрасывается, и полное окно заново собирается через
+следующий URL из `config/chain_load.json` либо `CHAIN_LOAD_RPC_URLS`. Malformed
+base64 делает весь snapshot недостоверным. Недоступность всех RPC считается
+потерей наблюдаемости, а не нормальной или аномальной нагрузкой. Telegram
+получает краткие категории, полная диагностика остаётся в
+`state/chain_load.json` и logs.
+
+Type URL извлекаются из raw protobuf эвристически и используются только для
+triage. Multi-message transaction получает объединённую подпись типов, но её
+bytes и count учитываются ровно один раз. Alert определяется исключительно
+общим `sum_tx_bytes`.
+
+Разовый локальный smoke test без Telegram и без изменения state:
+
+```bash
+python3 chain_load_watcher.py --once --no-notify
+```
+
+Режимы для production:
+
+```bash
+CHAIN_LOAD_MODE=once python3 chain_load_watcher.py
+
+CHAIN_LOAD_MODE=daemon CHAIN_LOAD_POLL_INTERVAL_SECONDS=60 \
+  python3 chain_load_watcher.py
+```
+
+Для server-развёртывания используйте `deploy/chain-load.env.example` и
+`deploy/gonka-chain-load.service.example`. После включения daemon отключите
+schedule workflow `Check Gonka chain load`, чтобы два процесса не писали один
+state и не отправляли повторные сообщения.
+
+Gas alert пока не реализован. Follow-up: исследовать
+`/block_results?height=...`, начать сохранять gas usage, накопить baseline за
+7–14 дней и только после этого определить окно и порог. Недоступность
+`block_results` не должна влиять на основной tx-bytes monitor.
 
 ## Локальная проверка
 

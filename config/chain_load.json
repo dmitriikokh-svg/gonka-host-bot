@@ -1,0 +1,18 @@
+{
+  "rpc_urls": [
+    "https://node1.gonka.ai/chain-rpc",
+    "https://node2.gonka.ai/chain-rpc",
+    "https://node3.gonka.ai/chain-rpc"
+  ],
+  "expected_chain_id": "gonka-mainnet",
+  "window_blocks": 10,
+  "warning_bytes": 50000000,
+  "critical_after_consecutive_windows": 2,
+  "recovery_after_clean_windows": 2,
+  "unavailable_alert_after_runs": 3,
+  "critical_reminder_minutes": 30,
+  "request_timeout_seconds": 15,
+  "poll_interval_seconds": 60,
+  "top_message_types": 3,
+  "top_hot_blocks": 3
+}
