@@ -3,14 +3,14 @@
     "confirming_sources": 1,
     "fresh_sources": 0,
     "height_spread": 0,
-    "latest_block_age_seconds": 6.576,
-    "latest_block_time": "2026-08-14T05:02:13.896832Z",
-    "latest_height": 5554105,
+    "latest_block_age_seconds": 9.316,
+    "latest_block_time": "2026-08-14T06:20:28.043883Z",
+    "latest_height": 5554994,
     "reason": "not_enough_sources",
     "result": "insufficient",
     "total_sources": 3
   },
-  "checked_at": "2026-08-14T05:02:20.473277Z",
+  "checked_at": "2026-08-14T06:20:37.359896Z",
   "halt": {
     "active": false,
     "first_detected_at": null,
@@ -24,7 +24,7 @@
     "first_unavailable_at": "2026-08-11T08:30:36.866653Z",
     "last_alert_at": "2026-08-11T10:26:56.634209Z",
     "last_recovered_at": null,
-    "unavailable_runs": 66
+    "unavailable_runs": 67
   },
   "sources": {
     "node1": {
@@ -33,7 +33,7 @@
       "block_time": null,
       "catching_up": null,
       "chain_id": null,
-      "error": "attempt 1/1: ConnectTimeout: HTTPSConnectionPool(host='node1.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node1.gonka.ai', port=443) at 0x7fdd705010a0>, 'Connection to node1.gonka.ai timed out. (connect timeout=8)'))",
+      "error": "attempt 1/1: ConnectTimeout: HTTPSConnectionPool(host='node1.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node1.gonka.ai', port=443) at 0x7f007bb6d0d0>, 'Connection to node1.gonka.ai timed out. (connect timeout=8)'))",
       "error_category": "timeout",
       "height": null,
       "name": "node1",
@@ -46,7 +46,7 @@
       "block_time": null,
       "catching_up": null,
       "chain_id": null,
-      "error": "attempt 1/1: ConnectTimeout: HTTPSConnectionPool(host='node2.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node2.gonka.ai', port=443) at 0x7fdd705016d0>, 'Connection to node2.gonka.ai timed out. (connect timeout=8)'))",
+      "error": "attempt 1/1: ConnectTimeout: HTTPSConnectionPool(host='node2.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node2.gonka.ai', port=443) at 0x7f007c2f8e90>, 'Connection to node2.gonka.ai timed out. (connect timeout=8)'))",
       "error_category": "timeout",
       "height": null,
       "name": "node2",
@@ -55,13 +55,13 @@
     },
     "node3": {
       "attempts": 1,
-      "block_age_seconds": 6.576,
-      "block_time": "2026-08-14T05:02:13.896832Z",
+      "block_age_seconds": 9.316,
+      "block_time": "2026-08-14T06:20:28.043883Z",
       "catching_up": false,
       "chain_id": "gonka-mainnet",
       "error": null,
       "error_category": null,
-      "height": 5554105,
+      "height": 5554994,
       "name": "node3",
       "status": "available",
       "url": "https://node3.gonka.ai/chain-rpc/status"
