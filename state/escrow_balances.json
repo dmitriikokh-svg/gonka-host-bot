@@ -5,10 +5,10 @@
       "balance_base": "332668438450",
       "balance_gnk": "332.66843845",
       "denom": "ngonka",
-      "last_checked_at": "2026-08-15T07:03:18+00:00",
+      "last_checked_at": "2026-08-15T07:39:51+00:00",
       "last_error": null,
       "last_low_alert_at": null,
-      "last_success_at": "2026-08-15T07:03:18+00:00",
+      "last_success_at": "2026-08-15T07:39:51+00:00",
       "low_alerted": false,
       "low_since": null,
       "source_url": "https://node3.gonka.ai/chain-api/cosmos/bank/v1beta1/balances/gonka1w66aw6jayepglwgz66qtunetr5nyw9ls7evq5g",
@@ -22,9 +22,9 @@
       "balance_base": "773687000000",
       "balance_gnk": "773.687",
       "denom": "ngonka",
-      "last_checked_at": "2026-08-15T07:03:18+00:00",
+      "last_checked_at": "2026-08-15T07:39:51+00:00",
       "last_error": null,
-      "last_success_at": "2026-08-15T07:03:18+00:00",
+      "last_success_at": "2026-08-15T07:39:51+00:00",
       "source_url": "https://node3.gonka.ai/chain-api/cosmos/bank/v1beta1/balances/gonka1sy7ug80wrnm6gk47creak0j5eagjpf7maqcqwk",
       "status": "ok",
       "unavailable_alerted": false,
@@ -32,5 +32,5 @@
       "unavailable_since": null
     }
   },
-  "checked_at": "2026-08-15T07:03:18+00:00"
+  "checked_at": "2026-08-15T07:39:51+00:00"
 }
