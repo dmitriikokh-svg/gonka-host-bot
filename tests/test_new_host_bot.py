@@ -139,7 +139,7 @@ class MigrationTests(unittest.TestCase):
         self.assertEqual(events["legacy"], "returned")
         message = "\n".join(watcher.event_messages(result, snapshot(358, [entry("current"), entry("legacy")])))
         self.assertIn("Ранее фиксировался в эпохе 325", message)
-        self.assertIn("Точная история ведётся с эпохи 357", message)
+        self.assertNotIn("Точная история ведётся", message)
 
 
 class TransitionTests(unittest.TestCase):

@@ -455,7 +455,6 @@ def epoch_range(start: int, end: int) -> str:
 def returned_history_lines(
     previous: dict,
     current_epoch: int,
-    history_from: int,
 ) -> list[str]:
     periods = previous.get("periods") or []
     lines: list[str] = []
@@ -476,7 +475,6 @@ def returned_history_lines(
             lines.append(f"Ранее фиксировался в эпохе {legacy_epoch}")
         else:
             lines.append("Ранее фиксировался до начала точной истории")
-        lines.append(f"Точная история ведётся с эпохи {history_from}")
 
     absence_from = previous.get("absence_from_epoch")
     if previous.get("absence_history_complete") and isinstance(absence_from, int):
@@ -527,7 +525,6 @@ def host_block(event: dict, result: dict, snapshot: dict) -> str:
         detail_lines = returned_history_lines(
             event["previous"],
             snapshot["epoch"],
-            result["state"]["history_complete_from_epoch"],
         )
     return build_host_details(
         event["entry"],
