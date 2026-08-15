@@ -1,0 +1,6 @@
+epoch,event,node_id,observed_at_utc,weight,total_weight,network_share_percent,inference_url
+361,returned,gonka1346p2h8dn4kp98c5e93k5q64g0h7vxjxnd55fh,2026-08-15T01:44:37+00:00,1654,503736,0.328347,http://78.111.80.104:8000
+361,new,gonka14cu9vmarz3rf7mm6g0aa8cvaq56q0hau4eq7nm,2026-08-15T01:44:37+00:00,64,503736,0.012705,http://95.133.252.146:8000
+361,returned,gonka1f0u3y2wneer8zhz3ypw4x54h38cpa0qsy8ts3e,2026-08-15T01:44:37+00:00,17537,503736,3.481387,http://95.217.122.154:8000
+361,new,gonka1fc9tzt83dgrqswlgay4668cuqjrk7zsqks2vm2,2026-08-15T01:44:37+00:00,1720,503736,0.341449,http://188.40.62.55:8000
+361,new,gonka1ueylw8hrlp5taqu4dy5zaxy0k82ya4r9trzzwy,2026-08-15T01:44:37+00:00,9423,503736,1.870623,http://135.232.215.183:8000
