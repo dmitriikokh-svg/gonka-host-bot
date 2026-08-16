@@ -14,10 +14,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.785406,
+        "network_share_percent": 0.804627,
         "weight": 3859
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -45,10 +45,10 @@
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 3.218355,
-        "weight": 15813
+        "network_share_percent": 2.779185,
+        "weight": 13329
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 325,
       "legacy_known": true,
       "periods": [
@@ -152,10 +152,10 @@
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 2.338309,
-        "weight": 11489
+        "network_share_percent": 2.333606,
+        "weight": 11192
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 343,
       "legacy_known": true,
       "periods": [
@@ -183,10 +183,10 @@
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 12.160875,
-        "weight": 59751
+        "network_share_percent": 12.457647,
+        "weight": 59747
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -208,14 +208,14 @@
       "history_has_gaps": false,
       "last_profile": {
         "inference_url": "http://195.201.192.170:8000",
-        "ml_node_count": 2,
+        "ml_node_count": 1,
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 3.519166,
-        "weight": 17291
+        "network_share_percent": 1.79274,
+        "weight": 8598
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 331,
       "legacy_known": true,
       "periods": [
@@ -260,10 +260,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.161192,
+        "network_share_percent": 0.165137,
         "weight": 792
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 325,
       "legacy_known": true,
       "periods": [
@@ -296,10 +296,10 @@
       "periods": []
     },
     "gonka1aw77zuy536tufqd56zfq6ev3234u5ftty0zkte": {
-      "absence_detected_epoch": null,
-      "absence_from_epoch": null,
-      "absence_history_complete": null,
-      "active": true,
+      "absence_detected_epoch": 363,
+      "absence_from_epoch": 363,
+      "absence_history_complete": true,
+      "active": false,
       "first_seen_epoch": 325,
       "history_has_gaps": false,
       "last_profile": {
@@ -316,11 +316,11 @@
       "legacy_known": true,
       "periods": [
         {
-          "absence_detected_epoch": null,
-          "end_exact": null,
+          "absence_detected_epoch": 363,
+          "end_exact": true,
           "from": 362,
           "started_after_gap": false,
-          "to": null
+          "to": 362
         }
       ]
     },
@@ -337,10 +337,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.176864,
+        "network_share_percent": 0.181192,
         "weight": 869
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -367,10 +367,10 @@
           "MiniMax-M2.7",
           "DeepSeek-V4-Flash-0731"
         ],
-        "network_share_percent": 0.56336,
-        "weight": 2768
+        "network_share_percent": 0.594869,
+        "weight": 2853
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -396,10 +396,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 1.670133,
+        "network_share_percent": 1.711006,
         "weight": 8206
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 325,
       "legacy_known": true,
       "periods": [
@@ -425,10 +425,10 @@
         "models": [
           "DeepSeek-V4-Flash-0731"
         ],
-        "network_share_percent": 0.300608,
-        "weight": 1477
+        "network_share_percent": 0.293994,
+        "weight": 1410
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": false,
       "periods": [
@@ -450,16 +450,16 @@
       "history_has_gaps": false,
       "last_profile": {
         "inference_url": "http://54.38.118.143:8000",
-        "ml_node_count": 24,
+        "ml_node_count": 27,
         "models": [
           "MiniMax-M2.7",
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 19.906052,
-        "weight": 97806
+        "network_share_percent": 21.763716,
+        "weight": 104379
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 345,
       "legacy_known": true,
       "periods": [
@@ -485,10 +485,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.133513,
+        "network_share_percent": 0.13678,
         "weight": 656
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -502,10 +502,10 @@
       ]
     },
     "gonka1hvhfcc23q0j49zjt372ymgkfsk9mnkqjj3l42x": {
-      "absence_detected_epoch": 362,
-      "absence_from_epoch": 362,
-      "absence_history_complete": true,
-      "active": false,
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
       "first_seen_epoch": 358,
       "history_has_gaps": false,
       "last_profile": {
@@ -514,10 +514,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 1.097797,
-        "weight": 5530
+        "network_share_percent": 2.247702,
+        "weight": 10780
       },
-      "last_seen_epoch": 361,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 358,
       "legacy_known": true,
       "periods": [
@@ -527,6 +527,13 @@
           "from": 359,
           "started_after_gap": false,
           "to": 361
+        },
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 363,
+          "started_after_gap": false,
+          "to": null
         }
       ]
     },
@@ -583,10 +590,10 @@
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 13.710318,
-        "weight": 67364
+        "network_share_percent": 13.691798,
+        "weight": 65666
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -614,10 +621,10 @@
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 1.886685,
-        "weight": 9270
+        "network_share_percent": 1.890321,
+        "weight": 9066
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 330,
       "legacy_known": true,
       "periods": [
@@ -642,12 +649,13 @@
         "ml_node_count": 8,
         "models": [
           "MiniMax-M2.7",
+          "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 17.526021,
-        "weight": 86112
+        "network_share_percent": 17.364226,
+        "weight": 83279
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -673,10 +681,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.216755,
-        "weight": 1065
+        "network_share_percent": 0.229149,
+        "weight": 1099
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -721,10 +729,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.14776,
-        "weight": 726
+        "network_share_percent": 0.181192,
+        "weight": 869
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -750,10 +758,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.20088,
+        "network_share_percent": 0.205796,
         "weight": 987
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -780,10 +788,10 @@
           "MiniMax-M2.7",
           "DeepSeek-V4-Flash-0731"
         ],
-        "network_share_percent": 6.095193,
-        "weight": 29948
+        "network_share_percent": 6.147819,
+        "weight": 29485
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 336,
       "legacy_known": true,
       "periods": [
@@ -805,14 +813,14 @@
       "history_has_gaps": false,
       "last_profile": {
         "inference_url": "http://159.69.59.139:8000",
-        "ml_node_count": 2,
+        "ml_node_count": 1,
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 3.34047,
-        "weight": 16413
+        "network_share_percent": 1.567136,
+        "weight": 7516
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 356,
       "legacy_known": true,
       "periods": [
@@ -838,10 +846,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.814918,
-        "weight": 4004
+        "network_share_percent": 0.810048,
+        "weight": 3885
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -867,10 +875,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 1.732209,
+        "network_share_percent": 1.7746,
         "weight": 8511
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 359,
       "legacy_known": true,
       "periods": [
@@ -878,6 +886,35 @@
           "absence_detected_epoch": null,
           "end_exact": null,
           "from": 359,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
+    "gonka1u60wtn9dhadweeuq2gywcpx34fpfnuhmu7w0qq": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 363,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://64.83.34.3:8000",
+        "ml_node_count": 5,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 4.378223,
+        "weight": 20998
+      },
+      "last_seen_epoch": 363,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": false,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 363,
           "started_after_gap": false,
           "to": null
         }
@@ -896,10 +933,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 1.91986,
-        "weight": 9433
+        "network_share_percent": 0.266472,
+        "weight": 1278
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": false,
       "periods": [
@@ -944,10 +981,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.079579,
-        "weight": 391
+        "network_share_percent": 0.085071,
+        "weight": 408
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 330,
       "legacy_known": true,
       "periods": [
@@ -975,10 +1012,10 @@
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 0.92645,
-        "weight": 4552
+        "network_share_percent": 0.96205,
+        "weight": 4614
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 338,
       "legacy_known": true,
       "periods": [
@@ -1023,10 +1060,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.617294,
-        "weight": 3033
+        "network_share_percent": 0.611133,
+        "weight": 2931
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -1048,14 +1085,14 @@
       "history_has_gaps": false,
       "last_profile": {
         "inference_url": "http://95.216.25.29:8000",
-        "ml_node_count": 2,
+        "ml_node_count": 1,
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 3.314419,
-        "weight": 16285
+        "network_share_percent": 1.780438,
+        "weight": 8539
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 331,
       "legacy_known": true,
       "periods": [
@@ -1081,10 +1118,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.773398,
+        "network_share_percent": 0.792325,
         "weight": 3800
       },
-      "last_seen_epoch": 362,
+      "last_seen_epoch": 363,
       "legacy_first_seen_epoch": 346,
       "legacy_known": true,
       "periods": [
@@ -1098,9 +1135,9 @@
       ]
     }
   },
-  "last_host_count": 29,
-  "last_processed_epoch": 362,
-  "last_total_weight": 491338,
+  "last_host_count": 30,
+  "last_processed_epoch": 363,
+  "last_total_weight": 479601,
   "last_total_weight_complete": true,
   "observation_gaps": [],
   "schema_version": 1
