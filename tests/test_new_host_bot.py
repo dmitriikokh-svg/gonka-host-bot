@@ -200,7 +200,7 @@ class TransitionTests(unittest.TestCase):
         current = snapshot(353, [entry("b")])
         result = watcher.process_snapshot(state, current, CONFIG)
         message = "\n".join(watcher.event_messages(result, current))
-        self.assertIn("Последний раз был активен в эпохе 350", message)
+        self.assertIn("Последняя активная эпоха: <b>350</b>", message)
         self.assertIn("Отсутствие обнаружено в эпохе 353", message)
         self.assertNotIn("эпохи 350–352", message)
 
@@ -287,13 +287,24 @@ class MessageAndPersistenceTests(unittest.TestCase):
         first = watcher.process_snapshot(state, left_snapshot, CONFIG)
         messages = "\n".join(watcher.event_messages(first, left_snapshot))
         self.assertIn("Новый хост в сети Gonka — эпоха 351", messages)
-        self.assertIn("Хост покинул активный набор — эпоха 351", messages)
+        self.assertIn("Хост больше не участвует — эпоха 351", messages)
+        self.assertIn("Последняя активная эпоха: <b>350</b>", messages)
         self.assertIn("Доля общего веса сети: <b>100.0%</b>", messages)
         returned_snapshot = snapshot(352, [entry("a", 100), entry("b", 300)])
         second = watcher.process_snapshot(first["state"], returned_snapshot, CONFIG)
         returned = "\n".join(watcher.event_messages(second, returned_snapshot))
         self.assertIn("Хост вернулся в сеть — эпоха 352", returned)
         self.assertIn("Отсутствовал: эпоха 351", returned)
+
+    def test_left_message_does_not_round_small_positive_share_to_zero(self):
+        state = baseline(entries=[entry("small", 1), entry("large", 1999)])
+        current = snapshot(351, [entry("large", 1999)])
+
+        result = watcher.process_snapshot(state, current, CONFIG)
+        message = "\n".join(watcher.event_messages(result, current))
+
+        self.assertIn("Доля веса сети: <b>&lt;0.1%</b>", message)
+        self.assertNotIn("Доля веса сети: <b>0.0%</b>", message)
 
     def test_large_event_lists_are_split_below_telegram_limit(self):
         blocks = [f"• host-{index}\n" + ("x" * 180) for index in range(100)]

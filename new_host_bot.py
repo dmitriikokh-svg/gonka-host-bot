@@ -491,9 +491,9 @@ def left_detail_lines(host: dict) -> list[str]:
         start = period.get("from")
         end = period.get("to")
         if period.get("end_exact") and isinstance(start, int) and isinstance(end, int):
-            lines.append(f"Последний период участия: {epoch_range(start, end)}")
+            lines.append(f"Последняя активная эпоха: <b>{end}</b>")
         elif isinstance(end, int):
-            lines.append(f"Последний раз был активен в эпохе {end}")
+            lines.append(f"Последняя активная эпоха: <b>{end}</b>")
             detected = host.get("absence_detected_epoch")
             if isinstance(detected, int):
                 lines.append(f"Отсутствие обнаружено в эпохе {detected}")
@@ -505,11 +505,11 @@ def left_detail_lines(host: dict) -> list[str]:
         if isinstance(weight, int)
         else "Последний вес: нет данных"
     )
-    lines.append(
-        f"Доля сети в последней эпохе: <b>{share:.1f}%</b>"
-        if isinstance(share, (int, float))
-        else "Доля сети в последней эпохе: нет данных"
-    )
+    if isinstance(share, (int, float)):
+        share_text = "&lt;0.1%" if 0 < share < 0.1 else f"{share:.1f}%"
+        lines.append(f"Доля веса сети: <b>{share_text}</b>")
+    else:
+        lines.append("Доля веса сети: нет данных")
     return lines
 
 
@@ -570,7 +570,7 @@ def event_messages(result: dict, snapshot: dict) -> list[str]:
     definitions = (
         ("new", "🆕", "Новый хост в сети Gonka", "Новые хосты в сети Gonka"),
         ("returned", "↩️", "Хост вернулся в сеть", "Хосты вернулись в сеть"),
-        ("left", "👋", "Хост покинул активный набор", "Хосты покинули активный набор"),
+        ("left", "⬇️", "Хост больше не участвует", "Хосты больше не участвуют"),
     )
     messages: list[str] = []
     for event_type, icon, singular, plural in definitions:
