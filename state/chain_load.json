@@ -1,15 +1,15 @@
 {
   "alert_level": "none",
-  "checked_at": "2026-08-19T06:56:49.562403Z",
+  "checked_at": "2026-08-19T07:37:08.091599Z",
   "consecutive_breaches": 0,
-  "consecutive_clean_windows": 220,
+  "consecutive_clean_windows": 221,
   "event_started_at": null,
   "last_alert_at": null,
-  "last_evaluated_height": 5637556,
+  "last_evaluated_height": 5638017,
   "last_recovered_at": null,
   "last_reminder_at": null,
-  "last_sum_tx_bytes": 2346,
-  "last_window_start": 5637547,
+  "last_sum_tx_bytes": 1630,
+  "last_window_start": 5638008,
   "last_working_rpc": "https://node3.gonka.ai/chain-rpc",
   "monitoring": {
     "alerted": false,
@@ -21,80 +21,26 @@
   "snapshot": {
     "blocks": [
       {
-        "height": 5637547,
+        "height": 5638008,
         "max_tx_bytes": 0,
         "message_types": {},
         "sum_tx_bytes": 0,
         "tx_count": 0
       },
       {
-        "height": 5637548,
-        "max_tx_bytes": 1036,
-        "message_types": {
-          "MsgSubmitHardwareDiff": {
-            "bytes": 1036,
-            "count": 1
-          }
-        },
-        "sum_tx_bytes": 1036,
-        "tx_count": 1
-      },
-      {
-        "height": 5637549,
-        "max_tx_bytes": 0,
-        "message_types": {},
-        "sum_tx_bytes": 0,
-        "tx_count": 0
-      },
-      {
-        "height": 5637550,
-        "max_tx_bytes": 0,
-        "message_types": {},
-        "sum_tx_bytes": 0,
-        "tx_count": 0
-      },
-      {
-        "height": 5637551,
-        "max_tx_bytes": 0,
-        "message_types": {},
-        "sum_tx_bytes": 0,
-        "tx_count": 0
-      },
-      {
-        "height": 5637552,
-        "max_tx_bytes": 0,
-        "message_types": {},
-        "sum_tx_bytes": 0,
-        "tx_count": 0
-      },
-      {
-        "height": 5637553,
+        "height": 5638009,
         "max_tx_bytes": 497,
         "message_types": {
           "MsgSubmitHardwareDiff": {
-            "bytes": 989,
-            "count": 2
+            "bytes": 497,
+            "count": 1
           }
         },
-        "sum_tx_bytes": 989,
-        "tx_count": 2
+        "sum_tx_bytes": 497,
+        "tx_count": 1
       },
       {
-        "height": 5637554,
-        "max_tx_bytes": 0,
-        "message_types": {},
-        "sum_tx_bytes": 0,
-        "tx_count": 0
-      },
-      {
-        "height": 5637555,
-        "max_tx_bytes": 0,
-        "message_types": {},
-        "sum_tx_bytes": 0,
-        "tx_count": 0
-      },
-      {
-        "height": 5637556,
+        "height": 5638010,
         "max_tx_bytes": 321,
         "message_types": {
           "MsgSend": {
@@ -104,92 +50,150 @@
         },
         "sum_tx_bytes": 321,
         "tx_count": 1
+      },
+      {
+        "height": 5638011,
+        "max_tx_bytes": 491,
+        "message_types": {
+          "MsgSend": {
+            "bytes": 321,
+            "count": 1
+          },
+          "MsgSubmitHardwareDiff": {
+            "bytes": 491,
+            "count": 1
+          }
+        },
+        "sum_tx_bytes": 812,
+        "tx_count": 2
+      },
+      {
+        "height": 5638012,
+        "max_tx_bytes": 0,
+        "message_types": {},
+        "sum_tx_bytes": 0,
+        "tx_count": 0
+      },
+      {
+        "height": 5638013,
+        "max_tx_bytes": 0,
+        "message_types": {},
+        "sum_tx_bytes": 0,
+        "tx_count": 0
+      },
+      {
+        "height": 5638014,
+        "max_tx_bytes": 0,
+        "message_types": {},
+        "sum_tx_bytes": 0,
+        "tx_count": 0
+      },
+      {
+        "height": 5638015,
+        "max_tx_bytes": 0,
+        "message_types": {},
+        "sum_tx_bytes": 0,
+        "tx_count": 0
+      },
+      {
+        "height": 5638016,
+        "max_tx_bytes": 0,
+        "message_types": {},
+        "sum_tx_bytes": 0,
+        "tx_count": 0
+      },
+      {
+        "height": 5638017,
+        "max_tx_bytes": 0,
+        "message_types": {},
+        "sum_tx_bytes": 0,
+        "tx_count": 0
       }
     ],
     "chain_id": "gonka-mainnet",
     "hot_blocks": [
       {
-        "bytes": 1036,
-        "height": 5637548,
-        "tx_count": 1
-      },
-      {
-        "bytes": 989,
-        "height": 5637553,
+        "bytes": 812,
+        "height": 5638011,
         "tx_count": 2
       },
       {
+        "bytes": 497,
+        "height": 5638009,
+        "tx_count": 1
+      },
+      {
         "bytes": 321,
-        "height": 5637556,
+        "height": 5638010,
         "tx_count": 1
       },
       {
         "bytes": 0,
-        "height": 5637547,
+        "height": 5638008,
         "tx_count": 0
       },
       {
         "bytes": 0,
-        "height": 5637549,
+        "height": 5638012,
         "tx_count": 0
       },
       {
         "bytes": 0,
-        "height": 5637550,
+        "height": 5638013,
         "tx_count": 0
       },
       {
         "bytes": 0,
-        "height": 5637551,
+        "height": 5638014,
         "tx_count": 0
       },
       {
         "bytes": 0,
-        "height": 5637552,
+        "height": 5638015,
         "tx_count": 0
       },
       {
         "bytes": 0,
-        "height": 5637554,
+        "height": 5638016,
         "tx_count": 0
       },
       {
         "bytes": 0,
-        "height": 5637555,
+        "height": 5638017,
         "tx_count": 0
       }
     ],
-    "latest_height": 5637556,
-    "max_tx_bytes": 1036,
+    "latest_height": 5638017,
+    "max_tx_bytes": 497,
     "message_types": [
       {
-        "bytes": 2025,
-        "count": 3,
+        "bytes": 988,
+        "count": 2,
         "type": "MsgSubmitHardwareDiff"
       },
       {
-        "bytes": 321,
-        "count": 1,
+        "bytes": 642,
+        "count": 2,
         "type": "MsgSend"
       }
     ],
     "rpc": "https://node3.gonka.ai/chain-rpc",
-    "sum_tx_bytes": 2346,
+    "sum_tx_bytes": 1630,
     "tx_count": 4,
     "window_block_count": 10,
-    "window_end": 5637556,
-    "window_start": 5637547
+    "window_end": 5638017,
+    "window_start": 5638008
   },
   "sources": [
     {
-      "error": "ConnectTimeout: HTTPSConnectionPool(host='node1.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node1.gonka.ai', port=443) at 0x7f54ee91bf20>, 'Connection to node1.gonka.ai timed out. (connect timeout=15)'))",
+      "error": "ConnectTimeout: HTTPSConnectionPool(host='node1.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node1.gonka.ai', port=443) at 0x7fe31e9db830>, 'Connection to node1.gonka.ai timed out. (connect timeout=15)'))",
       "error_category": "timeout",
       "name": "rpc1",
       "rpc": "https://node1.gonka.ai/chain-rpc",
       "status": "unavailable"
     },
     {
-      "error": "ConnectTimeout: HTTPSConnectionPool(host='node2.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node2.gonka.ai', port=443) at 0x7f54ee8f8c80>, 'Connection to node2.gonka.ai timed out. (connect timeout=15)'))",
+      "error": "ConnectTimeout: HTTPSConnectionPool(host='node2.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node2.gonka.ai', port=443) at 0x7fe31e9f8a70>, 'Connection to node2.gonka.ai timed out. (connect timeout=15)'))",
       "error_category": "timeout",
       "name": "rpc2",
       "rpc": "https://node2.gonka.ai/chain-rpc",
@@ -198,7 +202,7 @@
     {
       "error": null,
       "error_category": null,
-      "latest_height": 5637556,
+      "latest_height": 5638017,
       "name": "rpc3",
       "rpc": "https://node3.gonka.ai/chain-rpc",
       "status": "available"
