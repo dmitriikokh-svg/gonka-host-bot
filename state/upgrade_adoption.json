@@ -48,12 +48,12 @@
         "0.2.0",
         "0.2.0",
         "0.2.0",
+        "0.2.0",
         "3.0.16",
         "3.0.16",
         "0.2.0",
         "0.2.0",
-        "3.0.16",
-        "0.2.0"
+        "3.0.16"
       ]
     },
     "gonka1830lqug50lse998x2lakk4pj5ypfumz5pasz0y": {
@@ -95,11 +95,11 @@
         "0.2.0",
         "0.2.0",
         "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "3.0.16",
         "0.2.0",
         "3.0.16",
+        "0.2.0",
+        "0.2.0",
         "0.2.0",
         "0.2.0"
       ]
@@ -129,15 +129,15 @@
       "weight": 14528,
       "versions": [
         "0.2.0",
-        "0.2.0",
-        "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION"
+        "0.2.0",
+        "0.2.0"
       ]
     },
     "gonka1a3pkge3g33v3zdkq7qmycpjwpulms6ejt8z00f": {
@@ -206,17 +206,17 @@
       "weight": 68345,
       "versions": [
         "0.2.0",
-        "3.0.16",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "0.2.0",
         "0.2.0",
         "0.2.0",
         "3.0.16",
-        "3.0.16"
+        "3.0.16",
+        "0.2.0",
+        "3.0.16",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0"
       ]
     },
     "gonka1kx9mca3xm8u8ypzfuhmxey66u0ufxhs7nm6wc5": {
@@ -252,9 +252,9 @@
       "status": "incomplete",
       "weight": 8180,
       "versions": [
+        "MISSING_VERSION",
         "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION"
+        "0.2.0"
       ]
     },
     "gonka1tlvg4kjx7ljd5thgd5fkgh39q6lu8cmxupktgg": {
@@ -285,8 +285,8 @@
       "status": "other",
       "weight": 4589,
       "versions": [
-        "3.0.14-post2",
         "0.2.0",
+        "3.0.14-post2",
         "0.2.0"
       ]
     },
@@ -307,7 +307,7 @@
       ]
     }
   },
-  "mlnode_reported_signature": "18:4:5764",
-  "mlnode_candidate_signature": "19:4:5764",
-  "mlnode_candidate_runs": 1
+  "mlnode_reported_signature": "19:4:5764",
+  "mlnode_candidate_signature": null,
+  "mlnode_candidate_runs": 0
 }
