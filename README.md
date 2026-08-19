@@ -22,7 +22,8 @@
   кворуму Tendermint RPC.
 - `chain_load_watcher.py` — аномальный объём raw transaction bytes в последних
   блоках и риск чрезмерной chain load/state inflation.
-- `upgrade_adoption_watcher.py` — распространение целевой API-версии по весу.
+- `upgrade_adoption_watcher.py` — распространение целевых API- и
+  MLNode-версий.
 - `glamsterdam_watcher.py` — дата и статус Ethereum Glamsterdam.
 
 Общие HTTP fallback, атомарная запись JSON и Telegram находятся в
@@ -41,6 +42,8 @@ workflow-скриптом `scripts/commit_state.sh`.
 - `ETHEREUM_RPC_URLS` — необязательный secret: один или несколько Ethereum RPC
   через запятую. Они используются раньше публичных резервных RPC.
 - `TARGET_API_VERSION` — repository variable.
+- `TARGET_MLNODE_VERSION` — repository variable; workflow использует `3.0.16`,
+  если переменная ещё не задана.
 - `ADOPTION_THRESHOLD` — repository variable.
 
 Конфигурация собственных нод находится в `config/our_nodes.json`, ключей для
@@ -51,6 +54,22 @@ workflow-скриптом `scripts/commit_state.sh`.
 `ngonka`: 1 GNK = 1 000 000 000 ngonka. Ручной запуск workflow
 `Check escrow balances` по умолчанию отправляет проверочную сводку; плановые
 запуски пишут в Telegram только алерты, восстановления и напоминания.
+
+## Upgrade adoption monitor
+
+`upgrade_adoption_watcher.py` получает участников и эпоху из одного snapshot,
+затем один раз опрашивает `/v1/versions` каждого публичного API. Версия
+децентрализованного API берётся из `api_version.version`; она не считается
+версией inference-chain или MLNode. MLNode-версии читаются отдельно из
+`mlnodes[].version`.
+
+В Telegram показываются число видимых MLNode целевой версии, полностью
+обновлённые хосты и их вес. Вес хоста считается обновлённым только когда все
+его видимые MLNode сообщают целевую версию. Смешанные хосты и пустые версии не
+попадают в этот вес. Новое значение MLNode-прогресса отправляется после двух
+одинаковых последовательных проверок; первая проверка новой целевой версии
+создаёт начальную сводку сразу. Подробные версии по хостам сохраняются в
+`state/upgrade_adoption.json` и выводятся в workflow log.
 
 Workflow `Check bridge WGNK burns` запланирован каждые пять минут со смещением
 от начала часа. GitHub Actions может фактически запустить его позже. Монитор

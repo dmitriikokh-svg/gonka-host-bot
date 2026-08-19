@@ -32,6 +32,7 @@ jobs:
           TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
           TELEGRAM_SECONDARY_CHAT_ID: ${{ secrets.TELEGRAM_SECONDARY_CHAT_ID }}
           TARGET_API_VERSION: ${{ vars.TARGET_API_VERSION }}
+          TARGET_MLNODE_VERSION: ${{ vars.TARGET_MLNODE_VERSION || '3.0.16' }}
           ADOPTION_THRESHOLD: ${{ vars.ADOPTION_THRESHOLD }}
         run: python upgrade_adoption_watcher.py
 
