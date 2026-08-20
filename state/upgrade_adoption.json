@@ -1,25 +1,25 @@
 {
   "target_version": "v0.2.15-post3",
   "threshold": 267800,
-  "adopted_weight": 333747,
+  "adopted_weight": 334409,
   "network_total_weight": 415488,
-  "unknown_weight": 39022,
-  "unreachable_count": 6,
+  "unknown_weight": 38360,
+  "unreachable_count": 5,
   "threshold_reached": true,
   "unknown_band": "normal",
   "unknown_participants": 0,
   "target_mlnode_version": "3.0.16",
   "mlnode_target_node_count": 18,
-  "mlnode_visible_node_count": 115,
+  "mlnode_visible_node_count": 116,
   "mlnode_missing_version_node_count": 11,
   "mlnode_fully_updated_host_count": 4,
   "mlnode_fully_updated_weight": 5764,
   "mlnode_mixed_host_count": 4,
-  "mlnode_unknown_host_count": 14,
-  "mlnode_unknown_weight": 178200,
-  "mlnode_unavailable_host_count": 6,
+  "mlnode_unknown_host_count": 13,
+  "mlnode_unknown_weight": 177538,
+  "mlnode_unavailable_host_count": 5,
   "mlnode_version_distribution": {
-    "0.2.0": 75,
+    "0.2.0": 76,
     "3.0.14": 7,
     "3.0.14-post2": 4,
     "3.0.16": 18,
@@ -44,14 +44,14 @@
       "weight": 60555,
       "versions": [
         "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "3.0.16",
         "3.0.16",
         "0.2.0",
         "0.2.0",
         "3.0.16",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "0.2.0",
         "0.2.0"
       ]
@@ -65,10 +65,10 @@
       "status": "incomplete",
       "weight": 7772,
       "versions": [
-        "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
         "MISSING_VERSION"
       ]
     },
@@ -78,9 +78,11 @@
       "versions": []
     },
     "gonka1gyk0aahvr3qeju4zx0nplfreej6cy4jjk8svc5": {
-      "status": "unavailable",
+      "status": "other",
       "weight": 662,
-      "versions": []
+      "versions": [
+        "0.2.0"
+      ]
     },
     "gonka1scskt6wpnjnumsah6kjphmdu87vjgvcxmn4rxv": {
       "status": "mixed",
@@ -93,14 +95,14 @@
         "0.2.0",
         "0.2.0",
         "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "3.0.16",
         "0.2.0",
         "3.0.16",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "0.2.0"
       ]
     },
@@ -132,11 +134,11 @@
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "MISSING_VERSION",
         "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "MISSING_VERSION"
       ]
     },
@@ -168,6 +170,19 @@
         "0.2.0",
         "0.2.0",
         "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
         "3.0.16",
@@ -178,19 +193,6 @@
         "0.2.0",
         "0.2.0",
         "3.0.16",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "0.2.0"
       ]
     },
@@ -207,14 +209,14 @@
       "versions": [
         "0.2.0",
         "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "3.0.16",
         "3.0.16",
         "0.2.0",
         "3.0.16",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "0.2.0",
         "0.2.0"
       ]
@@ -253,8 +255,8 @@
       "weight": 8180,
       "versions": [
         "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION"
+        "MISSING_VERSION",
+        "0.2.0"
       ]
     },
     "gonka1tlvg4kjx7ljd5thgd5fkgh39q6lu8cmxupktgg": {
@@ -285,9 +287,9 @@
       "status": "other",
       "weight": 4589,
       "versions": [
-        "3.0.14-post2",
         "0.2.0",
-        "0.2.0"
+        "0.2.0",
+        "3.0.14-post2"
       ]
     },
     "gonka1ym3np7guxart483yfdxnlztuazx22cjt0e4a2p": {
