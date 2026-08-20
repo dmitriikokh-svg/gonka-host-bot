@@ -39,8 +39,9 @@ workflow-скриптом `scripts/commit_state.sh`.
   завершает проверку ошибкой.
 - `TELEGRAM_SECONDARY_CHAT_ID` — необязательный secret второго канала. Если он
   задан, каждое уведомление отправляется также в этот канал без topic.
-- `ETHEREUM_RPC_URLS` — необязательный secret: один или несколько Ethereum RPC
-  через запятую. Они используются раньше публичных резервных RPC.
+- `ETHEREUM_RPC_URLS` — GitHub Actions secret: один или несколько надёжных
+  Ethereum JSON-RPC URL через запятую или перенос строки. Secret-источники
+  используются раньше публичных fallback.
 - `TARGET_API_VERSION` — repository variable.
 - `TARGET_MLNODE_VERSION` — repository variable; workflow использует `3.0.16`,
   если переменная ещё не задана.
@@ -81,6 +82,16 @@ Gonka API отслеживается отдельно и не считается
 Перед удалением завершённой транзакции из очереди монитор сохраняет её эпоху и
 список подписавших validators. Последние 20 таких записей используются как
 фактическое liveness-доказательство для Top-10 bridge peers.
+
+Для production создайте repository secret `ETHEREUM_RPC_URLS` в GitHub Actions.
+URL провайдера может содержать token в path или query, поэтому его нельзя
+помещать в workflow, config или логи. Монитор принимает несколько URL через
+запятую либо перенос строки, удаляет повторы и сохраняет только безопасную
+метку `scheme://hostname[:port]`. Публичные RPC из `config/bridge_burn.json`
+остаются fallback, но их доступность и поддержка `finalized`/`eth_getLogs` не
+гарантируются. Если finalized block или полный диапазон logs недоступен, scan
+cursor не продвигается; пустой успешный `eth_getLogs` означает, что новых burn
+не найдено, а не ошибку мониторинга.
 
 Workflow `Check bridge stale and BLS risk` запускается каждые 5 минут. Он
 читает реальное распределение BLS slots текущей подписанной эпохи и применяет
@@ -210,6 +221,9 @@ phase gating не применяется. Telegram содержит только
 `timeout`, `HTTP 503`, `invalid response`, `wrong chain ID` и `node syncing`.
 Полная диагностика сохраняется в `state/chain_halt.json` и выводится
 в workflow/systemd logs.
+В конфигурацию также включён проверенный Tendermint RPC
+`http://204.12.168.157:26657/status`; quorum остаётся равным двум. Один
+доступный источник по-прежнему означает потерю наблюдаемости, а не halt.
 
 Разовый запуск, как в GitHub Actions:
 
@@ -257,6 +271,10 @@ base64 делает весь snapshot недостоверным. Недосту
 потерей наблюдаемости, а не нормальной или аномальной нагрузкой. Telegram
 получает краткие категории, полная диагностика остаётся в
 `state/chain_load.json` и logs.
+Архивный `http://204.12.168.157:26657` добавлен последним fallback. Пустая или
+состоящая из пробелов `CHAIN_LOAD_RPC_URLS` не заменяет список из config;
+непустой override принимает URL через запятую или перенос строки, удаляет
+повторы и проходит ту же валидацию.
 
 Type URL извлекаются из raw protobuf эвристически и используются только для
 triage. Multi-message transaction получает объединённую подпись типов, но её

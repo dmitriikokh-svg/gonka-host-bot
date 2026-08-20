@@ -2,7 +2,8 @@
   "rpc_urls": [
     "https://node1.gonka.ai/chain-rpc",
     "https://node2.gonka.ai/chain-rpc",
-    "https://node3.gonka.ai/chain-rpc"
+    "https://node3.gonka.ai/chain-rpc",
+    "http://204.12.168.157:26657"
   ],
   "expected_chain_id": "gonka-mainnet",
   "window_blocks": 10,

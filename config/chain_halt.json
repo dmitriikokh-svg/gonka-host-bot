@@ -11,6 +11,10 @@
     {
       "name": "node3",
       "url": "https://node3.gonka.ai/chain-rpc/status"
+    },
+    {
+      "name": "archive",
+      "url": "http://204.12.168.157:26657/status"
     }
   ],
   "expected_chain_id": "gonka-mainnet",

@@ -220,6 +220,23 @@ class SourcePollingTests(unittest.TestCase):
 
 
 class AssessmentTests(unittest.TestCase):
+    def test_node3_and_archive_keep_network_healthy_during_node1_node2_outage(self):
+        cfg = config(
+            sources=config()["sources"]
+            + [{"name": "archive", "url": "http://archive.example/status"}]
+        )
+        result = watcher.assess_network(
+            [
+                observation("node1", status="unavailable", error="timeout"),
+                observation("node2", status="unavailable", error="timeout"),
+                observation("node3", height=100, age=5),
+                observation("archive", height=99, age=10),
+            ],
+            cfg,
+        )
+        self.assertEqual(result["result"], "healthy")
+        self.assertEqual(result["confirming_sources"], 2)
+
     def test_two_old_close_sources_confirm_halt(self):
         result = watcher.assess_network(
             [observation("node1", height=100, age=61), observation("node2", height=102, age=90)],
@@ -262,6 +279,27 @@ class AssessmentTests(unittest.TestCase):
         )
         self.assertEqual(result["result"], "halted")
         self.assertEqual(result["confirming_sources"], 2)
+
+    def test_wrong_chain_syncing_and_malformed_sources_do_not_enter_quorum(self):
+        cfg = config()
+        source1, source2, source3 = cfg["sources"]
+        wrong_chain = watcher.parse_status_payload(
+            payload(chain_id="other-chain"), source1, cfg, NOW
+        )
+        syncing = watcher.parse_status_payload(
+            payload(catching_up=True), source2, cfg, NOW
+        )
+        malformed = watcher.unavailable_observation(
+            source3,
+            "malformed JSON",
+            error_category="invalid response",
+        )
+        result = watcher.assess_network(
+            [wrong_chain, syncing, malformed],
+            cfg,
+        )
+        self.assertEqual(result["result"], "insufficient")
+        self.assertEqual(result["confirming_sources"], 0)
 
 
 class StateTransitionTests(unittest.TestCase):

@@ -153,12 +153,16 @@ def load_config(
         raise ValueError("chain load config must be a JSON object")
     config = copy.deepcopy(config)
     environment = os.environ if environ is None else environ
-    if "CHAIN_LOAD_RPC_URLS" in environment:
-        config["rpc_urls"] = [
-            item.strip()
-            for item in environment["CHAIN_LOAD_RPC_URLS"].split(",")
-            if item.strip()
-        ]
+    raw_override = environment.get("CHAIN_LOAD_RPC_URLS", "")
+    override_urls = []
+    for item in raw_override.replace("\n", ",").split(","):
+        value = item.strip()
+        if value:
+            normalized = validate_rpc_url(value, "CHAIN_LOAD_RPC_URLS")
+            if normalized not in override_urls:
+                override_urls.append(normalized)
+    if override_urls:
+        config["rpc_urls"] = override_urls
     return validate_config(config)
 
 

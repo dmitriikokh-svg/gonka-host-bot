@@ -53,11 +53,11 @@ def positive_int(config: dict, field: str, *, minimum: int = 1) -> int:
 def validate_url(value: str, field: str) -> None:
     parsed = urlparse(value)
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
-        raise ValueError(f"invalid URL in {field}: {value!r}")
+        raise ValueError(f"invalid URL in {field}")
     try:
         parsed.port
     except ValueError as exc:
-        raise ValueError(f"invalid port in {field}: {value!r}") from exc
+        raise ValueError(f"invalid port in {field}") from exc
 
 
 def load_config() -> dict:
@@ -174,6 +174,23 @@ def source_label(url: str) -> str:
     return f"{parsed.scheme}://{parsed.hostname}{port}"
 
 
+def safe_rpc_error(exc: Exception) -> str:
+    """Return diagnostics that cannot echo a credentialed provider URL."""
+    response = getattr(exc, "response", None)
+    status_code = getattr(response, "status_code", None)
+    if isinstance(status_code, int):
+        return f"HTTP {status_code}"
+    if isinstance(exc, requests.Timeout):
+        return "timeout"
+    if isinstance(exc, requests.ConnectionError):
+        return "connection error"
+    if isinstance(exc, requests.RequestException):
+        return "request error"
+    if isinstance(exc, (ValueError, TypeError, KeyError)):
+        return "invalid response"
+    return type(exc).__name__
+
+
 def configured_rpc_urls(config: dict) -> list[str]:
     secret_urls: list[str] = []
     raw = os.environ.get("ETHEREUM_RPC_URLS", "")
@@ -184,9 +201,20 @@ def configured_rpc_urls(config: dict) -> list[str]:
             secret_urls.append(value)
 
     result: list[str] = []
+    seen: set[tuple[str, str, str, str, str]] = set()
     for url in secret_urls + config["ethereum_rpc_urls"]:
-        if url not in result:
-            result.append(url)
+        parsed = urlparse(url)
+        key = (
+            parsed.scheme.lower(),
+            parsed.netloc,
+            parsed.path.rstrip("/"),
+            parsed.query,
+            parsed.fragment,
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(url)
     return result
 
 
@@ -224,7 +252,7 @@ def rpc_call(
             except Exception as exc:  # noqa: BLE001 - aggregate safe labels
                 errors.append(
                     f"{label} attempt {attempt}/{config['attempts_per_source']}: "
-                    f"{type(exc).__name__}: {str(exc)[:300]}"
+                    f"{safe_rpc_error(exc)}"
                 )
                 if attempt < config["attempts_per_source"]:
                     time.sleep(1)
@@ -568,7 +596,13 @@ def age_minutes(item: dict, now: datetime) -> int:
     return max(0, int((now - detected).total_seconds() // 60))
 
 
-def source_success(state: dict, source: str, now: str) -> list[str]:
+def source_success(
+    state: dict,
+    source: str,
+    now: str,
+    *,
+    endpoint: str | None = None,
+) -> list[str]:
     previous = state["sources"].get(source, {})
     messages: list[str] = []
     if previous.get("alerted"):
@@ -583,6 +617,7 @@ def source_success(state: dict, source: str, now: str) -> list[str]:
         "alerted": False,
         "last_success_at": now,
         "last_error": None,
+        "endpoint": endpoint,
     }
     return messages
 
@@ -613,6 +648,7 @@ def source_failure(
         "alerted": alerted,
         "last_success_at": previous.get("last_success_at"),
         "last_error": str(error)[:2000],
+        "endpoint": previous.get("endpoint"),
     }
     return messages
 
@@ -797,7 +833,7 @@ def run() -> dict:
             if isinstance(previous_cursor, int) and not isinstance(previous_cursor, bool)
             else None
         )
-        finalized, _source = fetch_finalized_block(
+        finalized, ethereum_source = fetch_finalized_block(
             config,
             minimum_block=minimum_block,
         )
@@ -809,7 +845,14 @@ def run() -> dict:
         added = add_burn_logs(state, config, logs, now)
         state["ethereum_finalized_block"] = finalized
         state["last_scanned_finalized_block"] = finalized
-        messages.extend(source_success(state, "ethereum", now))
+        messages.extend(
+            source_success(
+                state,
+                "ethereum",
+                now,
+                endpoint=ethereum_source,
+            )
+        )
     except (SourcesUnavailable, ValueError) as exc:
         messages.extend(source_failure(state, config, "ethereum", exc, now))
 
@@ -834,6 +877,7 @@ def run() -> dict:
                 ),
                 "critical": bool(state.get("critical_alerted")),
                 "ethereum_source": state["sources"].get("ethereum", {}).get("status"),
+                "ethereum_endpoint": state["sources"].get("ethereum", {}).get("endpoint"),
                 "gonka_source": state["sources"].get("gonka", {}).get("status"),
             },
             ensure_ascii=False,

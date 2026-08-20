@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import _bootstrap  # noqa: F401 - installs an optional requests stub
 
@@ -135,6 +135,94 @@ class BridgeResponseTests(unittest.TestCase):
                 "completed_validators": [],
                 "epoch_index": None,
             },
+        )
+
+
+class RpcConfigurationTests(unittest.TestCase):
+    def test_secret_urls_are_first_support_both_separators_and_are_deduplicated(self):
+        cfg = config(
+            ethereum_rpc_urls=[
+                "https://public.example/rpc",
+                "https://duplicate.example/rpc/",
+            ]
+        )
+        with patch.dict(
+            os.environ,
+            {
+                "ETHEREUM_RPC_URLS": (
+                    " https://secret.example/token?key=value,\n"
+                    "https://duplicate.example/rpc,,\n"
+                    "https://secret.example/token?key=value "
+                )
+            },
+            clear=True,
+        ):
+            urls = watcher.configured_rpc_urls(cfg)
+
+        self.assertEqual(
+            urls,
+            [
+                "https://secret.example/token?key=value",
+                "https://duplicate.example/rpc",
+                "https://public.example/rpc",
+            ],
+        )
+
+    def test_invalid_secret_url_does_not_echo_provider_token(self):
+        token = "TOP_SECRET_PROVIDER_TOKEN"
+        with (
+            patch.dict(
+                os.environ,
+                {"ETHEREUM_RPC_URLS": f"ftp://provider.example/{token}"},
+                clear=True,
+            ),
+            self.assertRaises(ValueError) as caught,
+        ):
+            watcher.configured_rpc_urls(config())
+        self.assertNotIn(token, str(caught.exception))
+
+    def test_provider_token_is_absent_from_exception_state_and_message(self):
+        token = "TOP_SECRET_PROVIDER_TOKEN"
+        cfg = config(
+            source_unavailable_alert_after_runs=1,
+            ethereum_rpc_urls=[],
+        )
+
+        class Session:
+            @staticmethod
+            def post(url, **_kwargs):
+                raise RuntimeError(f"403 denied for {url}")
+
+        with (
+            patch.dict(
+                os.environ,
+                {"ETHEREUM_RPC_URLS": f"https://provider.example/v2/{token}?key={token}"},
+                clear=True,
+            ),
+            self.assertRaises(watcher.SourcesUnavailable) as caught,
+        ):
+            watcher.rpc_call(cfg, "eth_getBlockByNumber", ["finalized", False], session=Session)
+
+        self.assertNotIn(token, str(caught.exception))
+        self.assertIn("https://provider.example", str(caught.exception))
+        state = watcher.default_state()
+        messages = watcher.source_failure(
+            state,
+            cfg,
+            "ethereum",
+            caught.exception,
+            "2026-07-29T00:00:00+00:00",
+        )
+        self.assertNotIn(token, repr(state))
+        self.assertNotIn(token, "\n".join(messages))
+
+    def test_workflow_reads_rpc_only_from_github_secret(self):
+        workflow = (
+            watcher.ROOT / ".github" / "workflows" / "check-bridge-burn.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "ETHEREUM_RPC_URLS: ${{ secrets.ETHEREUM_RPC_URLS }}",
+            workflow,
         )
 
 
@@ -335,6 +423,69 @@ class RunIntegrationTests(unittest.TestCase):
         self.assertIn("ethereum/150/2", state["queue"])
         self.assertEqual(send.call_count, 1)
         self.assertIn("Проверка WGNK burn bridge", send.call_args.args[0])
+
+    def test_full_ethereum_failure_does_not_advance_cursor(self):
+        previous = watcher.default_state()
+        previous["ethereum_finalized_block"] = 150
+        previous["last_scanned_finalized_block"] = 150
+        with tempfile.TemporaryDirectory() as directory:
+            state_file = Path(directory) / "bridge.json"
+            watcher.save_json_atomic(state_file, previous, sort_keys=True)
+            with (
+                patch.object(watcher, "STATE_FILE", state_file),
+                patch.object(watcher, "load_config", return_value=config()),
+                patch.object(
+                    watcher,
+                    "fetch_finalized_block",
+                    side_effect=watcher.SourcesUnavailable("safe failure"),
+                ),
+                patch.object(watcher, "fetch_burn_logs") as fetch_logs,
+                patch.object(watcher, "send_telegram_message"),
+                patch.dict(os.environ, {}, clear=True),
+            ):
+                state = watcher.run()
+
+        self.assertEqual(state["ethereum_finalized_block"], 150)
+        self.assertEqual(state["last_scanned_finalized_block"], 150)
+        fetch_logs.assert_not_called()
+        self.assertEqual(state["sources"]["ethereum"]["status"], "unavailable")
+
+    def test_empty_logs_are_success_and_next_run_starts_after_cursor(self):
+        cfg = config()
+        with tempfile.TemporaryDirectory() as directory:
+            state_file = Path(directory) / "bridge.json"
+            with (
+                patch.object(watcher, "STATE_FILE", state_file),
+                patch.object(watcher, "load_config", return_value=cfg),
+                patch.object(
+                    watcher,
+                    "fetch_finalized_block",
+                    side_effect=[
+                        (200, "https://provider.example"),
+                        (205, "https://provider.example"),
+                    ],
+                ),
+                patch.object(watcher, "fetch_burn_logs", return_value=[]) as fetch_logs,
+                patch.object(watcher, "send_telegram_message"),
+                patch.dict(os.environ, {}, clear=True),
+            ):
+                first = watcher.run()
+                second = watcher.run()
+
+        self.assertEqual(first["ethereum_finalized_block"], 200)
+        self.assertEqual(first["last_scanned_finalized_block"], 200)
+        self.assertEqual(second["ethereum_finalized_block"], 205)
+        self.assertEqual(second["last_scanned_finalized_block"], 205)
+        self.assertEqual(second["queue"], {})
+        self.assertEqual(second["sources"]["ethereum"]["status"], "available")
+        self.assertEqual(
+            second["sources"]["ethereum"]["endpoint"],
+            "https://provider.example",
+        )
+        self.assertEqual(
+            fetch_logs.call_args_list,
+            [call(cfg, 73, 200), call(cfg, 201, 205)],
+        )
 
 
 if __name__ == "__main__":

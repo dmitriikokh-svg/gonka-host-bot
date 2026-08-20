@@ -158,13 +158,29 @@ class ConfigTests(unittest.TestCase):
             loaded = watcher.load_config(
                 path,
                 environ={
-                    "CHAIN_LOAD_RPC_URLS": "https://a.example/rpc, https://b.example/rpc"
+                    "CHAIN_LOAD_RPC_URLS": (
+                        "https://a.example/rpc,\nhttps://b.example/rpc,,"
+                        "https://a.example/rpc"
+                    )
                 },
             )
         self.assertEqual(
             loaded["rpc_urls"],
             ["https://a.example/rpc", "https://b.example/rpc"],
         )
+
+    def test_empty_rpc_env_keeps_configured_fallbacks(self):
+        expected = config()["rpc_urls"]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.json"
+            path.write_text(json.dumps(config()), encoding="utf-8")
+            for value in ("", "  \n ,  "):
+                with self.subTest(value=value):
+                    loaded = watcher.load_config(
+                        path,
+                        environ={"CHAIN_LOAD_RPC_URLS": value},
+                    )
+                    self.assertEqual(loaded["rpc_urls"], expected)
 
     def test_all_config_values_are_validated(self):
         with self.assertRaisesRegex(ValueError, "expected_chain_id"):
@@ -322,6 +338,44 @@ class SnapshotCollectionTests(unittest.TestCase):
         self.assertEqual(result["snapshot"]["sum_tx_bytes"], 3)
         self.assertIn(f"{rpc2}/block?height=1", session.calls)
         self.assertIn(f"{rpc2}/block?height=2", session.calls)
+
+    def test_status_failure_falls_back_to_second_rpc(self):
+        rpc1, rpc2 = config(window_blocks=1)["rpc_urls"]
+        mapping = {
+            f"{rpc1}/status": Response(error=TimeoutError("timed out")),
+            f"{rpc2}/status": status_payload(5),
+            f"{rpc2}/block?height=5": block_payload(5, [b"ok"]),
+        }
+        result = watcher.collect_snapshot(
+            config(window_blocks=1),
+            session=MappingSession(mapping),
+        )
+        self.assertTrue(result["available"])
+        self.assertEqual(result["snapshot"]["rpc"], rpc2)
+        self.assertEqual(result["sources"][0]["error_category"], "timeout")
+
+    def test_malformed_base64_discards_each_snapshot(self):
+        rpc1, rpc2 = config(window_blocks=1)["rpc_urls"]
+        malformed1 = block_payload(5)
+        malformed1["result"]["block"]["data"]["txs"] = ["not-base64***"]
+        malformed2 = block_payload(5)
+        malformed2["result"]["block"]["data"]["txs"] = ["also-bad***"]
+        mapping = {
+            f"{rpc1}/status": status_payload(5),
+            f"{rpc1}/block?height=5": malformed1,
+            f"{rpc2}/status": status_payload(5),
+            f"{rpc2}/block?height=5": malformed2,
+        }
+        result = watcher.collect_snapshot(
+            config(window_blocks=1),
+            session=MappingSession(mapping),
+        )
+        self.assertFalse(result["available"])
+        self.assertIsNone(result["snapshot"])
+        self.assertEqual(
+            [item["error_category"] for item in result["sources"]],
+            ["malformed tx", "malformed tx"],
+        )
 
     def test_wrong_chain_falls_back_to_next_rpc(self):
         rpc1, rpc2 = config(window_blocks=1)["rpc_urls"]
