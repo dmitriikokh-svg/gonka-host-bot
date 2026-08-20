@@ -79,16 +79,16 @@
       "status": "mixed",
       "weight": 8550,
       "versions": [
-        "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
-        "3.0.16"
+        "3.0.16",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "MISSING_VERSION"
       ]
     },
     "gonka1346p2h8dn4kp98c5e93k5q64g0h7vxjxnd55fh": {
@@ -107,8 +107,8 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
-        "3.0.16",
         "0.2.0",
+        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -162,10 +162,10 @@
       "weight": 8637,
       "versions": [
         "0.2.0",
+        "3.0.14-post2",
         "0.2.0",
         "0.2.0",
-        "0.2.0",
-        "3.0.14-post2"
+        "0.2.0"
       ]
     },
     "gonka1m58jds005cttwq2vt0p7yk6vy2aqg254cqqppf": {
@@ -241,8 +241,8 @@
       "weight": 4426,
       "versions": [
         "0.2.0",
-        "3.0.14-post2",
-        "0.2.0"
+        "0.2.0",
+        "3.0.14-post2"
       ]
     },
     "gonka1ym3np7guxart483yfdxnlztuazx22cjt0e4a2p": {
@@ -259,13 +259,13 @@
       "versions": [
         "0.2.0",
         "0.2.0",
-        "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
         "MISSING_VERSION",
+        "MISSING_VERSION",
+        "0.2.0",
+        "0.2.0",
         "MISSING_VERSION"
       ]
     },
