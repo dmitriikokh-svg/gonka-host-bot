@@ -59,6 +59,7 @@ class MLNodeSummaryTests(unittest.TestCase):
             {"id": "mixed", "weight": 200},
             {"id": "missing", "weight": 300},
             {"id": "down", "weight": 400},
+            {"id": "old", "weight": 10},
         ]
         results = {
             "full": {
@@ -71,29 +72,61 @@ class MLNodeSummaryTests(unittest.TestCase):
                 "mlnodes": [node("m1", "3.0.16"), node("m2", None)]
             },
             "down": None,
+            "old": {
+                "mlnodes": [node("o1", "0.2.0")]
+            },
         }
 
         summary = watcher.summarize_mlnode_adoption(
             participants,
             results,
             "3.0.16",
-            network_total_weight=1050,
-            network_host_count=5,
+            network_total_weight=1060,
+            network_host_count=6,
             initial_unknown_weight=50,
             initial_unknown_hosts=1,
         )
 
         self.assertEqual(summary["target_node_count"], 4)
-        self.assertEqual(summary["visible_node_count"], 6)
+        self.assertEqual(summary["visible_node_count"], 7)
         self.assertEqual(summary["missing_version_node_count"], 1)
         self.assertEqual(summary["fully_updated_host_count"], 1)
         self.assertEqual(summary["fully_updated_weight"], 100)
         self.assertEqual(summary["mixed_host_count"], 2)
-        self.assertEqual(summary["unknown_host_count"], 3)
-        self.assertEqual(summary["unknown_weight"], 750)
+        self.assertEqual(summary["other_host_count"], 1)
+        self.assertEqual(summary["unknown_host_count"], 2)
+        self.assertEqual(summary["unknown_weight"], 450)
         self.assertEqual(summary["unavailable_host_count"], 1)
+        self.assertEqual(
+            summary["fully_updated_host_count"]
+            + summary["mixed_host_count"]
+            + summary["other_host_count"]
+            + summary["unknown_host_count"],
+            6,
+        )
         self.assertEqual(summary["version_distribution"]["3.0.16"], 3)
         self.assertEqual(summary["version_distribution"]["v3.0.16"], 1)
+
+    def test_distribution_list_puts_target_first_and_collapses_post(self):
+        lines = watcher.format_mlnode_distribution_lines(
+            {
+                "3.0.16": 46,
+                "0.2.0": 34,
+                "3.0.14": 7,
+                "3.0.14-post2": 4,
+                "MISSING_VERSION": 16,
+            },
+            "3.0.16",
+        )
+        self.assertEqual(
+            lines,
+            [
+                "3.0.16 — 46",
+                "0.2.0 — 34",
+                "3.0.14 / post2 — 11",
+                "версия не указана — 16",
+            ],
+        )
 
     def test_progress_change_requires_two_matching_checks(self):
         previous = {
@@ -162,9 +195,17 @@ class IntegrationTests(unittest.TestCase):
         message = send.call_args.args[0]
         self.assertIn("Прогресс обновлений (эпоха 365)", message)
         self.assertIn("API v0.2.15-post3", message)
+        self.assertIn("Цель: 50 веса (50.0%) у хостов с этой версией API", message)
+        self.assertIn("Обновлено: 100 / 100 веса (100.0%)", message)
+        self.assertIn("✅ Цель по API достигнута!", message)
         self.assertIn("MLNode 3.0.16", message)
-        self.assertIn("Подтверждено MLNode: 1 из 1 видимых", message)
-        self.assertIn("1 из 1 с известным весом", message)
+        self.assertIn("Ноды с этой версией: 1 из 1 (100.0%)", message)
+        self.assertIn("3.0.16 — 1", message)
+        self.assertIn("Хосты, у которых всё железо на 3.0.16: 1 из 1", message)
+        self.assertIn("Частично обновлённых: 0", message)
+        self.assertIn("На старых версиях: 0", message)
+        self.assertIn("Нет данных: 0", message)
+        self.assertNotIn("Участников без веса", message)
         self.assertEqual(saved["mlnode_fully_updated_weight"], 100)
         self.assertEqual(saved["mlnode_reported_signature"], "1:1:100")
 

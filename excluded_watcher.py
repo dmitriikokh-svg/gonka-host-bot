@@ -135,12 +135,16 @@ def main():
             )
             for node_id in sorted(new_ids)
         )
+        count = len(new_ids)
+        if count == 1:
+            title = "Исключён после Confirmation PoC"
+        else:
+            title = f"Исключены после Confirmation PoC ({count})"
         epoch = snapshot.get("epoch")
-        epoch_note = f" (эпоха {escape_html(epoch)})" if epoch is not None else ""
-        message = (
-            f"\u26A0\uFE0F \u041d\u043e\u0432\u043e\u0435 \u0438\u0441\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 "
-            f"\u043f\u043e\u0441\u043b\u0435 cPoC ({len(new_ids)}){epoch_note}:\n{lines}"
+        epoch_note = (
+            f" — эпоха {escape_html(epoch)}" if epoch is not None else ""
         )
+        message = f"⚠️ <b>{title}{epoch_note}</b>\n\n{lines}"
         send_telegram_message(message)
         print(f"Sent alert for {len(new_ids)} newly excluded participant(s).")
     else:

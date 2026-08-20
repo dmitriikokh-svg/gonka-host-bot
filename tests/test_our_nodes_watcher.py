@@ -9,9 +9,11 @@ import requests
 import our_nodes_watcher
 from our_nodes_watcher import (
     RATIO_METRIC_VERSION,
+    build_node_recovery,
     confirmation_metric,
     evaluate_confirmation,
     fetch_epoch_group_snapshot,
+    format_alert_datetime,
     parse_epoch_group_payload,
     parse_participants_payload,
 )
@@ -278,6 +280,34 @@ class MainPersistenceTests(unittest.TestCase):
             self.assertEqual(node["weight_ratio"], 24.0)
             self.assertEqual(node["ratio_source"], "https://group.example")
             self.assertEqual(node["ratio_low_runs"], 2)
+
+
+class MessageFormatTests(unittest.TestCase):
+    def test_recovery_times_use_utc_and_pacific_clock(self):
+        self.assertEqual(
+            format_alert_datetime("2026-08-20T20:02:03+00:00"),
+            "20 авг, 20:02 UTC (13:02 PT)",
+        )
+        self.assertEqual(
+            format_alert_datetime("2026-08-21T02:00:00+00:00"),
+            "21 авг, 02:00 UTC (20 авг, 19:00 PT)",
+        )
+        message = build_node_recovery(
+            {
+                "name": "node1",
+                "participant_address": "gonka1test",
+            },
+            {"first_failed_at": "2026-08-20T20:02:03+00:00"},
+            {"details": "HTTP 200 in 45 ms"},
+            "2026-08-20T20:17:03+00:00",
+        )
+        self.assertIn("Наша нода снова отвечает: node1", message)
+        self.assertIn("Недоступность с: 20 авг, 20:02 UTC (13:02 PT)", message)
+        self.assertIn(
+            "Восстановлена: 20 авг, 20:17 UTC (13:17 PT) (15 мин)",
+            message,
+        )
+        self.assertNotIn("T20:", message)
 
 
 if __name__ == "__main__":

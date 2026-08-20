@@ -275,6 +275,7 @@ def summarize_mlnode_adoption(
     fully_updated_hosts = 0
     fully_updated_weight = 0
     mixed_hosts = 0
+    other_hosts = 0
     unknown_hosts = initial_unknown_hosts
     unknown_weight = initial_unknown_weight
     unavailable_hosts = 0
@@ -327,13 +328,13 @@ def summarize_mlnode_adoption(
         elif any(matching):
             status = "mixed"
             mixed_hosts += 1
-        else:
-            status = "other"
-
-        if has_missing:
+        elif has_missing:
+            status = "incomplete"
             unknown_hosts += 1
             unknown_weight += weight
-            status = "incomplete" if status == "other" else status
+        else:
+            status = "other"
+            other_hosts += 1
 
         hosts[participant_id] = {
             "status": status,
@@ -356,12 +357,73 @@ def summarize_mlnode_adoption(
         "fully_updated_weight": fully_updated_weight,
         "fully_updated_weight_percent": pct,
         "mixed_host_count": mixed_hosts,
+        "other_host_count": other_hosts,
         "unknown_host_count": unknown_hosts,
         "unknown_weight": unknown_weight,
         "unavailable_host_count": unavailable_hosts,
         "version_distribution": dict(sorted(distribution.items())),
         "hosts": hosts,
     }
+
+
+def format_mlnode_distribution_lines(
+    distribution: dict,
+    target_version: str,
+) -> list[str]:
+    """Telegram list of MLNode versions: target first, then by count.
+
+    ``3.0.14`` and ``3.0.14-post2`` collapse to ``3.0.14 / post2``.
+    """
+    missing = int(distribution.get("MISSING_VERSION") or 0)
+    counts: dict[str, int] = {}
+    post_tags: dict[str, list[str]] = {}
+    for raw, n in distribution.items():
+        if raw == "MISSING_VERSION" or not n:
+            continue
+        label = str(raw)
+        if "-post" in label:
+            base, _, tag = label.partition("-post")
+            counts[base] = counts.get(base, 0) + int(n)
+            tags = post_tags.setdefault(base, [])
+            if tag not in tags:
+                tags.append(tag)
+        else:
+            counts[label] = counts.get(label, 0) + int(n)
+
+    def display_name(version: str) -> str:
+        tags = post_tags.get(version) or []
+        if not tags:
+            return version
+        return f"{version} / " + ", ".join(f"post{tag}" for tag in tags)
+
+    norm_target = normalize_version(target_version)
+    ordered: list[str] = []
+    for version in counts:
+        if normalize_version(version) == norm_target:
+            ordered.append(version)
+            break
+    ordered.extend(
+        sorted(
+            (version for version in counts if version not in ordered),
+            key=lambda version: (-counts[version], version),
+        )
+    )
+    lines = [f"{display_name(version)} — {counts[version]}" for version in ordered]
+    if missing:
+        lines.append(f"версия не указана — {missing}")
+    return lines
+
+
+def russian_host_word(count: int) -> str:
+    n = abs(count) % 100
+    n1 = n % 10
+    if 11 <= n <= 14:
+        return "хостов"
+    if n1 == 1:
+        return "хост"
+    if 2 <= n1 <= 4:
+        return "хоста"
+    return "хостов"
 
 
 def mlnode_signature(summary):
@@ -526,6 +588,16 @@ def main():
         if network_total_weight
         else 0
     )
+    goal_pct = (
+        threshold / network_total_weight * 100
+        if network_total_weight
+        else 0
+    )
+    mlnode_pct = (
+        mlnode["target_node_count"] / mlnode["visible_node_count"] * 100
+        if mlnode["visible_node_count"]
+        else 0
+    )
 
     print(
         f"Adoption: {adopted_weight}/{network_total_weight} "
@@ -603,34 +675,46 @@ def main():
 
     if changed:
         status_line = (
-            "✅ Порог достигнут!\n"
+            "✅ Цель по API достигнута!\n"
             if crossed_threshold_now
+            else ""
+        )
+        unknown_hosts_line = (
+            f"Участников без веса: {unknown_participants}\n"
+            if unknown_participants
             else ""
         )
 
         message = (
             f"📊 Прогресс обновлений{epoch_note}\n\n"
             f"API {target_version}\n"
-            f"{adopted_weight} / {network_total_weight} "
+            f"Цель: {threshold} веса ({goal_pct:.1f}%) "
+            f"у хостов с этой версией API\n"
+            f"Обновлено: {adopted_weight} / {network_total_weight} "
             f"веса ({pct:.1f}%)\n"
-            f"Порог: {threshold}\n"
-            f"Недоступных хостов: {unreachable}\n"
-            f"Неизвестный вес: {unknown_weight}\n"
             f"{status_line}"
-            f"Участников без веса: {unknown_participants}\n\n"
+            f"Не достучались до /v1/versions: {unreachable} "
+            f"{russian_host_word(unreachable)} "
+            f"(их вес: {unknown_weight})\n"
+            f"{unknown_hosts_line}"
+            f"---\n"
             f"MLNode {target_mlnode_version}\n"
-            f"Подтверждено MLNode: {mlnode['target_node_count']} из "
-            f"{mlnode['visible_node_count']} видимых\n"
-            f"Полностью обновлённых хостов: "
+            f"Ноды с этой версией: {mlnode['target_node_count']} из "
+            f"{mlnode['visible_node_count']} ({mlnode_pct:.1f}%)\n"
+        )
+        dist_lines = format_mlnode_distribution_lines(
+            mlnode["version_distribution"],
+            target_mlnode_version,
+        )
+        if dist_lines:
+            message += "\n" + "\n".join(dist_lines) + "\n"
+        message += (
+            f"\nХосты, у которых всё железо на {target_mlnode_version}: "
             f"{mlnode['fully_updated_host_count']} из "
-            f"{network_host_count} с известным весом\n"
-            f"Их вес: {mlnode['fully_updated_weight']} / "
-            f"{network_total_weight} "
-            f"({mlnode['fully_updated_weight_percent']:.1f}%)\n"
-            f"Смешанных хостов: {mlnode['mixed_host_count']}\n"
-            f"Неполные/недоступные MLNode-данные: "
-            f"{mlnode['unknown_host_count']} хостов, "
-            f"{mlnode['unknown_weight']} веса\n"
+            f"{network_host_count}\n"
+            f"Частично обновлённых: {mlnode['mixed_host_count']}\n"
+            f"На старых версиях: {mlnode['other_host_count']}\n"
+            f"Нет данных: {mlnode['unknown_host_count']}\n"
         )
 
         send_telegram_message(message, parse_mode=None)
@@ -662,6 +746,7 @@ def main():
             ],
             "mlnode_fully_updated_weight": mlnode["fully_updated_weight"],
             "mlnode_mixed_host_count": mlnode["mixed_host_count"],
+            "mlnode_other_host_count": mlnode["other_host_count"],
             "mlnode_unknown_host_count": mlnode["unknown_host_count"],
             "mlnode_unknown_weight": mlnode["unknown_weight"],
             "mlnode_unavailable_host_count": mlnode[

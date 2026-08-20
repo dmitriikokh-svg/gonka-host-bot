@@ -568,9 +568,9 @@ def chunk_messages(
 
 def event_messages(result: dict, snapshot: dict) -> list[str]:
     definitions = (
-        ("new", "🆕", "Новый хост в сети Gonka", "Новые хосты в сети Gonka"),
-        ("returned", "↩️", "Хост вернулся в сеть", "Хосты вернулись в сеть"),
-        ("left", "⬇️", "Хост больше не участвует", "Хосты больше не участвуют"),
+        ("new", "🎉", "Новый хост", "Новые хосты"),
+        ("returned", "🥳", "Хост вернулся", "Хосты вернулись"),
+        ("left", "⬇️", "Хост ушёл", "Хосты ушли"),
     )
     messages: list[str] = []
     for event_type, icon, singular, plural in definitions:
@@ -597,7 +597,7 @@ def weight_warning_message(alert: dict) -> str:
         else f"нет данных → {alert['current_host_count']}"
     )
     return (
-        "⚠️ <b>Резко изменился общий вес сети</b>\n\n"
+        "⚠️ <b>Резко изменился вес сети</b>\n\n"
         f"Эпохи: {alert['from_epoch']} → {alert['to_epoch']}\n"
         f"Было: <b>{format_integer(alert['previous_total'])}</b>\n"
         f"Стало: <b>{format_integer(alert['current_total'])}</b>\n"

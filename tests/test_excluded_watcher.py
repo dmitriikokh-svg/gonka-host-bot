@@ -74,7 +74,8 @@ class NotificationTests(unittest.TestCase):
             watcher.main()
 
         message = send_message.call_args.args[0]
-        self.assertIn("после cPoC (1) (эпоха 355)", message)
+        self.assertIn("после Confirmation PoC — эпоха 355", message)
+        self.assertIn("Исключён после Confirmation PoC", message)
         self.assertIn("<code>gonka1excluded</code>", message)
         self.assertIn("Причина: <b>не пройден Confirmation PoC</b>", message)
         self.assertIn("Блок исключения: <code>5 481 065</code>", message)

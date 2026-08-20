@@ -15,8 +15,10 @@ import requests
 from bot_common import (
     escape_html,
     fetch_json_with_fallback,
+    format_alert_datetime,
     format_integer,
     load_json,
+    parse_iso_datetime,
     save_json_atomic,
     send_telegram_message,
     utc_now,
@@ -27,6 +29,10 @@ ROOT = Path(__file__).resolve().parent
 CONFIG_FILE = ROOT / "config" / "our_nodes.json"
 STATE_FILE = ROOT / "state" / "our_nodes_state.json"
 RATIO_METRIC_VERSION = "confirmation_weight_over_weight_v2"
+NODE_REASON_LABELS = {
+    "participant_absent": "нет в участниках эпохи",
+    "participant not found": "нет в участниках эпохи",
+}
 
 
 def validate_public_http_url(raw_url: str) -> str:
@@ -342,55 +348,100 @@ def save_state(state: dict, path: str | Path | None = None) -> None:
     save_json_atomic(path or STATE_FILE, state, sort_keys=True)
 
 
+def format_duration_ru(seconds: int) -> str:
+    if seconds < 60:
+        return "меньше минуты"
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes} мин"
+    hours = minutes // 60
+    rest_minutes = minutes % 60
+    if hours < 24:
+        if rest_minutes:
+            return f"{hours} ч {rest_minutes} мин"
+        return f"{hours} ч"
+    days = hours // 24
+    rest_hours = hours % 24
+    if rest_hours:
+        return f"{days} д {rest_hours} ч"
+    return f"{days} д"
+
+
+def format_percent_label(value: float) -> str:
+    if float(value).is_integer():
+        return f"{int(value)}%"
+    return f"{value:.1f}%"
+
+
+def human_node_reason(result: dict) -> str:
+    reason = str(result.get("reason") or "")
+    details = str(result.get("details") or "")
+    for raw in (reason, details):
+        if raw in NODE_REASON_LABELS:
+            return NODE_REASON_LABELS[raw]
+    return details or reason or "нет данных"
+
+
+def confirmed_weight_line(metric: dict) -> str:
+    return (
+        f"Подтверждено: {format_integer(metric['confirmation_weight'])} из "
+        f"{format_integer(metric['weight'])} веса "
+        f"({metric['rate']:.1f}%)"
+    )
+
+
 def build_node_alert(node: dict, result: dict, now: str) -> str:
     return (
-        "🔴 <b>Нода недоступна</b>\n\n"
-        f"Имя: <code>{escape_html(node['name'])}</code>\n"
+        f"🔴 <b>Наша нода не отвечает: {escape_html(node['name'])}</b>\n\n"
         f"Адрес: <code>{escape_html(node['participant_address'])}</code>\n"
         f"Роль: {escape_html(node.get('role', 'unknown'))}\n"
-        f"Причина: <code>{escape_html(result['details'])}</code>\n"
-        f"Проверка: {escape_html(now)}"
+        f"Причина: {escape_html(human_node_reason(result))}"
     )
 
 
 def build_node_recovery(node: dict, previous: dict, result: dict, now: str) -> str:
+    started_at = previous.get("first_failed_at")
+    recovered_at = format_alert_datetime(now)
+    start_dt = parse_iso_datetime(started_at)
+    end_dt = parse_iso_datetime(now)
+    if start_dt is not None and end_dt is not None:
+        recovered_at = (
+            f"{recovered_at} "
+            f"({format_duration_ru(int((end_dt - start_dt).total_seconds()))})"
+        )
     return (
-        "🟢 <b>Нода восстановлена</b>\n\n"
-        f"Имя: <code>{escape_html(node['name'])}</code>\n"
+        f"🟢 <b>Наша нода снова отвечает: {escape_html(node['name'])}</b>\n\n"
         f"Адрес: <code>{escape_html(node['participant_address'])}</code>\n"
-        f"Недоступность с: {escape_html(previous.get('first_failed_at', 'unknown'))}\n"
-        f"Восстановлена: {escape_html(now)}\n"
+        f"Недоступность с: {escape_html(format_alert_datetime(started_at))}\n"
+        f"Восстановлена: {escape_html(recovered_at)}\n"
         f"Проверка endpoint: {escape_html(result.get('details', 'ok'))}"
     )
 
 
 def build_ratio_alert(node: dict, metric: dict, threshold: float) -> str:
+    percent = format_percent_label(threshold)
     return (
-        "⚠️ <b>Confirmation PoC rate ниже порога</b>\n\n"
-        f"Нода: <code>{escape_html(node['name'])}</code>\n"
+        f"⚠️ <b>Confirmation PoC ниже {percent}: "
+        f"{escape_html(node['name'])}</b>\n\n"
         f"Эпоха: {metric['epoch']}\n"
-        f"Confirmation weight: <b>{format_integer(metric['confirmation_weight'])}</b>\n"
-        f"Weight: <b>{format_integer(metric['weight'])}</b>\n"
-        f"Rate: <b>{metric['rate']:.1f}%</b>\n"
-        f"Порог: <b>{threshold:.1f}%</b>"
+        f"{confirmed_weight_line(metric)}\n"
+        f"Порог: {percent}"
     )
 
 
-def build_ratio_recovery(node: dict, metric: dict) -> str:
+def build_ratio_recovery(node: dict, metric: dict, threshold: float) -> str:
+    percent = format_percent_label(threshold)
     return (
-        "🟢 <b>Confirmation PoC rate восстановился</b>\n\n"
-        f"Нода: <code>{escape_html(node['name'])}</code>\n"
+        f"🟢 <b>Confirmation PoC снова выше {percent}: "
+        f"{escape_html(node['name'])}</b>\n\n"
         f"Эпоха: {metric['epoch']}\n"
-        f"Confirmation weight: <b>{format_integer(metric['confirmation_weight'])}</b>\n"
-        f"Weight: <b>{format_integer(metric['weight'])}</b>\n"
-        f"Rate: <b>{metric['rate']:.1f}%</b>"
+        f"{confirmed_weight_line(metric)}"
     )
 
 
 def build_metric_unavailable(node: dict, metric: dict) -> str:
     return (
-        "🟡 <b>Confirmation PoC rate недоступен</b>\n\n"
-        f"Нода: <code>{escape_html(node['name'])}</code>\n"
+        f"🟡 <b>Confirmation PoC: нет данных — {escape_html(node['name'])}</b>\n\n"
         f"Эпоха: {metric['epoch']}\n"
         f"Причина: <code>{escape_html(metric['reason'])}</code>"
     )
@@ -398,10 +449,9 @@ def build_metric_unavailable(node: dict, metric: dict) -> str:
 
 def build_metric_recovery(node: dict, metric: dict) -> str:
     return (
-        "🟢 <b>Confirmation PoC rate снова доступен</b>\n\n"
-        f"Нода: <code>{escape_html(node['name'])}</code>\n"
+        f"🟢 <b>Confirmation PoC снова читается — {escape_html(node['name'])}</b>\n\n"
         f"Эпоха: {metric['epoch']}\n"
-        f"Rate: <b>{metric['rate']:.1f}%</b>"
+        f"{confirmed_weight_line(metric)}"
     )
 
 
@@ -553,13 +603,13 @@ def main() -> None:
             elif event == "low":
                 alerts.append(build_ratio_alert(node, metric, alert_threshold))
             elif event == "recovered":
-                alerts.append(build_ratio_recovery(node, metric))
+                alerts.append(build_ratio_recovery(node, metric, recovery_threshold))
 
         state["nodes"][node_id] = {
             "status": current_status,
             "last_checked_at": now,
             "first_failed_at": (
-                previous.get("first_failed_at", now)
+                (previous.get("first_failed_at") or now)
                 if current_status == "down"
                 else None
             ),

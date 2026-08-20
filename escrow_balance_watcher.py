@@ -20,6 +20,7 @@ from bot_common import (
     SourcesUnavailable,
     escape_html,
     fetch_json_with_fallback,
+    format_alert_datetime,
     load_json,
     save_json_atomic,
     send_telegram_message,
@@ -198,7 +199,6 @@ def account_thresholds(config: dict, account: dict) -> tuple[Decimal, Decimal]:
 
 def base_message(account: dict, balance: Decimal, threshold: Decimal) -> str:
     return (
-        f"Ключ: <code>{escape_html(account['name'])}</code>\n"
         f"Адрес: <code>{escape_html(account['address'])}</code>\n"
         f"Баланс: <b>{escape_html(format_gnk(balance))} GNK</b>\n"
         f"Порог: <code>&lt; {escape_html(format_gnk(threshold))} GNK</code>"
@@ -223,10 +223,9 @@ def apply_success(
 
     if record.get("unavailable_alerted"):
         messages.append(
-            "🟢 <b>API баланса снова доступен</b>\n\n"
-            f"Ключ: <code>{escape_html(account['name'])}</code>\n"
-            f"Баланс: <b>{escape_html(format_gnk(balance))} GNK</b>\n"
-            f"Источник: <code>{escape_html(source_url)}</code>"
+            f"🟢 <b>Баланс эскроу-ключа снова мониторится: "
+            f"{escape_html(account['name'])}</b>\n\n"
+            f"На ключе: {escape_html(format_gnk(balance))} GNK"
         )
 
     low_alert_active = bool(record.get("low_alerted"))
@@ -247,23 +246,26 @@ def apply_success(
         )
         if not low_alert_active:
             messages.append(
-                "🔴 <b>Низкий баланс эскроу-ключа</b>\n\n"
+                f"🔴 <b>Низкий баланс эскроу-ключа: "
+                f"{escape_html(account['name'])}</b>\n\n"
                 + base_message(account, balance, low_threshold)
             )
             record["low_since"] = now
             record["last_low_alert_at"] = now
         elif reminder_due:
             messages.append(
-                "🔴 <b>Напоминание: баланс эскроу-ключа всё ещё низкий</b>\n\n"
+                f"🔴 <b>Напоминание: баланс эскроу-ключа всё ещё низкий: "
+                f"{escape_html(account['name'])}</b>\n\n"
                 + base_message(account, balance, low_threshold)
-                + f"\nНизкий баланс с: {escape_html(record.get('low_since', 'unknown'))}"
+                + f"\nНизкий с: {escape_html(format_alert_datetime(record.get('low_since')))}"
             )
             record["last_low_alert_at"] = now
         record["low_alerted"] = True
         status = "low"
     elif low_alert_active and is_recovered:
         messages.append(
-            "🟢 <b>Баланс эскроу-ключа восстановлен</b>\n\n"
+            f"🟢 <b>Баланс эскроу-ключа пополнен: "
+            f"{escape_html(account['name'])}</b>\n\n"
             + base_message(account, balance, low_threshold)
         )
         record["low_alerted"] = False
@@ -309,11 +311,10 @@ def apply_failure(
 
     if runs >= config["unavailable_alert_after_runs"] and not alerted:
         messages.append(
-            "🟡 <b>Не удалось проверить баланс эскроу-ключа</b>\n\n"
-            f"Ключ: <code>{escape_html(account['name'])}</code>\n"
+            f"🟡 <b>Не удалось промониторить баланс эскроу-ключа: "
+            f"{escape_html(account['name'])}</b>\n\n"
             f"Адрес: <code>{escape_html(account['address'])}</code>\n"
-            f"Последовательных неудачных проверок: {runs}\n"
-            "Последний известный баланс сохранён и не считается нулевым."
+            f"Проверок подряд: {runs}"
         )
         alerted = True
 

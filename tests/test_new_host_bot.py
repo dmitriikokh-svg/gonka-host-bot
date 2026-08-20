@@ -286,14 +286,14 @@ class MessageAndPersistenceTests(unittest.TestCase):
         left_snapshot = snapshot(351, [entry("b", 300)])
         first = watcher.process_snapshot(state, left_snapshot, CONFIG)
         messages = "\n".join(watcher.event_messages(first, left_snapshot))
-        self.assertIn("Новый хост в сети Gonka — эпоха 351", messages)
-        self.assertIn("Хост больше не участвует — эпоха 351", messages)
+        self.assertIn("Новый хост — эпоха 351", messages)
+        self.assertIn("Хост ушёл — эпоха 351", messages)
         self.assertIn("Последняя активная эпоха: <b>350</b>", messages)
         self.assertIn("Доля общего веса сети: <b>100.0%</b>", messages)
         returned_snapshot = snapshot(352, [entry("a", 100), entry("b", 300)])
         second = watcher.process_snapshot(first["state"], returned_snapshot, CONFIG)
         returned = "\n".join(watcher.event_messages(second, returned_snapshot))
-        self.assertIn("Хост вернулся в сеть — эпоха 352", returned)
+        self.assertIn("Хост вернулся — эпоха 352", returned)
         self.assertIn("Отсутствовал: эпоха 351", returned)
 
     def test_left_message_does_not_round_small_positive_share_to_zero(self):
