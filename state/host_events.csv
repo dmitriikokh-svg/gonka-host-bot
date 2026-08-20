@@ -22,3 +22,7 @@ epoch,event,node_id,observed_at_utc,weight,total_weight,network_share_percent,in
 366,left,gonka1l6emtgat9xn9yr8q9lcg2ph6qkqgnkdg8xwa3d,2026-08-19T17:54:28+00:00,85248,415488,16.45727,http://32.198.122.2:8000
 366,left,gonka1z6xwdunt3cxqmexjffez053m62le88g98tsj8s,2026-08-19T17:54:28+00:00,8428,415488,1.62704,http://95.216.25.29:8000
 366,returned,gonka1fc9tzt83dgrqswlgay4668cuqjrk7zsqks2vm2,2026-08-19T17:54:28+00:00,1869,415488,0.449832,http://188.40.62.55:8000
+367,left,gonka1fc9tzt83dgrqswlgay4668cuqjrk7zsqks2vm2,2026-08-20T16:45:01+00:00,1869,330993,0.449832,http://188.40.62.55:8000
+367,left,gonka1gvrrhjmy4w4mayvs2s5l23edj8ertcmtd2v4zr,2026-08-20T16:45:01+00:00,107037,330993,25.761755,http://54.38.118.143:8000
+367,left,gonka1ueylw8hrlp5taqu4dy5zaxy0k82ya4r9trzzwy,2026-08-20T16:45:01+00:00,954,330993,0.22961,http://135.232.215.183:8000
+367,returned,gonka1z6xwdunt3cxqmexjffez053m62le88g98tsj8s,2026-08-20T16:45:01+00:00,15767,330993,4.763545,http://95.216.25.29:8000
