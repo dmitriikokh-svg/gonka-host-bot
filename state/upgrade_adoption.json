@@ -44,8 +44,8 @@
       "weight": 60555,
       "versions": [
         "3.0.16",
-        "0.2.0",
         "3.0.16",
+        "0.2.0",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -63,9 +63,9 @@
       "status": "incomplete",
       "weight": 7772,
       "versions": [
+        "MISSING_VERSION",
+        "MISSING_VERSION",
         "0.2.0",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION"
       ]
@@ -84,6 +84,9 @@
       "status": "mixed",
       "weight": 43786,
       "versions": [
+        "3.0.16",
+        "0.2.0",
+        "0.2.0",
         "0.2.0",
         "0.2.0",
         "0.2.0",
@@ -96,9 +99,6 @@
         "0.2.0",
         "0.2.0",
         "3.0.16",
-        "0.2.0",
-        "3.0.16",
-        "0.2.0",
         "0.2.0"
       ]
     },
@@ -171,14 +171,6 @@
         "0.2.0",
         "0.2.0",
         "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
         "3.0.16",
@@ -189,6 +181,14 @@
         "0.2.0",
         "0.2.0",
         "3.0.16",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "0.2.0"
       ]
     },
@@ -203,11 +203,11 @@
       "status": "mixed",
       "weight": 68345,
       "versions": [
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "0.2.0",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -285,8 +285,8 @@
       "status": "other",
       "weight": 4589,
       "versions": [
-        "3.0.14-post2",
         "0.2.0",
+        "3.0.14-post2",
         "0.2.0"
       ]
     },
@@ -302,12 +302,12 @@
       "status": "incomplete",
       "weight": 3845,
       "versions": [
-        "0.2.0",
-        "MISSING_VERSION"
+        "MISSING_VERSION",
+        "0.2.0"
       ]
     }
   },
-  "mlnode_reported_signature": "25:4:5764",
-  "mlnode_candidate_signature": "33:4:5764",
-  "mlnode_candidate_runs": 1
+  "mlnode_reported_signature": "33:4:5764",
+  "mlnode_candidate_signature": null,
+  "mlnode_candidate_runs": 0
 }
