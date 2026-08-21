@@ -54,10 +54,10 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "0.2.0",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "3.0.16"
       ]
     },
@@ -70,8 +70,8 @@
       "status": "incomplete",
       "weight": 8180,
       "versions": [
-        "MISSING_VERSION",
         "0.2.0",
+        "MISSING_VERSION",
         "0.2.0"
       ]
     },
@@ -103,6 +103,7 @@
       "status": "mixed",
       "weight": 63522,
       "versions": [
+        "0.2.0",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -112,8 +113,7 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
-        "3.0.16",
-        "0.2.0"
+        "3.0.16"
       ]
     },
     "gonka1a3pkge3g33v3zdkq7qmycpjwpulms6ejt8z00f": {
@@ -125,8 +125,8 @@
       "status": "incomplete",
       "weight": 7501,
       "versions": [
-        "MISSING_VERSION",
         "0.2.0",
+        "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION"
@@ -161,11 +161,11 @@
       "status": "mixed",
       "weight": 8637,
       "versions": [
-        "0.2.0",
         "3.0.16",
         "3.0.16",
         "0.2.0",
-        "3.0.14-post2"
+        "3.0.14-post2",
+        "0.2.0"
       ]
     },
     "gonka1m58jds005cttwq2vt0p7yk6vy2aqg254cqqppf": {
@@ -240,9 +240,9 @@
       "status": "mixed",
       "weight": 4426,
       "versions": [
-        "3.0.14-post2",
         "3.0.16",
-        "3.0.16"
+        "3.0.16",
+        "3.0.14-post2"
       ]
     },
     "gonka1ym3np7guxart483yfdxnlztuazx22cjt0e4a2p": {
@@ -257,6 +257,7 @@
       "status": "incomplete",
       "weight": 15767,
       "versions": [
+        "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "0.2.0",
@@ -265,16 +266,15 @@
         "MISSING_VERSION",
         "MISSING_VERSION",
         "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION"
+        "0.2.0"
       ]
     },
     "gonka1zktn8j65wlys8a8e38hqhf4y3x6m4x04zskkrx": {
       "status": "incomplete",
       "weight": 3733,
       "versions": [
-        "0.2.0",
-        "MISSING_VERSION"
+        "MISSING_VERSION",
+        "0.2.0"
       ]
     }
   },
