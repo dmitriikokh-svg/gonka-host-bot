@@ -1,29 +1,29 @@
 {
   "target_version": "v0.2.15-post3",
   "threshold": 267800,
-  "adopted_weight": 259046,
+  "adopted_weight": 240995,
   "network_total_weight": 330993,
-  "unknown_weight": 28365,
-  "unreachable_count": 4,
+  "unknown_weight": 46416,
+  "unreachable_count": 6,
   "threshold_reached": false,
-  "unknown_band": "normal",
+  "unknown_band": "degraded",
   "unknown_participants": 0,
   "target_mlnode_version": "3.0.16",
-  "mlnode_target_node_count": 48,
-  "mlnode_visible_node_count": 103,
-  "mlnode_missing_version_node_count": 16,
-  "mlnode_fully_updated_host_count": 4,
-  "mlnode_fully_updated_weight": 50709,
+  "mlnode_target_node_count": 47,
+  "mlnode_visible_node_count": 97,
+  "mlnode_missing_version_node_count": 14,
+  "mlnode_fully_updated_host_count": 3,
+  "mlnode_fully_updated_weight": 49738,
   "mlnode_mixed_host_count": 5,
-  "mlnode_unknown_host_count": 13,
-  "mlnode_unknown_weight": 87990,
-  "mlnode_unavailable_host_count": 4,
+  "mlnode_unknown_host_count": 14,
+  "mlnode_unknown_weight": 88961,
+  "mlnode_unavailable_host_count": 6,
   "mlnode_version_distribution": {
-    "0.2.0": 30,
+    "0.2.0": 27,
     "3.0.14": 6,
     "3.0.14-post2": 3,
-    "3.0.16": 48,
-    "MISSING_VERSION": 16
+    "3.0.16": 47,
+    "MISSING_VERSION": 14
   },
   "mlnode_hosts": {
     "gonka10mmdjau4dnj8krs7sh7t7635ttnmq9u3vqgz09": {
@@ -39,15 +39,9 @@
       "versions": []
     },
     "gonka1830lqug50lse998x2lakk4pj5ypfumz5pasz0y": {
-      "status": "incomplete",
+      "status": "unavailable",
       "weight": 17080,
-      "versions": [
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION",
-        "MISSING_VERSION"
-      ]
+      "versions": []
     },
     "gonka1kvmerzu64094dt9t62ea0cp75larh39ulzldum": {
       "status": "mixed",
@@ -58,9 +52,9 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "0.2.0",
-        "3.0.16",
-        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -68,11 +62,9 @@
       ]
     },
     "gonka1qwfrtz9c7kcrfkrrlne2pkcye74mj6ce33xdkl": {
-      "status": "target",
+      "status": "unavailable",
       "weight": 971,
-      "versions": [
-        "3.0.16"
-      ]
+      "versions": []
     },
     "gonka1t0psqlz8fzhlqnaresvk5vxfmgv0te23mnwdad": {
       "status": "incomplete",
@@ -91,11 +83,11 @@
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "MISSING_VERSION",
         "MISSING_VERSION",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "MISSING_VERSION"
       ]
     },
@@ -111,13 +103,13 @@
       "status": "mixed",
       "weight": 63522,
       "versions": [
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -134,9 +126,9 @@
       "weight": 7501,
       "versions": [
         "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
         "MISSING_VERSION"
       ]
     },
@@ -169,11 +161,11 @@
       "status": "mixed",
       "weight": 8637,
       "versions": [
+        "0.2.0",
         "3.0.16",
         "3.0.16",
         "0.2.0",
-        "3.0.14-post2",
-        "0.2.0"
+        "3.0.14-post2"
       ]
     },
     "gonka1m58jds005cttwq2vt0p7yk6vy2aqg254cqqppf": {
@@ -265,13 +257,13 @@
       "weight": 15767,
       "versions": [
         "0.2.0",
+        "0.2.0",
         "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
-        "0.2.0",
         "0.2.0",
         "0.2.0"
       ]
@@ -285,7 +277,7 @@
       ]
     }
   },
-  "mlnode_reported_signature": "48:4:50709",
+  "mlnode_reported_signature": "47:3:49738",
   "mlnode_candidate_signature": null,
   "mlnode_candidate_runs": 0
 }
