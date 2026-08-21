@@ -54,9 +54,9 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
+        "3.0.16",
+        "3.0.16",
         "3.0.16",
         "3.0.16"
       ]
@@ -80,11 +80,11 @@
       "weight": 8550,
       "versions": [
         "MISSING_VERSION",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "MISSING_VERSION",
         "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
@@ -110,8 +110,8 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
-        "3.0.16",
         "0.2.0",
+        "3.0.16",
         "3.0.16",
         "3.0.16"
       ]
@@ -125,10 +125,10 @@
       "status": "incomplete",
       "weight": 7501,
       "versions": [
-        "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
         "MISSING_VERSION"
       ]
     },
@@ -136,8 +136,8 @@
       "status": "mixed",
       "weight": 2717,
       "versions": [
-        "3.0.16",
-        "3.0.14-post2"
+        "3.0.14-post2",
+        "3.0.16"
       ]
     },
     "gonka1f0u3y2wneer8zhz3ypw4x54h38cpa0qsy8ts3e": {
@@ -162,10 +162,10 @@
       "weight": 8637,
       "versions": [
         "0.2.0",
-        "3.0.14-post2",
-        "0.2.0",
         "3.0.16",
-        "3.0.16"
+        "3.0.16",
+        "0.2.0",
+        "3.0.14-post2"
       ]
     },
     "gonka1m58jds005cttwq2vt0p7yk6vy2aqg254cqqppf": {
@@ -240,9 +240,9 @@
       "status": "mixed",
       "weight": 4426,
       "versions": [
-        "0.2.0",
         "3.0.14-post2",
-        "3.0.16"
+        "3.0.16",
+        "0.2.0"
       ]
     },
     "gonka1ym3np7guxart483yfdxnlztuazx22cjt0e4a2p": {
@@ -258,15 +258,15 @@
       "weight": 15767,
       "versions": [
         "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION"
+        "0.2.0"
       ]
     },
     "gonka1zktn8j65wlys8a8e38hqhf4y3x6m4x04zskkrx": {
