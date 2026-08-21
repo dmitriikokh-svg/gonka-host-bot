@@ -139,11 +139,11 @@
       "weight": 62927,
       "versions": [
         "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16"
@@ -160,17 +160,17 @@
       "versions": [
         "MISSING_VERSION",
         "MISSING_VERSION",
-        "0.2.0",
         "MISSING_VERSION",
-        "MISSING_VERSION"
+        "MISSING_VERSION",
+        "0.2.0"
       ]
     },
     "gonka1dkl4mah5erqggvhqkpc8j3qs5tyuetgdy552cp": {
       "status": "mixed",
       "weight": 2675,
       "versions": [
-        "3.0.16",
-        "3.0.14-post2"
+        "3.0.14-post2",
+        "3.0.16"
       ]
     },
     "gonka1f0u3y2wneer8zhz3ypw4x54h38cpa0qsy8ts3e": {
@@ -184,10 +184,6 @@
       "versions": [
         "3.0.16",
         "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
         "3.0.16",
         "3.0.16",
@@ -211,7 +207,11 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
-        "0.2.0"
+        "0.2.0",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16"
       ]
     },
     "gonka1gyk0aahvr3qeju4zx0nplfreej6cy4jjk8svc5": {
@@ -230,11 +230,11 @@
       "status": "mixed",
       "weight": 9492,
       "versions": [
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "0.2.0",
-        "3.0.14-post2",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16"
+        "3.0.14-post2"
       ]
     },
     "gonka1scskt6wpnjnumsah6kjphmdu87vjgvcxmn4rxv": {
@@ -267,8 +267,8 @@
       "weight": 7782,
       "versions": [
         "0.2.0",
-        "MISSING_VERSION",
-        "0.2.0"
+        "0.2.0",
+        "MISSING_VERSION"
       ]
     },
     "gonka1t4dc2gjzwate5dr0y962pfgh5j9ln6jcud32h9": {
@@ -276,9 +276,9 @@
       "weight": 83584,
       "versions": [
         "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "3.0.16",
-        "0.2.0",
-        "0.2.0",
         "0.2.0",
         "0.2.0",
         "0.2.0",
@@ -311,15 +311,15 @@
       "weight": 8498,
       "versions": [
         "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0",
+        "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "0.2.0",
-        "0.2.0"
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "MISSING_VERSION"
       ]
     }
   },
