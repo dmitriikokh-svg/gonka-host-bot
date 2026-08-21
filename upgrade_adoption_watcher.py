@@ -370,31 +370,13 @@ def format_mlnode_distribution_lines(
     distribution: dict,
     target_version: str,
 ) -> list[str]:
-    """Telegram list of MLNode versions: target first, then by count.
-
-    ``3.0.14`` and ``3.0.14-post2`` collapse to ``3.0.14 / post2``.
-    """
+    """Telegram list of exact MLNode versions: target first, then by count."""
     missing = int(distribution.get("MISSING_VERSION") or 0)
-    counts: dict[str, int] = {}
-    post_tags: dict[str, list[str]] = {}
-    for raw, n in distribution.items():
-        if raw == "MISSING_VERSION" or not n:
-            continue
-        label = str(raw)
-        if "-post" in label:
-            base, _, tag = label.partition("-post")
-            counts[base] = counts.get(base, 0) + int(n)
-            tags = post_tags.setdefault(base, [])
-            if tag not in tags:
-                tags.append(tag)
-        else:
-            counts[label] = counts.get(label, 0) + int(n)
-
-    def display_name(version: str) -> str:
-        tags = post_tags.get(version) or []
-        if not tags:
-            return version
-        return f"{version} / " + ", ".join(f"post{tag}" for tag in tags)
+    counts = {
+        str(raw): int(n)
+        for raw, n in distribution.items()
+        if raw != "MISSING_VERSION" and n
+    }
 
     norm_target = normalize_version(target_version)
     ordered: list[str] = []
@@ -408,7 +390,7 @@ def format_mlnode_distribution_lines(
             key=lambda version: (-counts[version], version),
         )
     )
-    lines = [f"{display_name(version)} — {counts[version]}" for version in ordered]
+    lines = [f"{version} — {counts[version]}" for version in ordered]
     if missing:
         lines.append(f"версия не указана — {missing}")
     return lines
@@ -424,6 +406,30 @@ def russian_host_word(count: int) -> str:
     if 2 <= n1 <= 4:
         return "хоста"
     return "хостов"
+
+
+def format_api_unknown_lines(
+    *,
+    unreachable: int,
+    unreachable_weight: int,
+    other_unknown_weight: int,
+) -> list[str]:
+    if unreachable:
+        lines = [
+            f"Не достучались до /v1/versions: {unreachable} "
+            f"{russian_host_word(unreachable)} "
+            f"(вес {unreachable_weight})"
+        ]
+    else:
+        lines = [
+            f"Не достучались до /v1/versions: 0 {russian_host_word(0)}"
+        ]
+    if other_unknown_weight:
+        lines.append(
+            "Вес хостов без известной версии API по иным причинам: "
+            f"{other_unknown_weight}"
+        )
+    return lines
 
 
 def mlnode_signature(summary):
@@ -554,17 +560,21 @@ def main():
 
     adopted_weight = 0
     unreachable = 0
+    unreachable_weight = 0
+    missing_api_version_weight = 0
 
     for participant in parsed:
         info = results.get(participant["id"])
 
         if info is None:
             unreachable += 1
+            unreachable_weight += participant["weight"]
             unknown_weight += participant["weight"]
             continue
 
         version = info.get("api_version")
         if version is None:
+            missing_api_version_weight += participant["weight"]
             unknown_weight += participant["weight"]
             continue
 
@@ -603,7 +613,9 @@ def main():
         f"Adoption: {adopted_weight}/{network_total_weight} "
         f"({pct:.1f}%), "
         f"threshold {threshold}, "
-        f"unreachable hosts: {unreachable}, "
+        f"unreachable hosts: {unreachable} ({unreachable_weight}), "
+        f"missing api_version weight: {missing_api_version_weight}, "
+        f"unqueryable weight: {unqueryable_weight}, "
         f"unknown weight: {unknown_weight}"
     )
     print(
@@ -684,6 +696,13 @@ def main():
             if unknown_participants
             else ""
         )
+        api_unknown_lines = format_api_unknown_lines(
+            unreachable=unreachable,
+            unreachable_weight=unreachable_weight,
+            other_unknown_weight=(
+                missing_api_version_weight + unqueryable_weight
+            ),
+        )
 
         message = (
             f"📊 Прогресс обновлений{epoch_note}\n\n"
@@ -693,10 +712,8 @@ def main():
             f"Обновлено: {adopted_weight} / {network_total_weight} "
             f"веса ({pct:.1f}%)\n"
             f"{status_line}"
-            f"Не достучались до /v1/versions: {unreachable} "
-            f"{russian_host_word(unreachable)} "
-            f"(их вес: {unknown_weight})\n"
-            f"{unknown_hosts_line}"
+            + "".join(f"{line}\n" for line in api_unknown_lines)
+            + f"{unknown_hosts_line}"
             f"---\n"
             f"MLNode {target_mlnode_version}\n"
             f"Ноды с этой версией: {mlnode['target_node_count']} из "
@@ -732,6 +749,10 @@ def main():
             "network_total_weight": network_total_weight,
             "unknown_weight": unknown_weight,
             "unreachable_count": unreachable,
+            "unreachable_weight": unreachable_weight,
+            "missing_api_version_weight": missing_api_version_weight,
+            "unqueryable_weight": unqueryable_weight,
+            "unqueryable_hosts": unqueryable_hosts,
             "threshold_reached": threshold_reached,
             "unknown_band": unknown_band,
             "unknown_participants": unknown_participants,

@@ -390,9 +390,17 @@ def confirmed_weight_line(metric: dict) -> str:
     )
 
 
+def node_absent_from_epoch(payload: dict) -> bool:
+    return str(payload.get("reason") or "") == "participant_absent"
+
+
 def build_node_alert(node: dict, result: dict, now: str) -> str:
+    if node_absent_from_epoch(result):
+        title = f"Наша нода не участвует в эпохе: {escape_html(node['name'])}"
+    else:
+        title = f"Наша нода не отвечает: {escape_html(node['name'])}"
     return (
-        f"🔴 <b>Наша нода не отвечает: {escape_html(node['name'])}</b>\n\n"
+        f"🔴 <b>{title}</b>\n\n"
         f"Адрес: <code>{escape_html(node['participant_address'])}</code>\n"
         f"Роль: {escape_html(node.get('role', 'unknown'))}\n"
         f"Причина: {escape_html(human_node_reason(result))}"
@@ -409,8 +417,12 @@ def build_node_recovery(node: dict, previous: dict, result: dict, now: str) -> s
             f"{recovered_at} "
             f"({format_duration_ru(int((end_dt - start_dt).total_seconds()))})"
         )
+    if node_absent_from_epoch(previous):
+        title = f"Наша нода снова в эпохе: {escape_html(node['name'])}"
+    else:
+        title = f"Наша нода снова отвечает: {escape_html(node['name'])}"
     return (
-        f"🟢 <b>Наша нода снова отвечает: {escape_html(node['name'])}</b>\n\n"
+        f"🟢 <b>{title}</b>\n\n"
         f"Адрес: <code>{escape_html(node['participant_address'])}</code>\n"
         f"Недоступность с: {escape_html(format_alert_datetime(started_at))}\n"
         f"Восстановлена: {escape_html(recovered_at)}\n"

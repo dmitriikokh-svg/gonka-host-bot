@@ -9,11 +9,13 @@ import requests
 import our_nodes_watcher
 from our_nodes_watcher import (
     RATIO_METRIC_VERSION,
+    build_node_alert,
     build_node_recovery,
     confirmation_metric,
     evaluate_confirmation,
     fetch_epoch_group_snapshot,
     format_alert_datetime,
+    inspect_node,
     parse_epoch_group_payload,
     parse_participants_payload,
 )
@@ -308,6 +310,81 @@ class MessageFormatTests(unittest.TestCase):
             message,
         )
         self.assertNotIn("T20:", message)
+
+    def test_absent_participant_uses_epoch_titles(self):
+        node = {
+            "name": "node1",
+            "participant_address": "gonka1test",
+            "role": "host",
+        }
+        alert = build_node_alert(
+            node,
+            {
+                "reason": "participant_absent",
+                "details": "participant not found",
+            },
+            "2026-08-21T02:00:00+00:00",
+        )
+        self.assertIn("Наша нода не участвует в эпохе: node1", alert)
+        self.assertNotIn("Наша нода не отвечает", alert)
+        self.assertIn("Причина: нет в участниках эпохи", alert)
+
+        recovery = build_node_recovery(
+            node,
+            {
+                "first_failed_at": "2026-08-20T20:02:03+00:00",
+                "reason": "participant_absent",
+            },
+            {"details": "HTTP 200 in 45 ms"},
+            "2026-08-20T20:17:03+00:00",
+        )
+        self.assertIn("Наша нода снова в эпохе: node1", recovery)
+        self.assertNotIn("Наша нода снова отвечает", recovery)
+
+    def test_unhealthy_endpoint_keeps_unreachable_titles(self):
+        node = {
+            "name": "node1",
+            "participant_address": "gonka1test",
+            "role": "host",
+        }
+        alert = build_node_alert(
+            node,
+            {"reason": "endpoint_unhealthy", "details": "timeout"},
+            "2026-08-21T02:00:00+00:00",
+        )
+        self.assertIn("Наша нода не отвечает: node1", alert)
+        self.assertNotIn("не участвует в эпохе", alert)
+
+        recovery = build_node_recovery(
+            node,
+            {
+                "first_failed_at": "2026-08-20T20:02:03+00:00",
+                "reason": "endpoint_unhealthy",
+            },
+            {"details": "HTTP 200 in 45 ms"},
+            "2026-08-20T20:17:03+00:00",
+        )
+        self.assertIn("Наша нода снова отвечает: node1", recovery)
+        self.assertNotIn("снова в эпохе", recovery)
+
+    def test_healthy_endpoint_is_absent_when_missing_from_epoch(self):
+        with patch.object(
+            our_nodes_watcher,
+            "check_endpoint",
+            return_value={"ok": True, "http_status": 200, "latency_ms": 1},
+        ):
+            result = inspect_node(
+                {
+                    "name": "node1",
+                    "participant_address": "gonka1missing",
+                    "endpoint": "https://node.example",
+                    "participant_required": True,
+                },
+                {},
+                {"health_path": "/v1/versions"},
+            )
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["reason"], "participant_absent")
 
 
 if __name__ == "__main__":

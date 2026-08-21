@@ -107,7 +107,7 @@ class MLNodeSummaryTests(unittest.TestCase):
         self.assertEqual(summary["version_distribution"]["3.0.16"], 3)
         self.assertEqual(summary["version_distribution"]["v3.0.16"], 1)
 
-    def test_distribution_list_puts_target_first_and_collapses_post(self):
+    def test_distribution_list_puts_target_first_without_merging_post(self):
         lines = watcher.format_mlnode_distribution_lines(
             {
                 "3.0.16": 46,
@@ -123,9 +123,49 @@ class MLNodeSummaryTests(unittest.TestCase):
             [
                 "3.0.16 — 46",
                 "0.2.0 — 34",
-                "3.0.14 / post2 — 11",
+                "3.0.14 — 7",
+                "3.0.14-post2 — 4",
                 "версия не указана — 16",
             ],
+        )
+
+    def test_distribution_list_keeps_post_target_as_its_own_line(self):
+        lines = watcher.format_mlnode_distribution_lines(
+            {
+                "3.0.16": 46,
+                "3.0.14": 7,
+                "3.0.14-post2": 4,
+            },
+            "3.0.14-post2",
+        )
+        self.assertEqual(
+            lines,
+            [
+                "3.0.14-post2 — 4",
+                "3.0.16 — 46",
+                "3.0.14 — 7",
+            ],
+        )
+
+    def test_api_unknown_lines_split_unreachable_from_other_weight(self):
+        self.assertEqual(
+            watcher.format_api_unknown_lines(
+                unreachable=2,
+                unreachable_weight=9857,
+                other_unknown_weight=13924,
+            ),
+            [
+                "Не достучались до /v1/versions: 2 хоста (вес 9857)",
+                "Вес хостов без известной версии API по иным причинам: 13924",
+            ],
+        )
+        self.assertEqual(
+            watcher.format_api_unknown_lines(
+                unreachable=0,
+                unreachable_weight=0,
+                other_unknown_weight=0,
+            ),
+            ["Не достучались до /v1/versions: 0 хостов"],
         )
 
     def test_progress_change_requires_two_matching_checks(self):
@@ -198,6 +238,12 @@ class IntegrationTests(unittest.TestCase):
         self.assertIn("Цель: 50 веса (50.0%) у хостов с этой версией API", message)
         self.assertIn("Обновлено: 100 / 100 веса (100.0%)", message)
         self.assertIn("✅ Цель по API достигнута!", message)
+        self.assertIn("Не достучались до /v1/versions: 0 хостов", message)
+        self.assertNotIn("их вес", message)
+        self.assertNotIn(
+            "Вес хостов без известной версии API по иным причинам",
+            message,
+        )
         self.assertIn("MLNode 3.0.16", message)
         self.assertIn("Ноды с этой версией: 1 из 1 (100.0%)", message)
         self.assertIn("3.0.16 — 1", message)
@@ -208,6 +254,83 @@ class IntegrationTests(unittest.TestCase):
         self.assertNotIn("Участников без веса", message)
         self.assertEqual(saved["mlnode_fully_updated_weight"], 100)
         self.assertEqual(saved["mlnode_reported_signature"], "1:1:100")
+        self.assertEqual(saved["unreachable_weight"], 0)
+        self.assertEqual(saved["missing_api_version_weight"], 0)
+        self.assertEqual(saved["unqueryable_weight"], 0)
+
+    def test_main_splits_api_unknown_weight_reasons(self):
+        entries = [
+            {
+                "index": "gonka1ok",
+                "weight": "100",
+                "inference_url": "https://ok.example",
+            },
+            {
+                "index": "gonka1down",
+                "weight": "9857",
+                "inference_url": "https://down.example",
+            },
+            {
+                "index": "gonka1empty",
+                "weight": "5000",
+                "inference_url": "https://empty.example",
+            },
+            {
+                "index": "gonka1nourl",
+                "weight": "8924",
+            },
+        ]
+
+        def fake_info(url, retries=2, timeout=5):
+            mapping = {
+                "https://ok.example": {
+                    "api_version": "v0.2.15-post3",
+                    "mlnodes": [node("ml-1", "3.0.16")],
+                },
+                "https://down.example": None,
+                "https://empty.example": {
+                    "api_version": None,
+                    "mlnodes": [node("ml-1", "3.0.16")],
+                },
+            }
+            return mapping[url]
+
+        saved = {}
+
+        with (
+            patch.dict(
+                "os.environ",
+                {
+                    "TARGET_API_VERSION": "v0.2.15-post3",
+                    "TARGET_MLNODE_VERSION": "3.0.16",
+                    "ADOPTION_THRESHOLD": "50",
+                },
+                clear=False,
+            ),
+            patch.object(watcher, "fetch_active_snapshot", return_value=(entries, 365)),
+            patch.object(watcher, "validate_public_url", side_effect=lambda url: url),
+            patch.object(watcher, "fetch_version_info", side_effect=fake_info),
+            patch.object(watcher, "load_json", return_value=None),
+            patch.object(watcher, "save_json_atomic", side_effect=lambda _path, state: saved.update(state)),
+            patch.object(watcher, "send_telegram_message") as send,
+        ):
+            watcher.main()
+
+        message = send.call_args.args[0]
+        self.assertIn(
+            "Не достучались до /v1/versions: 1 хост (вес 9857)",
+            message,
+        )
+        self.assertIn(
+            "Вес хостов без известной версии API по иным причинам: 13924",
+            message,
+        )
+        self.assertNotIn("их вес", message)
+        self.assertEqual(saved["unreachable_count"], 1)
+        self.assertEqual(saved["unreachable_weight"], 9857)
+        self.assertEqual(saved["missing_api_version_weight"], 5000)
+        self.assertEqual(saved["unqueryable_weight"], 8924)
+        self.assertEqual(saved["unknown_weight"], 23781)
 
     def test_workflow_passes_target_mlnode_version(self):
         workflow = (
