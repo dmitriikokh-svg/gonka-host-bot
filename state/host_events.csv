@@ -26,3 +26,6 @@ epoch,event,node_id,observed_at_utc,weight,total_weight,network_share_percent,in
 367,left,gonka1gvrrhjmy4w4mayvs2s5l23edj8ertcmtd2v4zr,2026-08-20T16:45:01+00:00,107037,330993,25.761755,http://54.38.118.143:8000
 367,left,gonka1ueylw8hrlp5taqu4dy5zaxy0k82ya4r9trzzwy,2026-08-20T16:45:01+00:00,954,330993,0.22961,http://135.232.215.183:8000
 367,returned,gonka1z6xwdunt3cxqmexjffez053m62le88g98tsj8s,2026-08-20T16:45:01+00:00,15767,330993,4.763545,http://95.216.25.29:8000
+368,left,gonka1a3pkge3g33v3zdkq7qmycpjwpulms6ejt8z00f,2026-08-21T14:46:10+00:00,550,509462,0.166167,http://213.219.205.218:8000
+368,returned,gonka1gvrrhjmy4w4mayvs2s5l23edj8ertcmtd2v4zr,2026-08-21T14:46:10+00:00,102738,509462,20.165979,http://54.38.118.143:8000
+368,new,gonka1t4dc2gjzwate5dr0y962pfgh5j9ln6jcud32h9,2026-08-21T14:46:10+00:00,83584,509462,16.406327,http://44.242.236.62:8000
