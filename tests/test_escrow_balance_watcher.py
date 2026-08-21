@@ -80,6 +80,8 @@ class StateTransitionTests(unittest.TestCase):
         third, messages = self.success(second, 97, "2026-07-23T00:00:00+00:00")
         self.assertEqual(len(messages), 1)
         self.assertIn("Напоминание", messages[0])
+        self.assertIn("Низкий с:", messages[0])
+        self.assertIn("UTC", messages[0])
         self.assertEqual(third["low_since"], "2026-07-22T00:00:00+00:00")
 
     def test_exactly_100_is_not_low_and_recovers(self):
@@ -88,7 +90,7 @@ class StateTransitionTests(unittest.TestCase):
         self.assertEqual(recovered["status"], "ok")
         self.assertFalse(recovered["low_alerted"])
         self.assertEqual(len(messages), 1)
-        self.assertIn("восстановлен", messages[0])
+        self.assertIn("пополнен", messages[0])
 
     def test_unavailable_preserves_last_balance_and_alerts_on_third_run(self):
         previous, _ = self.success({}, 150, "2026-07-22T00:00:00+00:00")
@@ -102,6 +104,9 @@ class StateTransitionTests(unittest.TestCase):
             )
             self.assertEqual(previous["balance_gnk"], "150")
             self.assertEqual(len(messages), 1 if run == 3 else 0)
+            if run == 3:
+                self.assertIn("промониторить", messages[0])
+                self.assertNotIn("не затираем", messages[0])
         self.assertEqual(previous["status"], "unavailable")
         self.assertTrue(previous["unavailable_alerted"])
 
@@ -115,7 +120,8 @@ class StateTransitionTests(unittest.TestCase):
         self.assertEqual(recovered["status"], "ok")
         self.assertFalse(recovered["unavailable_alerted"])
         self.assertEqual(len(messages), 1)
-        self.assertIn("снова доступен", messages[0])
+        self.assertIn("снова мониторится", messages[0])
+        self.assertIn("На ключе: 150 GNK", messages[0])
 
 
 class PersistenceTests(unittest.TestCase):

@@ -208,12 +208,17 @@ def model_changes(previous: dict[str, Any], current: dict[str, Any]) -> list[dic
     return changes
 
 
-def build_changes_message(epoch: int | None, changes: list[dict]) -> str:
+def build_changes_message(
+    epoch: int | None,
+    changes: list[dict],
+    models: dict[str, str],
+) -> str:
     lines = [
         "ℹ️ <b>Изменились коэффициенты PoC моделей</b>",
         "",
         f"Эпоха: {epoch if epoch is not None else 'нет данных'}",
     ]
+    changed_ids = {change["model_id"] for change in changes}
     for change in changes:
         model_id = escape_html(change["model_id"])
         if change["type"] == "added":
@@ -229,22 +234,40 @@ def build_changes_message(epoch: int | None, changes: list[dict]) -> str:
                 f"<b>{escape_html(change['old'])}</b> → "
                 f"<b>{escape_html(change['new'])}</b>"
             )
+    unchanged = [
+        (model_id, coefficient)
+        for model_id, coefficient in sorted(models.items())
+        if model_id not in changed_ids
+    ]
+    if unchanged:
+        lines.append("")
+        lines.append("Без изменений:")
+        for model_id, coefficient in unchanged:
+            lines.append(
+                f"• {escape_html(model_id)} — {escape_html(coefficient)}"
+            )
     return "\n".join(lines)
 
 
 def build_unavailable_message(reason: str, runs: int) -> str:
     return (
-        "🟡 <b>Коэффициенты PoC моделей недоступны</b>\n\n"
-        f"Последовательных проверок: <b>{runs}</b>\n"
+        "🟡 <b>Не удалось прочитать коэффициенты PoC</b>\n\n"
+        f"Проверок подряд: <b>{runs}</b>\n"
         f"Причина: <code>{escape_html(reason)}</code>"
     )
 
 
-def build_recovery_message(epoch: int | None) -> str:
-    return (
-        "🟢 <b>Коэффициенты PoC моделей снова доступны</b>\n\n"
-        f"Эпоха: {epoch if epoch is not None else 'нет данных'}"
-    )
+def build_recovery_message(epoch: int | None, models: dict[str, str]) -> str:
+    lines = [
+        "🟢 <b>Коэффициенты PoC моделей снова доступны</b>",
+        "",
+        f"Эпоха: {epoch if epoch is not None else 'нет данных'}",
+    ]
+    for model_id, coefficient in sorted(models.items()):
+        lines.append(
+            f"• {escape_html(model_id)} — {escape_html(coefficient)}"
+        )
+    return "\n".join(lines)
 
 
 def apply_success(
@@ -260,11 +283,11 @@ def apply_success(
     previous_models = previous.get("models")
     baseline = not isinstance(previous_models, dict)
     if previous.get("unavailable_alerted"):
-        messages.append(build_recovery_message(epoch))
+        messages.append(build_recovery_message(epoch, models))
     if not baseline:
         changes = model_changes(previous_models, models)
         if changes:
-            messages.append(build_changes_message(epoch, changes))
+            messages.append(build_changes_message(epoch, changes, models))
     return {
         "schema_version": 1,
         "checked_at": now,

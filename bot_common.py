@@ -14,6 +14,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -22,8 +23,58 @@ class SourcesUnavailable(RuntimeError):
     """Raised when every configured HTTP source failed."""
 
 
+PACIFIC = ZoneInfo("America/Los_Angeles")
+MONTHS_RU = (
+    "янв",
+    "фев",
+    "мар",
+    "апр",
+    "мая",
+    "июн",
+    "июл",
+    "авг",
+    "сен",
+    "окт",
+    "ноя",
+    "дек",
+)
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def parse_iso_datetime(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.strip() or value.strip() == "unknown":
+        return None
+    text = value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def format_date_ru(value: datetime) -> str:
+    return f"{value.day} {MONTHS_RU[value.month - 1]}"
+
+
+def format_alert_datetime(value: Any) -> str:
+    parsed = parse_iso_datetime(value)
+    if parsed is None:
+        return "нет данных" if value in (None, "", "unknown") else str(value)
+    utc = parsed.astimezone(timezone.utc)
+    pacific = parsed.astimezone(PACIFIC)
+    utc_text = f"{format_date_ru(utc)}, {utc:%H:%M} UTC"
+    if (pacific.year, pacific.month, pacific.day) == (utc.year, utc.month, utc.day):
+        pacific_text = f"{pacific:%H:%M} PT"
+    else:
+        pacific_text = f"{format_date_ru(pacific)}, {pacific:%H:%M} PT"
+    return f"{utc_text} ({pacific_text})"
 
 
 def escape_html(value: Any) -> str:

@@ -138,6 +138,7 @@ class ChangeDetectionTests(unittest.TestCase):
         self.assertEqual(len(messages), 1)
         self.assertIn("0.72", messages[0])
         self.assertIn("0.78", messages[0])
+        self.assertNotIn("Без изменений", messages[0])
 
         _, repeated = watcher.apply_success(
             state,
@@ -148,6 +149,22 @@ class ChangeDetectionTests(unittest.TestCase):
             now="2026-08-13T01:00:00+00:00",
         )
         self.assertEqual(repeated, [])
+
+    def test_change_alert_lists_unchanged_coefficients(self):
+        previous = {"models": {"Kimi": "0.90", "GLM": "2.5935"}}
+        _, messages = watcher.apply_success(
+            previous,
+            {"Kimi": "0.945", "GLM": "2.5935"},
+            epoch=367,
+            source="https://params",
+            epoch_source="https://group",
+            now="2026-08-13T00:00:00+00:00",
+        )
+        self.assertEqual(len(messages), 1)
+        self.assertIn("0.9", messages[0])
+        self.assertIn("0.945", messages[0])
+        self.assertIn("Без изменений:", messages[0])
+        self.assertIn("GLM — 2.5935", messages[0])
 
     def test_unavailable_alerts_once_and_preserves_models(self):
         previous = {"models": {"M": "0.78"}}
@@ -165,6 +182,8 @@ class ChangeDetectionTests(unittest.TestCase):
             now="two",
         )
         self.assertEqual(len(messages), 1)
+        self.assertIn("Не удалось прочитать коэффициенты PoC", messages[0])
+        self.assertIn("Проверок подряд", messages[0])
         self.assertIn("timeout", messages[0])
         self.assertNotIn("full details", messages[0])
         self.assertEqual(second["models"], {"M": "0.78"})
@@ -194,6 +213,8 @@ class ChangeDetectionTests(unittest.TestCase):
         )
         self.assertEqual(len(messages), 1)
         self.assertIn("снова доступны", messages[0])
+        self.assertIn("Эпоха: 360", messages[0])
+        self.assertIn("M — 0.78", messages[0])
         self.assertEqual(state["unavailable_runs"], 0)
 
     def test_state_round_trip(self):
