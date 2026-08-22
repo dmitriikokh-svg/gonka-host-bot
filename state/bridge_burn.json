@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-08-22T14:56:07+00:00",
+  "checked_at": "2026-08-22T15:23:31+00:00",
   "completed_history": [],
   "critical_alerted": false,
   "critical_since": null,
@@ -11,9 +11,9 @@
     "ethereum": {
       "alerted": true,
       "endpoint": null,
-      "failed_runs": 572,
+      "failed_runs": 573,
       "failed_since": "2026-07-29T09:27:34+00:00",
-      "last_error": "all Ethereum RPC sources failed: https://eth-mainnet.g.alchemy.com attempt 1/1: HTTP 400 | https://ethereum-rpc.publicnode.com attempt 1/1: HTTP 403 | https://cloudflare-eth.com attempt 1/1: invalid response | https://1rpc.io attempt 1/1: HTTP 403 | https://eth.llamarpc.com attempt 1/1: HTTP 403",
+      "last_error": "all Ethereum RPC sources failed: https://eth-mainnet.g.alchemy.com attempt 1/1: HTTP 400 | https://ethereum-rpc.publicnode.com attempt 1/1: HTTP 403 | https://cloudflare-eth.com attempt 1/1: invalid response | https://1rpc.io attempt 1/1: invalid response | https://eth.llamarpc.com attempt 1/1: HTTP 403",
       "last_success_at": null,
       "status": "unavailable"
     }
