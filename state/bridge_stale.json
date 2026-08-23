@@ -1,7 +1,7 @@
 {
-  "checked_at": "2026-08-23T11:33:21+00:00",
-  "dkg_phase": "DKG_PHASE_SIGNED",
-  "epoch": 369,
+  "checked_at": "2026-08-23T11:53:06+00:00",
+  "dkg_phase": "DKG_PHASE_VERIFYING",
+  "epoch": 370,
   "ethereum_finalized_block": 25817366,
   "owner": "Dmitrii Kokh",
   "participants": {
@@ -336,11 +336,11 @@
     "gonka_chain": {
       "alerted": false,
       "endpoint": null,
-      "failed_runs": 1,
-      "failed_since": "2026-08-23T11:33:21+00:00",
-      "last_error": "all sources failed: http://204.12.168.157:1317/productscience/inference/bls/epoch_data/370 attempt 1/1: HTTPError: 404 Client Error: Not Found for url: http://204.12.168.157:1317/productscience/inference/bls/epoch_data/370 | https://node3.gonka.ai/chain-api/productscience/inference/bls/epoch_data/370 attempt 1/1: HTTPError: 404 Client Error: Not Found for url: https://node3.gonka.ai/chain-api/productscience/inference/bls/epoch_data/370 | http://node2.gonka.ai:8000/chain-api/productscience/inference/bls/epoch_data/370 attempt 1/1: HTTPError: 404 Client Error: Not Found for url: http://node2.gonka.ai:8000/chain-api/productscience/inference/bls/epoch_data/370 | http://node1.gonka.ai:8000/chain-api/productscience/inference/bls/epoch_data/370 attempt 1/1: HTTPError: 404 Client Error: Not Found for url: http://node1.gonka.ai:8000/chain-api/productscience/inference/bls/epoch_data/370",
-      "last_success_at": "2026-08-23T11:09:00+00:00",
-      "status": "unavailable"
+      "failed_runs": 0,
+      "failed_since": null,
+      "last_error": null,
+      "last_success_at": "2026-08-23T11:53:06+00:00",
+      "status": "available"
     }
   },
   "stale_rule_version": "bridge_lag_v1:tolerance=64:slots=35:after=2",
