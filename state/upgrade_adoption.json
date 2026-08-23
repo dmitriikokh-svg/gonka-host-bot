@@ -1,33 +1,33 @@
 {
   "target_version": "v0.2.15-post3",
   "threshold": 267800,
-  "adopted_weight": 407190,
-  "network_total_weight": 570990,
-  "unknown_weight": 63771,
-  "unreachable_count": 3,
-  "unreachable_weight": 21084,
-  "missing_api_version_weight": 42687,
+  "adopted_weight": 376819,
+  "network_total_weight": 572397,
+  "unknown_weight": 94657,
+  "unreachable_count": 7,
+  "unreachable_weight": 62910,
+  "missing_api_version_weight": 31747,
   "unqueryable_weight": 0,
   "unqueryable_hosts": 0,
   "threshold_reached": true,
   "unknown_band": "degraded",
   "unknown_participants": 0,
   "target_mlnode_version": "3.0.16",
-  "mlnode_target_node_count": 75,
-  "mlnode_visible_node_count": 133,
+  "mlnode_target_node_count": 72,
+  "mlnode_visible_node_count": 124,
   "mlnode_missing_version_node_count": 12,
-  "mlnode_fully_updated_host_count": 5,
-  "mlnode_fully_updated_weight": 57916,
+  "mlnode_fully_updated_host_count": 3,
+  "mlnode_fully_updated_weight": 62807,
   "mlnode_mixed_host_count": 7,
-  "mlnode_other_host_count": 8,
-  "mlnode_unknown_host_count": 9,
-  "mlnode_unknown_weight": 76897,
-  "mlnode_unavailable_host_count": 3,
+  "mlnode_other_host_count": 6,
+  "mlnode_unknown_host_count": 13,
+  "mlnode_unknown_weight": 117826,
+  "mlnode_unavailable_host_count": 7,
   "mlnode_version_distribution": {
-    "0.2.0": 41,
+    "0.2.0": 35,
     "3.0.14": 2,
     "3.0.14-post2": 3,
-    "3.0.16": 75,
+    "3.0.16": 72,
     "MISSING_VERSION": 12
   },
   "mlnode_hosts": {
@@ -38,51 +38,45 @@
         "0.2.0"
       ]
     },
-    "gonka10thh6z0wvq9c05j4z3f9qtpxxedruqn5ae350k": {
-      "status": "incomplete",
-      "weight": 8943,
-      "versions": [
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION"
-      ]
-    },
     "gonka1346p2h8dn4kp98c5e93k5q64g0h7vxjxnd55fh": {
       "status": "other",
-      "weight": 1593,
+      "weight": 1608,
       "versions": [
         "0.2.0",
         "0.2.0"
       ]
     },
+    "gonka168rtjfkszuhcggg4dfyse4yh7xn9zwfglnkns2": {
+      "status": "no_mlnode_data",
+      "weight": 11904,
+      "versions": []
+    },
     "gonka16dgkvx7mh609ntkzknckwaskgq9lcdp86j0skk": {
       "status": "mixed",
-      "weight": 61456,
+      "weight": 64097,
       "versions": [
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16"
       ]
     },
+    "gonka1830lqug50lse998x2lakk4pj5ypfumz5pasz0y": {
+      "status": "unavailable",
+      "weight": 39429,
+      "versions": []
+    },
     "gonka1aw77zuy536tufqd56zfq6ev3234u5ftty0zkte": {
       "status": "incomplete",
       "weight": 8559,
       "versions": [
-        "MISSING_VERSION",
         "0.2.0",
+        "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION"
@@ -90,125 +84,13 @@
     },
     "gonka1f0u3y2wneer8zhz3ypw4x54h38cpa0qsy8ts3e": {
       "status": "unavailable",
-      "weight": 17893,
+      "weight": 16483,
       "versions": []
-    },
-    "gonka1gyk0aahvr3qeju4zx0nplfreej6cy4jjk8svc5": {
-      "status": "other",
-      "weight": 715,
-      "versions": [
-        "0.2.0"
-      ]
-    },
-    "gonka1p2lhgng7tcqju7emk989s5fpdr7k2c3ek6h26m": {
-      "status": "target",
-      "weight": 877,
-      "versions": [
-        "3.0.16",
-        "3.0.16"
-      ]
-    },
-    "gonka1qwfrtz9c7kcrfkrrlne2pkcye74mj6ce33xdkl": {
-      "status": "target",
-      "weight": 971,
-      "versions": [
-        "3.0.16"
-      ]
-    },
-    "gonka1scskt6wpnjnumsah6kjphmdu87vjgvcxmn4rxv": {
-      "status": "target",
-      "weight": 47242,
-      "versions": [
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16"
-      ]
-    },
-    "gonka1ym3np7guxart483yfdxnlztuazx22cjt0e4a2p": {
-      "status": "other",
-      "weight": 2992,
-      "versions": [
-        "0.2.0",
-        "0.2.0"
-      ]
-    },
-    "gonka1z6xwdunt3cxqmexjffez053m62le88g98tsj8s": {
-      "status": "incomplete",
-      "weight": 25208,
-      "versions": [
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION"
-      ]
-    },
-    "gonka168rtjfkszuhcggg4dfyse4yh7xn9zwfglnkns2": {
-      "status": "no_mlnode_data",
-      "weight": 11930,
-      "versions": []
-    },
-    "gonka1830lqug50lse998x2lakk4pj5ypfumz5pasz0y": {
-      "status": "other",
-      "weight": 37641,
-      "versions": [
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0"
-      ]
-    },
-    "gonka1a3pkge3g33v3zdkq7qmycpjwpulms6ejt8z00f": {
-      "status": "no_mlnode_data",
-      "weight": 785,
-      "versions": []
-    },
-    "gonka1dkl4mah5erqggvhqkpc8j3qs5tyuetgdy552cp": {
-      "status": "mixed",
-      "weight": 2737,
-      "versions": [
-        "3.0.14-post2",
-        "3.0.16"
-      ]
-    },
-    "gonka1gvpv7vhk5gyxhmf9u8sc8pw5j8fr6lzalyrmkx": {
-      "status": "target",
-      "weight": 3423,
-      "versions": [
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16"
-      ]
     },
     "gonka1gvrrhjmy4w4mayvs2s5l23edj8ertcmtd2v4zr": {
       "status": "mixed",
-      "weight": 101991,
+      "weight": 103810,
       "versions": [
-        "3.0.16",
-        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -233,19 +115,14 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
-        "3.0.16"
-      ]
-    },
-    "gonka1hvhfcc23q0j49zjt372ymgkfsk9mnkqjj3l42x": {
-      "status": "target",
-      "weight": 5403,
-      "versions": [
+        "3.0.16",
+        "3.0.16",
         "3.0.16"
       ]
     },
     "gonka1kvmerzu64094dt9t62ea0cp75larh39ulzldum": {
       "status": "mixed",
-      "weight": 69163,
+      "weight": 72232,
       "versions": [
         "3.0.16",
         "3.0.16",
@@ -253,55 +130,55 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "0.2.0",
-        "3.0.16",
-        "3.0.16",
         "3.0.16"
       ]
     },
-    "gonka1kx9mca3xm8u8ypzfuhmxey66u0ufxhs7nm6wc5": {
-      "status": "mixed",
-      "weight": 7118,
-      "versions": [
-        "0.2.0",
-        "3.0.14-post2",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16"
-      ]
-    },
-    "gonka1m58jds005cttwq2vt0p7yk6vy2aqg254cqqppf": {
+    "gonka1qwfrtz9c7kcrfkrrlne2pkcye74mj6ce33xdkl": {
       "status": "unavailable",
-      "weight": 1182,
+      "weight": 971,
       "versions": []
     },
-    "gonka1t0psqlz8fzhlqnaresvk5vxfmgv0te23mnwdad": {
-      "status": "other",
-      "weight": 23490,
+    "gonka1scskt6wpnjnumsah6kjphmdu87vjgvcxmn4rxv": {
+      "status": "target",
+      "weight": 48420,
       "versions": [
-        "0.2.0",
-        "0.2.0",
-        "0.2.0"
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16"
       ]
     },
     "gonka1t4dc2gjzwate5dr0y962pfgh5j9ln6jcud32h9": {
       "status": "mixed",
-      "weight": 85603,
+      "weight": 86420,
       "versions": [
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "0.2.0",
         "3.0.16",
         "0.2.0",
         "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "0.2.0"
       ]
-    },
-    "gonka1tlvg4kjx7ljd5thgd5fkgh39q6lu8cmxupktgg": {
-      "status": "unavailable",
-      "weight": 2009,
-      "versions": []
     },
     "gonka1ts6k67zt064z87rx9hztm93cd3yh5mkqje6z4c": {
       "status": "other",
@@ -310,9 +187,90 @@
         "0.2.0"
       ]
     },
+    "gonka10thh6z0wvq9c05j4z3f9qtpxxedruqn5ae350k": {
+      "status": "incomplete",
+      "weight": 8528,
+      "versions": [
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "MISSING_VERSION",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "MISSING_VERSION"
+      ]
+    },
+    "gonka1a3pkge3g33v3zdkq7qmycpjwpulms6ejt8z00f": {
+      "status": "no_mlnode_data",
+      "weight": 799,
+      "versions": []
+    },
+    "gonka1dkl4mah5erqggvhqkpc8j3qs5tyuetgdy552cp": {
+      "status": "mixed",
+      "weight": 2691,
+      "versions": [
+        "3.0.16",
+        "3.0.14-post2"
+      ]
+    },
+    "gonka1gvpv7vhk5gyxhmf9u8sc8pw5j8fr6lzalyrmkx": {
+      "status": "target",
+      "weight": 3445,
+      "versions": [
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16"
+      ]
+    },
+    "gonka1gyk0aahvr3qeju4zx0nplfreej6cy4jjk8svc5": {
+      "status": "unavailable",
+      "weight": 662,
+      "versions": []
+    },
+    "gonka1hvhfcc23q0j49zjt372ymgkfsk9mnkqjj3l42x": {
+      "status": "target",
+      "weight": 10942,
+      "versions": [
+        "3.0.16"
+      ]
+    },
+    "gonka1kx9mca3xm8u8ypzfuhmxey66u0ufxhs7nm6wc5": {
+      "status": "mixed",
+      "weight": 7151,
+      "versions": [
+        "3.0.16",
+        "0.2.0",
+        "3.0.14-post2",
+        "3.0.16",
+        "3.0.16"
+      ]
+    },
+    "gonka1m58jds005cttwq2vt0p7yk6vy2aqg254cqqppf": {
+      "status": "unavailable",
+      "weight": 1229,
+      "versions": []
+    },
+    "gonka1t0psqlz8fzhlqnaresvk5vxfmgv0te23mnwdad": {
+      "status": "other",
+      "weight": 25410,
+      "versions": [
+        "0.2.0",
+        "0.2.0",
+        "0.2.0"
+      ]
+    },
+    "gonka1tlvg4kjx7ljd5thgd5fkgh39q6lu8cmxupktgg": {
+      "status": "unavailable",
+      "weight": 3939,
+      "versions": []
+    },
     "gonka1u60wtn9dhadweeuq2gywcpx34fpfnuhmu7w0qq": {
       "status": "other",
-      "weight": 24181,
+      "weight": 7707,
       "versions": [
         "3.0.14",
         "3.0.14"
@@ -320,20 +278,49 @@
     },
     "gonka1w29nvdy6caqtrw30whz9h6ghl0xszwh3egndah": {
       "status": "no_mlnode_data",
-      "weight": 388,
+      "weight": 395,
       "versions": []
     },
     "gonka1y2a9p56kv044327uycmqdexl7zs82fs5ryv5le": {
       "status": "mixed",
-      "weight": 4571,
+      "weight": 4659,
       "versions": [
         "0.2.0",
         "3.0.14-post2",
         "3.0.16"
       ]
+    },
+    "gonka1ym3np7guxart483yfdxnlztuazx22cjt0e4a2p": {
+      "status": "other",
+      "weight": 3053,
+      "versions": [
+        "0.2.0",
+        "0.2.0"
+      ]
+    },
+    "gonka1z6xwdunt3cxqmexjffez053m62le88g98tsj8s": {
+      "status": "incomplete",
+      "weight": 24731,
+      "versions": [
+        "MISSING_VERSION",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "0.2.0",
+        "0.2.0"
+      ]
+    },
+    "gonka1zjt5fqyljty2m2svhp89e6h377kglrylxndhch": {
+      "status": "unavailable",
+      "weight": 197,
+      "versions": []
     }
   },
   "mlnode_reported_signature": "74:4:56945",
-  "mlnode_candidate_signature": "75:5:57916",
+  "mlnode_candidate_signature": "72:3:62807",
   "mlnode_candidate_runs": 1
 }
