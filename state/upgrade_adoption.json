@@ -1,11 +1,11 @@
 {
   "target_version": "v0.2.15-post3",
   "threshold": 267800,
-  "adopted_weight": 387765,
+  "adopted_weight": 385756,
   "network_total_weight": 570990,
-  "unknown_weight": 83196,
-  "unreachable_count": 4,
-  "unreachable_weight": 40509,
+  "unknown_weight": 85205,
+  "unreachable_count": 5,
+  "unreachable_weight": 42518,
   "missing_api_version_weight": 42687,
   "unqueryable_weight": 0,
   "unqueryable_hosts": 0,
@@ -14,17 +14,17 @@
   "unknown_participants": 0,
   "target_mlnode_version": "3.0.16",
   "mlnode_target_node_count": 74,
-  "mlnode_visible_node_count": 133,
+  "mlnode_visible_node_count": 131,
   "mlnode_missing_version_node_count": 14,
   "mlnode_fully_updated_host_count": 4,
   "mlnode_fully_updated_weight": 56945,
   "mlnode_mixed_host_count": 7,
-  "mlnode_other_host_count": 7,
-  "mlnode_unknown_host_count": 11,
-  "mlnode_unknown_weight": 114215,
-  "mlnode_unavailable_host_count": 4,
+  "mlnode_other_host_count": 6,
+  "mlnode_unknown_host_count": 12,
+  "mlnode_unknown_weight": 116224,
+  "mlnode_unavailable_host_count": 5,
   "mlnode_version_distribution": {
-    "0.2.0": 40,
+    "0.2.0": 38,
     "3.0.14": 2,
     "3.0.14-post2": 3,
     "3.0.16": 74,
@@ -43,14 +43,14 @@
       "weight": 8943,
       "versions": [
         "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "MISSING_VERSION"
       ]
     },
@@ -66,10 +66,10 @@
       "status": "mixed",
       "weight": 61456,
       "versions": [
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "0.2.0",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -81,10 +81,10 @@
       "status": "incomplete",
       "weight": 8559,
       "versions": [
-        "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
         "MISSING_VERSION"
       ]
     },
@@ -92,11 +92,11 @@
       "status": "incomplete",
       "weight": 17893,
       "versions": [
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
-        "0.2.0"
+        "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION"
       ]
     },
     "gonka1gyk0aahvr3qeju4zx0nplfreej6cy4jjk8svc5": {
@@ -154,16 +154,16 @@
       "status": "incomplete",
       "weight": 25208,
       "versions": [
-        "MISSING_VERSION",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "0.2.0",
-        "0.2.0"
+        "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "MISSING_VERSION"
       ]
     },
     "gonka168rtjfkszuhcggg4dfyse4yh7xn9zwfglnkns2": {
@@ -211,7 +211,6 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
-        "3.0.16",
         "0.2.0",
         "3.0.16",
         "3.0.16",
@@ -221,6 +220,7 @@
         "3.0.16",
         "3.0.16",
         "0.2.0",
+        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -249,9 +249,9 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
+        "3.0.16",
+        "3.0.16",
         "3.0.16"
       ]
     },
@@ -259,10 +259,10 @@
       "status": "mixed",
       "weight": 7118,
       "versions": [
+        "3.0.16",
+        "3.0.16",
         "0.2.0",
         "3.0.14-post2",
-        "3.0.16",
-        "3.0.16",
         "3.0.16"
       ]
     },
@@ -295,12 +295,9 @@
       ]
     },
     "gonka1tlvg4kjx7ljd5thgd5fkgh39q6lu8cmxupktgg": {
-      "status": "other",
+      "status": "unavailable",
       "weight": 2009,
-      "versions": [
-        "0.2.0",
-        "0.2.0"
-      ]
+      "versions": []
     },
     "gonka1ts6k67zt064z87rx9hztm93cd3yh5mkqje6z4c": {
       "status": "other",
