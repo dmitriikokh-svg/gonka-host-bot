@@ -1,15 +1,15 @@
 {
   "alert_level": "none",
-  "checked_at": "2026-08-24T10:48:19.911795Z",
+  "checked_at": "2026-08-24T11:14:15.475177Z",
   "consecutive_breaches": 0,
-  "consecutive_clean_windows": 450,
+  "consecutive_clean_windows": 451,
   "event_started_at": null,
   "last_alert_at": null,
-  "last_evaluated_height": 5722050,
+  "last_evaluated_height": 5722347,
   "last_recovered_at": null,
   "last_reminder_at": null,
-  "last_sum_tx_bytes": 3215,
-  "last_window_start": 5722041,
+  "last_sum_tx_bytes": 2161,
+  "last_window_start": 5722338,
   "last_working_rpc": "https://node3.gonka.ai/chain-rpc",
   "monitoring": {
     "alerted": false,
@@ -21,80 +21,66 @@
   "snapshot": {
     "blocks": [
       {
-        "height": 5722041,
-        "max_tx_bytes": 0,
-        "message_types": {},
-        "sum_tx_bytes": 0,
-        "tx_count": 0
-      },
-      {
-        "height": 5722042,
-        "max_tx_bytes": 0,
-        "message_types": {},
-        "sum_tx_bytes": 0,
-        "tx_count": 0
-      },
-      {
-        "height": 5722043,
-        "max_tx_bytes": 318,
+        "height": 5722338,
+        "max_tx_bytes": 307,
         "message_types": {
-          "MsgCreateDevshardEscrow": {
-            "bytes": 318,
+          "MsgSend": {
+            "bytes": 307,
             "count": 1
           }
         },
-        "sum_tx_bytes": 318,
+        "sum_tx_bytes": 307,
         "tx_count": 1
       },
       {
-        "height": 5722044,
-        "max_tx_bytes": 333,
-        "message_types": {
-          "MsgCreateDevshardEscrow": {
-            "bytes": 651,
-            "count": 2
-          }
-        },
-        "sum_tx_bytes": 651,
-        "tx_count": 2
-      },
-      {
-        "height": 5722045,
-        "max_tx_bytes": 473,
-        "message_types": {
-          "MsgCreateDevshardEscrow": {
-            "bytes": 333,
-            "count": 1
-          },
-          "MsgSubmitHardwareDiff": {
-            "bytes": 473,
-            "count": 1
-          }
-        },
-        "sum_tx_bytes": 806,
-        "tx_count": 2
-      },
-      {
-        "height": 5722046,
-        "max_tx_bytes": 404,
-        "message_types": {
-          "MsgClaimRewards": {
-            "bytes": 404,
-            "count": 1
-          }
-        },
-        "sum_tx_bytes": 404,
-        "tx_count": 1
-      },
-      {
-        "height": 5722047,
+        "height": 5722339,
         "max_tx_bytes": 0,
         "message_types": {},
         "sum_tx_bytes": 0,
         "tx_count": 0
       },
       {
-        "height": 5722048,
+        "height": 5722340,
+        "max_tx_bytes": 0,
+        "message_types": {},
+        "sum_tx_bytes": 0,
+        "tx_count": 0
+      },
+      {
+        "height": 5722341,
+        "max_tx_bytes": 0,
+        "message_types": {},
+        "sum_tx_bytes": 0,
+        "tx_count": 0
+      },
+      {
+        "height": 5722342,
+        "max_tx_bytes": 0,
+        "message_types": {},
+        "sum_tx_bytes": 0,
+        "tx_count": 0
+      },
+      {
+        "height": 5722343,
+        "max_tx_bytes": 0,
+        "message_types": {},
+        "sum_tx_bytes": 0,
+        "tx_count": 0
+      },
+      {
+        "height": 5722344,
+        "max_tx_bytes": 321,
+        "message_types": {
+          "MsgSend": {
+            "bytes": 321,
+            "count": 1
+          }
+        },
+        "sum_tx_bytes": 321,
+        "tx_count": 1
+      },
+      {
+        "height": 5722345,
         "max_tx_bytes": 1036,
         "message_types": {
           "MsgSubmitHardwareDiff": {
@@ -106,14 +92,19 @@
         "tx_count": 1
       },
       {
-        "height": 5722049,
-        "max_tx_bytes": 0,
-        "message_types": {},
-        "sum_tx_bytes": 0,
-        "tx_count": 0
+        "height": 5722346,
+        "max_tx_bytes": 497,
+        "message_types": {
+          "MsgSubmitHardwareDiff": {
+            "bytes": 497,
+            "count": 1
+          }
+        },
+        "sum_tx_bytes": 497,
+        "tx_count": 1
       },
       {
-        "height": 5722050,
+        "height": 5722347,
         "max_tx_bytes": 0,
         "message_types": {},
         "sum_tx_bytes": 0,
@@ -124,91 +115,86 @@
     "hot_blocks": [
       {
         "bytes": 1036,
-        "height": 5722048,
+        "height": 5722345,
         "tx_count": 1
       },
       {
-        "bytes": 806,
-        "height": 5722045,
-        "tx_count": 2
-      },
-      {
-        "bytes": 651,
-        "height": 5722044,
-        "tx_count": 2
-      },
-      {
-        "bytes": 404,
-        "height": 5722046,
+        "bytes": 497,
+        "height": 5722346,
         "tx_count": 1
       },
       {
-        "bytes": 318,
-        "height": 5722043,
+        "bytes": 321,
+        "height": 5722344,
+        "tx_count": 1
+      },
+      {
+        "bytes": 307,
+        "height": 5722338,
         "tx_count": 1
       },
       {
         "bytes": 0,
-        "height": 5722041,
+        "height": 5722339,
         "tx_count": 0
       },
       {
         "bytes": 0,
-        "height": 5722042,
+        "height": 5722340,
         "tx_count": 0
       },
       {
         "bytes": 0,
-        "height": 5722047,
+        "height": 5722341,
         "tx_count": 0
       },
       {
         "bytes": 0,
-        "height": 5722049,
+        "height": 5722342,
         "tx_count": 0
       },
       {
         "bytes": 0,
-        "height": 5722050,
+        "height": 5722343,
+        "tx_count": 0
+      },
+      {
+        "bytes": 0,
+        "height": 5722347,
         "tx_count": 0
       }
     ],
-    "latest_height": 5722050,
+    "latest_height": 5722347,
     "max_tx_bytes": 1036,
     "message_types": [
       {
-        "bytes": 1509,
+        "bytes": 1533,
         "count": 2,
         "type": "MsgSubmitHardwareDiff"
       },
       {
-        "bytes": 1302,
-        "count": 4,
-        "type": "MsgCreateDevshardEscrow"
-      },
-      {
-        "bytes": 404,
-        "count": 1,
-        "type": "MsgClaimRewards"
+        "bytes": 628,
+        "count": 2,
+        "type": "MsgSend"
       }
     ],
     "rpc": "https://node3.gonka.ai/chain-rpc",
-    "sum_tx_bytes": 3215,
-    "tx_count": 7,
+    "sum_tx_bytes": 2161,
+    "tx_count": 4,
     "window_block_count": 10,
-    "window_end": 5722050,
-    "window_start": 5722041
+    "window_end": 5722347,
+    "window_start": 5722338
   },
   "sources": [
     {
-      "error": "ConnectTimeout: HTTPSConnectionPool(host='node1.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node1.gonka.ai', port=443) at 0x7f967e0bacc0>, 'Connection to node1.gonka.ai timed out. (connect timeout=15)'))",
+      "error": "ConnectTimeout: HTTPSConnectionPool(host='node1.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node1.gonka.ai', port=443) at 0x7fe197642bd0>, 'Connection to node1.gonka.ai timed out. (connect timeout=15)'))",
       "error_category": "timeout",
       "name": "rpc1",
       "rpc": "https://node1.gonka.ai/chain-rpc",
       "status": "unavailable"
     },
     {
-      "error": "ConnectTimeout: HTTPSConnectionPool(host='node2.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node2.gonka.ai', port=443) at 0x7f967d01fd10>, 'Connection to node2.gonka.ai timed out. (connect timeout=15)'))",
+      "error": "ConnectTimeout: HTTPSConnectionPool(host='node2.gonka.ai', port=443): Max retries exceeded with url: /chain-rpc/status (Caused by ConnectTimeoutError(<HTTPSConnection(host='node2.gonka.ai', port=443) at 0x7fe197643c20>, 'Connection to node2.gonka.ai timed out. (connect timeout=15)'))",
       "error_category": "timeout",
       "name": "rpc2",
       "rpc": "https://node2.gonka.ai/chain-rpc",
@@ -217,7 +203,7 @@
     {
       "error": null,
       "error_category": null,
-      "latest_height": 5722050,
+      "latest_height": 5722347,
       "name": "rpc3",
       "rpc": "https://node3.gonka.ai/chain-rpc",
       "status": "available"
