@@ -2,12 +2,12 @@
   "target_version": "v0.2.15-post3",
   "adoption_percent": 80.0,
   "goal_weight": 357290,
-  "adopted_weight": 386788,
-  "adopted_pct": 86.60473385235092,
+  "adopted_weight": 385008,
+  "adopted_pct": 86.20617850353662,
   "network_total_weight": 446613,
-  "unknown_weight": 45194,
+  "unknown_weight": 46974,
   "unreachable_count": 5,
-  "unreachable_weight": 20785,
+  "unreachable_weight": 22565,
   "missing_api_version_weight": 24409,
   "unqueryable_weight": 0,
   "unqueryable_hosts": 0,
@@ -17,20 +17,20 @@
   "target_mlnode_version": "3.0.16",
   "mlnode_target_node_count": 75,
   "mlnode_visible_node_count": 126,
-  "mlnode_missing_version_node_count": 15,
+  "mlnode_missing_version_node_count": 13,
   "mlnode_fully_updated_host_count": 3,
   "mlnode_fully_updated_weight": 54611,
   "mlnode_mixed_host_count": 8,
-  "mlnode_other_host_count": 5,
-  "mlnode_unknown_host_count": 12,
-  "mlnode_unknown_weight": 90452,
+  "mlnode_other_host_count": 6,
+  "mlnode_unknown_host_count": 11,
+  "mlnode_unknown_weight": 76493,
   "mlnode_unavailable_host_count": 5,
   "mlnode_version_distribution": {
-    "0.2.0": 30,
+    "0.2.0": 32,
     "3.0.14": 3,
     "3.0.14-post2": 3,
     "3.0.16": 75,
-    "MISSING_VERSION": 15
+    "MISSING_VERSION": 13
   },
   "mlnode_hosts": {
     "gonka168rtjfkszuhcggg4dfyse4yh7xn9zwfglnkns2": {
@@ -39,9 +39,15 @@
       "versions": []
     },
     "gonka1830lqug50lse998x2lakk4pj5ypfumz5pasz0y": {
-      "status": "unavailable",
+      "status": "other",
       "weight": 13959,
-      "versions": []
+      "versions": [
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0"
+      ]
     },
     "gonka1a3pkge3g33v3zdkq7qmycpjwpulms6ejt8z00f": {
       "status": "no_mlnode_data",
@@ -52,23 +58,17 @@
       "status": "incomplete",
       "weight": 8559,
       "versions": [
+        "0.2.0",
         "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION",
-        "MISSING_VERSION",
-        "0.2.0"
+        "MISSING_VERSION"
       ]
     },
     "gonka1f0u3y2wneer8zhz3ypw4x54h38cpa0qsy8ts3e": {
-      "status": "incomplete",
+      "status": "unavailable",
       "weight": 15739,
-      "versions": [
-        "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION"
-      ]
+      "versions": []
     },
     "gonka1m58jds005cttwq2vt0p7yk6vy2aqg254cqqppf": {
       "status": "unavailable",
@@ -130,8 +130,6 @@
       "status": "incomplete",
       "weight": 23321,
       "versions": [
-        "MISSING_VERSION",
-        "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
@@ -139,7 +137,9 @@
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
-        "MISSING_VERSION"
+        "MISSING_VERSION",
+        "MISSING_VERSION",
+        "0.2.0"
       ]
     },
     "gonka10mmdjau4dnj8krs7sh7t7635ttnmq9u3vqgz09": {
@@ -155,14 +155,14 @@
       "versions": [
         "MISSING_VERSION",
         "MISSING_VERSION",
+        "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION"
+        "0.2.0"
       ]
     },
     "gonka1346p2h8dn4kp98c5e93k5q64g0h7vxjxnd55fh": {
@@ -177,13 +177,13 @@
       "status": "mixed",
       "weight": 61347,
       "versions": [
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "3.0.16",
         "3.0.16"
       ]
@@ -210,6 +210,10 @@
       "status": "mixed",
       "weight": 108806,
       "versions": [
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "0.2.0",
         "3.0.16",
         "3.0.16",
@@ -219,10 +223,6 @@
         "3.0.16",
         "3.0.16",
         "0.2.0",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -273,9 +273,9 @@
       "weight": 7201,
       "versions": [
         "3.0.16",
-        "3.0.16",
         "0.2.0",
         "3.0.14-post2",
+        "3.0.16",
         "3.0.16"
       ]
     },
