@@ -1,0 +1,21 @@
+[Unit]
+Description=Gonka Analytics DB read-only probe
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=gonka-monitor
+Group=gonka-monitor
+WorkingDirectory=/opt/gonka-host-bot
+EnvironmentFile=/etc/gonka-analytics-db.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/gonka-host-bot/.venv/bin/python analytics_db_probe.py
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

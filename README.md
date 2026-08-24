@@ -24,6 +24,8 @@
   блоках и риск чрезмерной chain load/state inflation.
 - `upgrade_adoption_watcher.py` — распространение целевых API- и
   MLNode-версий.
+- `analytics_db_probe.py` — безопасная read-only проверка доступности и
+  актуальности серверной Gonka Analytics DB через локальный SSH tunnel.
 - `glamsterdam_watcher.py` — дата и статус Ethereum Glamsterdam.
 
 Общие HTTP fallback, атомарная запись JSON и Telegram находятся в
@@ -305,6 +307,55 @@ Gas alert пока не реализован. Follow-up: исследовать
 `/block_results?height=...`, начать сохранять gas usage, накопить baseline за
 7–14 дней и только после этого определить окно и порог. Недоступность
 `block_results` не должна влиять на основной tx-bytes monitor.
+
+## Gonka Analytics DB: read-only probe
+
+`analytics_db.py` предоставляет только параметризованные `SELECT` и
+подключается к PostgreSQL с `default_transaction_read_only=on`,
+`statement_timeout` и `application_name=gonka-host-bot`. Записывающие SQL,
+DDL, временные таблицы, несколько statements и locking `SELECT` отклоняются
+до обращения к БД. Пароль передаётся драйверу отдельным аргументом: DSN с
+credentials не формируется и в ошибки или JSON не попадает.
+
+Это server-only интеграция. По умолчанию probe подключается к
+`127.0.0.1:15432`; SSH tunnel до PostgreSQL должен быть поднят и защищён
+отдельно. Не добавляйте SSH-ключи или пароль БД в GitHub Actions, repository
+variables, README или tracked-файлы. Скопируйте env-пример с правами `0600`:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+sudo install -m 600 deploy/analytics-db.env.example /etc/gonka-analytics-db.env
+sudo install -m 644 deploy/gonka-analytics-db-probe.service.example \
+  /etc/systemd/system/gonka-analytics-db-probe.service
+sudoedit /etc/gonka-analytics-db.env
+sudoedit /etc/systemd/system/gonka-analytics-db-probe.service
+
+sudo systemctl daemon-reload
+sudo systemctl start gonka-analytics-db-probe
+sudo journalctl -u gonka-analytics-db-probe -n 50 --no-pager
+```
+
+В unit нужно проверить `User`, `Group`, `WorkingDirectory` и `ExecStart`.
+Обязательны `GONKA_ANALYTICS_DB_USER` и `GONKA_ANALYTICS_DB_PASSWORD`.
+Остальные значения по умолчанию: database `gonka_analytics`, connect timeout
+10 секунд и statement timeout 30 секунд; все переменные перечислены в
+`deploy/analytics-db.env.example`.
+
+Probe читает latest block, live epoch, последнюю settled epoch с
+`total_rewards_gnk > 0` и наличие восьми ожидаемых таблиц. Результат — одна
+строка JSON без participant addresses, credentials и raw DB errors. Probe не
+отправляет Telegram, не пишет `state/` и не имеет GitHub Actions workflow.
+
+При будущих запросах к схеме важно сохранять семантику данных:
+
+- поля `*_gnk` уже выражены в GNK и не делятся на `1e9`;
+- поля `*_ngonka` делятся на `1e9` только для отображения в GNK;
+- эпохи связываются и сортируются по `epoch_number`;
+- временной анализ transactions обязан использовать `block_time`;
+- live weights нельзя выдавать за settled rewards;
+- legacy-таблицы, не входящие в текущую схему, использовать нельзя.
 
 ## Локальная проверка
 
