@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-08-24T10:21:45+00:00",
-  "epoch": 370,
+  "checked_at": "2026-08-24T11:06:13+00:00",
+  "epoch": 371,
   "epoch_source": "https://node3.gonka.ai/chain-api/productscience/inference/inference/current_epoch_group_data",
   "last_error": null,
   "last_error_reason": null,
