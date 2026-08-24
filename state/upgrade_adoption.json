@@ -2,34 +2,34 @@
   "target_version": "v0.2.15-post3",
   "adoption_percent": 80.0,
   "goal_weight": 357290,
-  "adopted_weight": 386788,
-  "adopted_pct": 86.60473385235092,
+  "adopted_weight": 388017,
+  "adopted_pct": 86.87991616903224,
   "network_total_weight": 446613,
-  "unknown_weight": 45194,
-  "unreachable_count": 5,
-  "unreachable_weight": 20785,
+  "unknown_weight": 43965,
+  "unreachable_count": 4,
+  "unreachable_weight": 19556,
   "missing_api_version_weight": 24409,
   "unqueryable_weight": 0,
   "unqueryable_hosts": 0,
   "threshold_reached": true,
-  "unknown_band": "degraded",
+  "unknown_band": "normal",
   "unknown_participants": 0,
   "target_mlnode_version": "3.0.16",
-  "mlnode_target_node_count": 75,
-  "mlnode_visible_node_count": 127,
+  "mlnode_target_node_count": 76,
+  "mlnode_visible_node_count": 128,
   "mlnode_missing_version_node_count": 15,
-  "mlnode_fully_updated_host_count": 3,
-  "mlnode_fully_updated_weight": 54611,
+  "mlnode_fully_updated_host_count": 4,
+  "mlnode_fully_updated_weight": 55840,
   "mlnode_mixed_host_count": 8,
   "mlnode_other_host_count": 5,
-  "mlnode_unknown_host_count": 12,
-  "mlnode_unknown_weight": 90452,
-  "mlnode_unavailable_host_count": 5,
+  "mlnode_unknown_host_count": 11,
+  "mlnode_unknown_weight": 89223,
+  "mlnode_unavailable_host_count": 4,
   "mlnode_version_distribution": {
     "0.2.0": 30,
     "3.0.14": 4,
     "3.0.14-post2": 3,
-    "3.0.16": 75,
+    "3.0.16": 76,
     "MISSING_VERSION": 15
   },
   "mlnode_hosts": {
@@ -52,8 +52,8 @@
       "status": "incomplete",
       "weight": 8559,
       "versions": [
-        "0.2.0",
         "MISSING_VERSION",
+        "0.2.0",
         "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION"
@@ -63,17 +63,19 @@
       "status": "incomplete",
       "weight": 15739,
       "versions": [
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
         "0.2.0",
         "0.2.0"
       ]
     },
     "gonka1m58jds005cttwq2vt0p7yk6vy2aqg254cqqppf": {
-      "status": "unavailable",
+      "status": "target",
       "weight": 1229,
-      "versions": []
+      "versions": [
+        "3.0.16"
+      ]
     },
     "gonka1qwfrtz9c7kcrfkrrlne2pkcye74mj6ce33xdkl": {
       "status": "unavailable",
@@ -131,15 +133,15 @@
       "weight": 23321,
       "versions": [
         "MISSING_VERSION",
+        "MISSING_VERSION",
+        "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION",
-        "MISSING_VERSION"
+        "0.2.0"
       ]
     },
     "gonka10mmdjau4dnj8krs7sh7t7635ttnmq9u3vqgz09": {
@@ -154,14 +156,14 @@
       "weight": 9040,
       "versions": [
         "0.2.0",
-        "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION",
         "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "MISSING_VERSION",
         "0.2.0"
       ]
     },
@@ -177,11 +179,11 @@
       "status": "mixed",
       "weight": 61347,
       "versions": [
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -210,13 +212,6 @@
       "status": "mixed",
       "weight": 108806,
       "versions": [
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
         "3.0.16",
         "3.0.16",
@@ -226,6 +221,13 @@
         "3.0.16",
         "3.0.16",
         "0.2.0",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -260,9 +262,9 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "0.2.0",
-        "3.0.16",
-        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16"
@@ -273,10 +275,10 @@
       "weight": 7201,
       "versions": [
         "3.0.16",
-        "0.2.0",
-        "3.0.14-post2",
         "3.0.16",
-        "3.0.16"
+        "3.0.16",
+        "0.2.0",
+        "3.0.14-post2"
       ]
     },
     "gonka1t0psqlz8fzhlqnaresvk5vxfmgv0te23mnwdad": {
@@ -316,47 +318,47 @@
       "status": "mixed",
       "weight": 2795,
       "versions": [
-        "MISSING_VERSION",
-        "3.0.16"
+        "3.0.16",
+        "MISSING_VERSION"
       ]
     }
   },
-  "last_digest_epoch": "370",
+  "last_digest_epoch": "371",
   "last_notified_api": {
     "target_version": "v0.2.15-post3",
-    "adopted_weight": 380758,
-    "adopted_pct": 66.51991537342089,
-    "network_total_weight": 572397,
+    "adopted_weight": 388017,
+    "adopted_pct": 86.87991616903224,
+    "network_total_weight": 446613,
     "goal_pct": 80.0,
-    "goal_weight": 457918,
-    "unreachable": 7,
-    "unreachable_weight": 145391,
-    "unreachable_pct": 25.40037770987619,
-    "other_unknown_weight": 31747,
-    "other_unknown_pct": 5.546325365087518,
-    "unknown_band": "unreliable",
-    "threshold_reached": false,
+    "goal_weight": 357290,
+    "unreachable": 4,
+    "unreachable_weight": 19556,
+    "unreachable_pct": 4.378735056973263,
+    "other_unknown_weight": 24409,
+    "other_unknown_pct": 5.46535815124056,
+    "unknown_band": "normal",
+    "threshold_reached": true,
     "unknown_participants": 0
   },
   "last_notified_mlnode": {
     "target_version": "3.0.16",
-    "target_node_count": 73,
-    "visible_node_count": 126,
-    "target_pct": 57.936507936507944,
-    "fully_updated_host_count": 5,
-    "mixed_host_count": 6,
-    "other_host_count": 9,
-    "unknown_host_count": 9,
-    "network_host_count": 29,
+    "target_node_count": 76,
+    "visible_node_count": 128,
+    "target_pct": 59.375,
+    "fully_updated_host_count": 4,
+    "mixed_host_count": 8,
+    "other_host_count": 5,
+    "unknown_host_count": 11,
+    "network_host_count": 28,
     "version_distribution": {
-      "0.2.0": 36,
-      "3.0.14": 2,
+      "0.2.0": 30,
+      "3.0.14": 4,
       "3.0.14-post2": 3,
-      "3.0.16": 73,
-      "MISSING_VERSION": 12
+      "3.0.16": 76,
+      "MISSING_VERSION": 15
     }
   },
-  "api_reported_signature": "band:unreliable",
+  "api_reported_signature": null,
   "api_candidate_signature": null,
   "api_candidate_runs": 0,
   "mlnode_reported_signature": null,
