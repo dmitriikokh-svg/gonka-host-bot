@@ -14,10 +14,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.902123,
+        "network_share_percent": 0.904154,
         "weight": 4029
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -45,10 +45,10 @@
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 2.024124,
-        "weight": 9040
+        "network_share_percent": 2.038105,
+        "weight": 9082
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 325,
       "legacy_known": true,
       "periods": [
@@ -70,14 +70,15 @@
       "history_has_gaps": false,
       "last_profile": {
         "inference_url": "http://78.111.80.104:8000",
-        "ml_node_count": 1,
+        "ml_node_count": 2,
         "models": [
-          "MiniMax-M2.7"
+          "MiniMax-M2.7",
+          "DeepSeek-V4-Flash-0731"
         ],
-        "network_share_percent": 0.1845,
-        "weight": 824
+        "network_share_percent": 0.284105,
+        "weight": 1266
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 358,
       "legacy_known": true,
       "periods": [
@@ -159,10 +160,10 @@
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 2.644348,
-        "weight": 11810
+        "network_share_percent": 2.656808,
+        "weight": 11839
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 343,
       "legacy_known": true,
       "periods": [
@@ -189,10 +190,10 @@
           "MiniMax-M2.7",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 13.736053,
-        "weight": 61347
+        "network_share_percent": 14.25933,
+        "weight": 63541
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -218,10 +219,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 3.125525,
-        "weight": 13959
+        "network_share_percent": 3.512264,
+        "weight": 15651
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 331,
       "legacy_known": true,
       "periods": [
@@ -266,10 +267,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.178902,
-        "weight": 799
+        "network_share_percent": 0.178632,
+        "weight": 796
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 325,
       "legacy_known": true,
       "periods": [
@@ -321,10 +322,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 1.916424,
-        "weight": 8559
+        "network_share_percent": 1.865533,
+        "weight": 8313
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 325,
       "legacy_known": true,
       "periods": [
@@ -416,10 +417,10 @@
           "MiniMax-M2.7",
           "DeepSeek-V4-Flash-0731"
         ],
-        "network_share_percent": 0.620895,
-        "weight": 2773
+        "network_share_percent": 0.591773,
+        "weight": 2637
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -445,10 +446,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 3.52408,
-        "weight": 15739
+        "network_share_percent": 3.683266,
+        "weight": 16413
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 325,
       "legacy_known": true,
       "periods": [
@@ -498,6 +499,35 @@
         }
       ]
     },
+    "gonka1fundsnx5jdeye40xtcdh8v3zny9ytnz6ls252e": {
+      "absence_detected_epoch": null,
+      "absence_from_epoch": null,
+      "absence_history_complete": null,
+      "active": true,
+      "first_seen_epoch": 372,
+      "history_has_gaps": false,
+      "last_profile": {
+        "inference_url": "http://46.4.101.249:8000",
+        "ml_node_count": 1,
+        "models": [
+          "MiniMax-M2.7"
+        ],
+        "network_share_percent": 2.00579,
+        "weight": 8938
+      },
+      "last_seen_epoch": 372,
+      "legacy_first_seen_epoch": null,
+      "legacy_known": false,
+      "periods": [
+        {
+          "absence_detected_epoch": null,
+          "end_exact": null,
+          "from": 372,
+          "started_after_gap": false,
+          "to": null
+        }
+      ]
+    },
     "gonka1gvpv7vhk5gyxhmf9u8sc8pw5j8fr6lzalyrmkx": {
       "absence_detected_epoch": null,
       "absence_from_epoch": null,
@@ -511,10 +541,10 @@
         "models": [
           "DeepSeek-V4-Flash-0731"
         ],
-        "network_share_percent": 0.756583,
-        "weight": 3379
+        "network_share_percent": 0.76659,
+        "weight": 3416
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": false,
       "periods": [
@@ -536,16 +566,16 @@
       "history_has_gaps": false,
       "last_profile": {
         "inference_url": "http://54.38.118.143:8000",
-        "ml_node_count": 28,
+        "ml_node_count": 27,
         "models": [
           "MiniMax-M2.7",
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 24.362479,
-        "weight": 108806
+        "network_share_percent": 20.080788,
+        "weight": 89482
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 345,
       "legacy_known": true,
       "periods": [
@@ -578,10 +608,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.163229,
-        "weight": 729
+        "network_share_percent": 0.153497,
+        "weight": 684
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -607,10 +637,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.250776,
-        "weight": 1120
+        "network_share_percent": 0.249546,
+        "weight": 1112
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 358,
       "legacy_known": true,
       "periods": [
@@ -682,10 +712,10 @@
           "MiniMax-M2.7",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 16.362936,
-        "weight": 73079
+        "network_share_percent": 15.798568,
+        "weight": 70400
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -713,10 +743,10 @@
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 1.612358,
-        "weight": 7201
+        "network_share_percent": 1.612845,
+        "weight": 7187
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 330,
       "legacy_known": true,
       "periods": [
@@ -773,10 +803,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.275182,
+        "network_share_percent": 0.275802,
         "weight": 1229
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -850,10 +880,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.217414,
+        "network_share_percent": 0.217904,
         "weight": 971
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -880,10 +910,10 @@
           "MiniMax-M2.7",
           "DeepSeek-V4-Flash-0731"
         ],
-        "network_share_percent": 11.220453,
-        "weight": 50112
+        "network_share_percent": 9.735868,
+        "weight": 43384
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 336,
       "legacy_known": true,
       "periods": [
@@ -909,10 +939,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 3.124405,
-        "weight": 13954
+        "network_share_percent": 3.181706,
+        "weight": 14178
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 356,
       "legacy_known": true,
       "periods": [
@@ -969,10 +999,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.872568,
-        "weight": 3897
+        "network_share_percent": 0.872512,
+        "weight": 3888
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -998,10 +1028,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 1.969938,
+        "network_share_percent": 1.974372,
         "weight": 8798
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 359,
       "legacy_known": true,
       "periods": [
@@ -1023,14 +1053,14 @@
       "history_has_gaps": false,
       "last_profile": {
         "inference_url": "http://64.83.34.3:8000",
-        "ml_node_count": 3,
+        "ml_node_count": 9,
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 2.301993,
-        "weight": 10281
+        "network_share_percent": 6.834452,
+        "weight": 30455
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": false,
       "periods": [
@@ -1111,10 +1141,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.089339,
-        "weight": 399
+        "network_share_percent": 0.088194,
+        "weight": 393
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 330,
       "legacy_known": true,
       "periods": [
@@ -1142,10 +1172,10 @@
           "DeepSeek-V4-Flash-0731",
           "Kimi-K2.6"
         ],
-        "network_share_percent": 1.042737,
-        "weight": 4657
+        "network_share_percent": 1.044187,
+        "weight": 4653
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 338,
       "legacy_known": true,
       "periods": [
@@ -1190,10 +1220,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.673066,
-        "weight": 3006
+        "network_share_percent": 0.684455,
+        "weight": 3050
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": null,
       "legacy_known": true,
       "periods": [
@@ -1219,10 +1249,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 5.221747,
-        "weight": 23321
+        "network_share_percent": 3.615269,
+        "weight": 16110
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 331,
       "legacy_known": true,
       "periods": [
@@ -1284,10 +1314,10 @@
         "models": [
           "MiniMax-M2.7"
         ],
-        "network_share_percent": 0.625821,
-        "weight": 2795
+        "network_share_percent": 0.833689,
+        "weight": 3715
       },
-      "last_seen_epoch": 371,
+      "last_seen_epoch": 372,
       "legacy_first_seen_epoch": 346,
       "legacy_known": true,
       "periods": [
@@ -1308,9 +1338,9 @@
       ]
     }
   },
-  "last_host_count": 28,
-  "last_processed_epoch": 371,
-  "last_total_weight": 446613,
+  "last_host_count": 29,
+  "last_processed_epoch": 372,
+  "last_total_weight": 445610,
   "last_total_weight_complete": true,
   "observation_gaps": [],
   "schema_version": 1
