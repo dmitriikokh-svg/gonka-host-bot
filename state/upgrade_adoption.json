@@ -45,23 +45,23 @@
       "weight": 9082,
       "versions": [
         "0.2.0",
+        "0.2.0",
+        "0.2.0",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
         "MISSING_VERSION",
-        "MISSING_VERSION",
-        "0.2.0",
-        "0.2.0"
+        "MISSING_VERSION"
       ]
     },
     "gonka1346p2h8dn4kp98c5e93k5q64g0h7vxjxnd55fh": {
       "status": "mixed",
       "weight": 1266,
       "versions": [
-        "3.0.16",
-        "0.2.0"
+        "0.2.0",
+        "3.0.16"
       ]
     },
     "gonka168rtjfkszuhcggg4dfyse4yh7xn9zwfglnkns2": {
@@ -104,9 +104,9 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "0.2.0",
-        "3.0.16",
-        "3.0.16",
         "3.0.16"
       ]
     },
@@ -185,15 +185,15 @@
       "weight": 16110,
       "versions": [
         "0.2.0",
-        "MISSING_VERSION",
-        "0.2.0",
         "0.2.0",
         "0.2.0",
         "0.2.0",
         "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION",
-        "0.2.0"
+        "0.2.0",
+        "0.2.0",
+        "MISSING_VERSION"
       ]
     },
     "gonka1830lqug50lse998x2lakk4pj5ypfumz5pasz0y": {
@@ -210,8 +210,8 @@
       "status": "incomplete",
       "weight": 8313,
       "versions": [
-        "MISSING_VERSION",
         "0.2.0",
+        "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION",
         "MISSING_VERSION"
@@ -249,12 +249,6 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
         "3.0.16",
         "3.0.16",
@@ -265,6 +259,12 @@
         "3.0.16",
         "3.0.16",
         "0.2.0",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
+        "3.0.16",
         "3.0.16",
         "3.0.16",
         "3.0.16",
@@ -312,9 +312,9 @@
       "status": "mixed",
       "weight": 4653,
       "versions": [
+        "3.0.16",
         "0.2.0",
-        "3.0.14-post2",
-        "3.0.16"
+        "3.0.14-post2"
       ]
     },
     "gonka1zktn8j65wlys8a8e38hqhf4y3x6m4x04zskkrx": {
