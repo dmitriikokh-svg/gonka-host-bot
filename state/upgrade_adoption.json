@@ -2,12 +2,12 @@
   "target_version": "v0.2.15-post3",
   "adoption_percent": 80.0,
   "goal_weight": 284286,
-  "adopted_weight": 291444,
-  "adopted_pct": 82.01419413661716,
+  "adopted_weight": 289092,
+  "adopted_pct": 81.35232638634842,
   "network_total_weight": 355358,
-  "unknown_weight": 49122,
-  "unreachable_count": 2,
-  "unreachable_weight": 11868,
+  "unknown_weight": 51474,
+  "unreachable_count": 4,
+  "unreachable_weight": 14220,
   "missing_api_version_weight": 37254,
   "unqueryable_weight": 0,
   "unqueryable_hosts": 0,
@@ -15,21 +15,21 @@
   "unknown_band": "degraded",
   "unknown_participants": 0,
   "target_mlnode_version": "3.0.16",
-  "mlnode_target_node_count": 78,
-  "mlnode_visible_node_count": 117,
+  "mlnode_target_node_count": 76,
+  "mlnode_visible_node_count": 115,
   "mlnode_missing_version_node_count": 4,
-  "mlnode_fully_updated_host_count": 7,
-  "mlnode_fully_updated_weight": 121937,
+  "mlnode_fully_updated_host_count": 5,
+  "mlnode_fully_updated_weight": 119585,
   "mlnode_mixed_host_count": 6,
   "mlnode_other_host_count": 6,
-  "mlnode_unknown_host_count": 7,
-  "mlnode_unknown_weight": 33117,
-  "mlnode_unavailable_host_count": 2,
+  "mlnode_unknown_host_count": 9,
+  "mlnode_unknown_weight": 35469,
+  "mlnode_unavailable_host_count": 4,
   "mlnode_version_distribution": {
     "0.2.0": 23,
     "3.0.14": 9,
     "3.0.14-post2": 3,
-    "3.0.16": 78,
+    "3.0.16": 76,
     "MISSING_VERSION": 4
   },
   "mlnode_hosts": {
@@ -134,11 +134,9 @@
       ]
     },
     "gonka1m58jds005cttwq2vt0p7yk6vy2aqg254cqqppf": {
-      "status": "target",
+      "status": "unavailable",
       "weight": 1229,
-      "versions": [
-        "3.0.16"
-      ]
+      "versions": []
     },
     "gonka1scskt6wpnjnumsah6kjphmdu87vjgvcxmn4rxv": {
       "status": "target",
@@ -176,24 +174,24 @@
       "status": "incomplete",
       "weight": 8485,
       "versions": [
-        "0.2.0",
-        "0.2.0",
-        "0.2.0",
-        "MISSING_VERSION",
-        "MISSING_VERSION",
         "MISSING_VERSION",
         "0.2.0",
         "0.2.0",
         "0.2.0",
-        "0.2.0"
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "0.2.0",
+        "MISSING_VERSION",
+        "MISSING_VERSION"
       ]
     },
     "gonka1346p2h8dn4kp98c5e93k5q64g0h7vxjxnd55fh": {
       "status": "mixed",
       "weight": 1267,
       "versions": [
-        "0.2.0",
-        "3.0.16"
+        "3.0.16",
+        "0.2.0"
       ]
     },
     "gonka1a3pkge3g33v3zdkq7qmycpjwpulms6ejt8z00f": {
@@ -219,9 +217,9 @@
         "3.0.16",
         "3.0.16",
         "3.0.16",
-        "3.0.16",
-        "3.0.16",
         "0.2.0",
+        "3.0.16",
+        "3.0.16",
         "3.0.16"
       ]
     },
@@ -245,11 +243,9 @@
       ]
     },
     "gonka1qwfrtz9c7kcrfkrrlne2pkcye74mj6ce33xdkl": {
-      "status": "target",
+      "status": "unavailable",
       "weight": 1123,
-      "versions": [
-        "3.0.16"
-      ]
+      "versions": []
     },
     "gonka1tlvg4kjx7ljd5thgd5fkgh39q6lu8cmxupktgg": {
       "status": "unavailable",
@@ -305,18 +301,18 @@
   "last_digest_epoch": "373",
   "last_notified_api": {
     "target_version": "v0.2.15-post3",
-    "adopted_weight": 281080,
-    "adopted_pct": 79.09769865881731,
+    "adopted_weight": 289092,
+    "adopted_pct": 81.35232638634842,
     "network_total_weight": 355358,
     "goal_pct": 80.0,
     "goal_weight": 284286,
-    "unreachable": 6,
-    "unreachable_weight": 22232,
-    "unreachable_pct": 6.256226115635501,
+    "unreachable": 4,
+    "unreachable_weight": 14220,
+    "unreachable_pct": 4.00159838810439,
     "other_unknown_weight": 37254,
     "other_unknown_pct": 10.483512401578126,
     "unknown_band": "degraded",
-    "threshold_reached": false,
+    "threshold_reached": true,
     "unknown_participants": 0
   },
   "last_notified_mlnode": {
@@ -337,11 +333,11 @@
       "MISSING_VERSION": 4
     }
   },
-  "api_reported_signature": null,
+  "api_reported_signature": "threshold",
   "api_candidate_signature": null,
   "api_candidate_runs": 0,
   "mlnode_reported_signature": null,
-  "mlnode_candidate_signature": "hosts:6",
+  "mlnode_candidate_signature": "hosts:5",
   "mlnode_candidate_runs": 1,
   "epoch_phase": "Inference"
 }
