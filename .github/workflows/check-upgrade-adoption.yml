@@ -1,8 +1,6 @@
 name: Check upgrade adoption
 
 on:
-  schedule:
-    - cron: "11,31,51 * * * *"
   workflow_dispatch: {}
 
 permissions:
