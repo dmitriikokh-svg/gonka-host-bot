@@ -1,0 +1,64 @@
+# One-shot: copy GitHub secrets onto 5.78 without printing them.
+# Delete this branch after the cutover. Do not leave it on main.
+name: Seed 5.78 env
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write env over restricted SSH
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+          TELEGRAM_SECONDARY_CHAT_ID: ${{ secrets.TELEGRAM_SECONDARY_CHAT_ID }}
+          ETHEREUM_RPC_URLS: ${{ secrets.ETHEREUM_RPC_URLS }}
+          HOSTBOT_DEPLOY_KEY: ${{ secrets.HOSTBOT_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import sys
+
+          required = ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID")
+          missing = [k for k in required if not os.environ.get(k, "").strip()]
+          if missing:
+              print("missing required secrets:", ",".join(missing), file=sys.stderr)
+              raise SystemExit(1)
+          keys = (
+              "TELEGRAM_BOT_TOKEN",
+              "TELEGRAM_CHAT_ID",
+              "TELEGRAM_MESSAGE_THREAD_ID",
+              "TELEGRAM_SECONDARY_CHAT_ID",
+              "ETHEREUM_RPC_URLS",
+          )
+          with open("host-bot.env", "w", encoding="utf-8") as handle:
+              for key in keys:
+                  value = os.environ.get(key, "").strip()
+                  if value:
+                      handle.write(f"{key}={value}\n")
+              handle.write("TARGET_API_VERSION=v0.2.15-post3\n")
+              handle.write("TARGET_MLNODE_VERSION=3.0.16\n")
+              handle.write("ADOPTION_PERCENT=80\n")
+              handle.write("CHAIN_MONITOR_MODE=once\n")
+              handle.write("CHAIN_LOAD_MODE=once\n")
+          print("env_file_ready keys", sum(1 for key in keys if os.environ.get(key, "").strip()))
+          PY
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          install -m 600 /dev/null ~/.ssh/id_ed25519
+          printenv HOSTBOT_DEPLOY_KEY > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          cat > ~/.ssh/known_hosts <<'HOSTS'
+          5.78.117.55 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOFsJ35za4Pu7sGxhQGvE5D8um1/kb2cdNximXm2kVO6
+          5.78.117.55 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDGxbgK2Is7TczrqvLqdVqYU583TGXg7aZzCuxA1zu3/S4qf8Q1IV8T4eUo1+qYPhug5Eje+JfmLSTY8eOie8GGGEyGAgfXjWk+Hc62MBRVx5eBAMCRuAUUQbxC3YybtdHQ9TvaD4zrOw7OfAlHObdmUNw8fEg5URdOp+qUXrJhWvvboKO4YitgNnlrtc9t6CjfLP02mjTXoNfi3h/N62rGhgOJGJiqs/GtYoPqLOQxK2v5WN7auGuiVibKLuLBMifmp51IL31Fu9J8YqXYdSzF2AHJ4KhAWmAcHdtwcULCzQzcObA8Y0HyK85ovWyiuYpQQebvSeE5LtbwN9tScRdjHcR0uScfepDWw8iwamf4oUS8D/1lk+3DI31mW0BR18u8rjuNp7eGqi2OQ8ovrbFWhNKdU3Kj3oh+tG6PrW+KXbMoFP52EKImiXlC6DwXHjiE94M0aLXIvsaC/GDyY6YZg+uB2AIPNREV0rj9dSo2xm1iu/CaD1Popaclw/MbB8s=
+          HOSTS
+          chmod 644 ~/.ssh/known_hosts
+          ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes root@5.78.117.55 \
+            < host-bot.env
+          rm -f host-bot.env ~/.ssh/id_ed25519
+          echo seed_ssh_ok
