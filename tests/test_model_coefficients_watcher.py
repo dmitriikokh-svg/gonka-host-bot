@@ -239,12 +239,13 @@ class RepositoryWiringTests(unittest.TestCase):
             )
         )
 
-    def test_hourly_workflow_commits_state_and_has_telegram_routing(self):
+    def test_manual_workflow_commits_state_and_has_telegram_routing(self):
         root = Path(__file__).resolve().parents[1]
         workflow = (
             root / ".github" / "workflows" / "check-model-coefficients.yml"
         ).read_text(encoding="utf-8")
-        self.assertIn('cron: "43 * * * *"', workflow)
+        self.assertNotIn("schedule:", workflow)
+        self.assertNotIn("cron:", workflow)
         self.assertIn("workflow_dispatch", workflow)
         self.assertIn('python-version: "3.12"', workflow)
         self.assertIn("python model_coefficients_watcher.py", workflow)

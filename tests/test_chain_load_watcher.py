@@ -636,12 +636,13 @@ class PersistenceAndRuntimeTests(unittest.TestCase):
 
 
 class WorkflowTests(unittest.TestCase):
-    def test_workflow_has_schedule_mode_state_and_all_telegram_secrets(self):
+    def test_workflow_has_manual_mode_state_and_all_telegram_secrets(self):
         root = Path(__file__).resolve().parents[1]
         workflow = (root / ".github/workflows/check-chain-load.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn('cron: "3-58/5 * * * *"', workflow)
+        self.assertNotIn("schedule:", workflow)
+        self.assertNotIn("cron:", workflow)
         self.assertIn("workflow_dispatch", workflow)
         self.assertIn('python-version: "3.12"', workflow)
         self.assertIn("CHAIN_LOAD_MODE: once", workflow)

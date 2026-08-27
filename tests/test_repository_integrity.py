@@ -41,6 +41,16 @@ class TelegramRoutingTests(unittest.TestCase):
 
 
 class RepositoryReferenceTests(unittest.TestCase):
+    def test_server_monitor_workflows_have_no_scheduled_trigger(self):
+        workflows = sorted((ROOT / ".github" / "workflows").glob("check-*.yml"))
+        self.assertGreater(len(workflows), 0)
+        for path in workflows:
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(workflow=path.name):
+                self.assertNotIn("schedule:", text)
+                self.assertNotIn("cron:", text)
+                self.assertIn("workflow_dispatch", text)
+
     def test_workflow_python_entrypoints_exist(self):
         pattern = re.compile(r"^\s*run:\s*python\s+([^\s]+\.py)\s*$", re.MULTILINE)
         for path in (ROOT / ".github" / "workflows").glob("*.yml"):

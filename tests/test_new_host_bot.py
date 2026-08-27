@@ -349,10 +349,12 @@ class MessageAndPersistenceTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_workflow_commits_new_state_files_without_changing_schedule(self):
+    def test_manual_workflow_commits_new_state_files_without_schedule(self):
         root = Path(__file__).resolve().parents[1]
         workflow = (root / ".github/workflows/check-new-hosts.yml").read_text(encoding="utf-8")
-        self.assertIn('cron: "7,37 * * * *"', workflow)
+        self.assertNotIn("schedule:", workflow)
+        self.assertNotIn("cron:", workflow)
+        self.assertIn("workflow_dispatch", workflow)
         self.assertIn("state/host_presence.json", workflow)
         self.assertIn("state/host_events.csv", workflow)
 
