@@ -17,6 +17,7 @@ from bot_common import (
     fetch_json_with_fallback,
     format_alert_datetime,
     format_integer,
+    format_snapshot_age,
     load_json,
     parse_iso_datetime,
     save_json_atomic,
@@ -162,9 +163,11 @@ def parse_epoch_group_payload(payload: Any) -> dict:
         if not isinstance(address, str) or not address.strip():
             raise ValueError("validation_weights.member_address is missing")
         address = address.strip()
+        weight = nonnegative_integer(item.get("weight"), "weight")
+        if weight == 0:
+            continue
         if address in by_address:
             raise ValueError(f"duplicate validation weight address: {address}")
-        weight = nonnegative_integer(item.get("weight"), "weight", positive=True)
         confirmation_weight = nonnegative_integer(
             item.get("confirmation_weight"),
             "confirmation_weight",
@@ -176,6 +179,8 @@ def parse_epoch_group_payload(payload: Any) -> dict:
             "confirmation_weight": confirmation_weight,
             "rate": confirmation_weight / weight * 100,
         }
+    if not by_address:
+        raise ValueError("epoch_group_data.validation_weights has no positive-weight members")
     return {"epoch": epoch, "by_address": by_address}
 
 
@@ -371,6 +376,55 @@ def format_percent_label(value: float) -> str:
     if float(value).is_integer():
         return f"{int(value)}%"
     return f"{value:.1f}%"
+
+
+def format_command_nodes_message(
+    state: dict,
+    *,
+    config: dict | None = None,
+    now=None,
+) -> str:
+    if not isinstance(state, dict) or not isinstance(state.get("nodes"), dict):
+        return "Снимка нод ещё нет: watcher не запускался."
+    nodes_state = state["nodes"]
+    if not nodes_state:
+        return "Снимка нод ещё нет: watcher не запускался."
+    if config is None:
+        try:
+            config = load_config()
+        except Exception:  # noqa: BLE001 - command still works from state
+            config = None
+    order = [node["name"] for node in (config or {}).get("nodes") or [] if node.get("name")]
+    if not order:
+        order = sorted(nodes_state)
+    roles = {
+        node["name"]: node.get("role")
+        for node in (config or {}).get("nodes") or []
+        if node.get("name")
+    }
+    epoch = state.get("epoch")
+    epoch_note = f", эпоха {epoch}" if epoch is not None else ""
+    lines = [f"📊 Наши ноды{epoch_note}", ""]
+    for name in order:
+        record = nodes_state.get(name)
+        if not isinstance(record, dict):
+            lines.append(f"{name} — нет снимка")
+            continue
+        role = roles.get(name)
+        title = f"{name} {role}" if role else name
+        status = record.get("status") or "нет данных"
+        bits = [str(status)]
+        if record.get("participant_present") is False:
+            bits.append("не в участниках")
+        elif record.get("weight_ratio") is not None:
+            bits.append(f"CPoC {float(record['weight_ratio']):.1f}%")
+            confirmation = record.get("confirmation_weight")
+            weight = record.get("weight")
+            if confirmation is not None and weight is not None:
+                bits.append(f"{format_integer(int(confirmation))} / {format_integer(int(weight))}")
+        lines.append(f"{title} — {', '.join(bits)}")
+    lines.extend(["", format_snapshot_age(state.get("checked_at"), now=now)])
+    return "\n".join(lines)
 
 
 def human_node_reason(result: dict) -> str:

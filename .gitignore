@@ -15,6 +15,10 @@ env/
 .env.*
 !.env.example
 
+# Command listener poll offset and gateway escrow map (runtime only)
+state/command_listener.json
+state/gateway.json
+
 # macOS and VS Code
 .DS_Store
 .vscode/

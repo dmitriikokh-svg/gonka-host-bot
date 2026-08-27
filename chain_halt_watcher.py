@@ -26,6 +26,7 @@ import requests
 from bot_common import (
     escape_html,
     format_integer,
+    format_snapshot_age,
     load_json,
     save_json_atomic,
     send_telegram_message,
@@ -447,6 +448,54 @@ def parse_saved_time(value: Any) -> datetime | None:
         return parse_utc_timestamp(value, "state timestamp")
     except ValueError:
         return None
+
+
+HALT_STATUS_LABELS = {
+    "healthy": "жива",
+    "halted": "halt",
+    "monitoring_unavailable": "мало источников",
+}
+
+
+def format_command_halt_message(state: dict, *, now: datetime | None = None) -> str:
+    if not isinstance(state, dict) or not state.get("assessment"):
+        return "Снимка chain halt ещё нет: watcher не запускался."
+    assessment = state.get("assessment") or {}
+    status = state.get("status") or assessment.get("result") or "unknown"
+    label = HALT_STATUS_LABELS.get(str(status), str(status))
+    lines = [f"📊 Chain — {label}", ""]
+    height = assessment.get("latest_height")
+    if height is not None:
+        lines.append(f"Высота: {format_integer(int(height))}")
+    block_time = assessment.get("latest_block_time")
+    if block_time:
+        lines.append(f"Последний блок: {block_time}")
+    age = assessment.get("latest_block_age_seconds")
+    if age is not None:
+        lines.append(f"Возраст блока: {format_duration(age)}")
+    confirming = assessment.get("confirming_sources")
+    total = assessment.get("total_sources")
+    if confirming is not None and total is not None:
+        lines.append(f"Источники: {confirming}/{total} подтверждают")
+    sources = state.get("sources") or {}
+    if isinstance(sources, dict) and sources:
+        lines.append("")
+        for name in sorted(sources):
+            item = sources[name] if isinstance(sources[name], dict) else {}
+            if item.get("status") == "available":
+                src_height = item.get("height")
+                src_age = format_duration(item.get("block_age_seconds"))
+                height_text = (
+                    format_integer(int(src_height))
+                    if src_height is not None
+                    else "нет данных"
+                )
+                lines.append(f"• {name} — OK, блок {height_text}, возраст {src_age}")
+            else:
+                category = item.get("error_category") or "недоступен"
+                lines.append(f"• {name} — {category}")
+    lines.extend(["", format_snapshot_age(state.get("checked_at"), now=now)])
+    return "\n".join(lines)
 
 
 def source_lines(observations: list[dict]) -> str:

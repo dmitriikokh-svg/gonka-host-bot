@@ -180,6 +180,22 @@ class TelegramTests(unittest.TestCase):
 
         self.assertEqual(len(session.post_calls), 1)
 
+    def test_secondary_can_be_skipped_for_command_replies(self):
+        session = FakeSession([])
+        environment = {
+            "TELEGRAM_BOT_TOKEN": "test-token",
+            "TELEGRAM_CHAT_ID": "primary-chat",
+            "TELEGRAM_MESSAGE_THREAD_ID": "42",
+            "TELEGRAM_SECONDARY_CHAT_ID": "secondary-chat",
+        }
+        with patch.dict(os.environ, environment, clear=True):
+            send_telegram_message(
+                "hello", include_secondary=False, session=session
+            )
+
+        self.assertEqual(len(session.post_calls), 1)
+        self.assertEqual(session.post_calls[0][1]["json"]["chat_id"], "primary-chat")
+
     def test_missing_thread_id_refuses_to_send_to_general(self):
         session = FakeSession([])
         environment = {

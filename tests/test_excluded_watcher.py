@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 import _bootstrap  # noqa: F401 - installs an optional requests stub
@@ -89,7 +90,16 @@ class NotificationTests(unittest.TestCase):
             "API: <code>https://excluded.example/?a=1&amp;b=2</code>",
             message,
         )
-        save_state.assert_called_once_with({"gonka1excluded"})
+        save_state.assert_called_once()
+        saved = save_state.call_args.args[0]
+        self.assertEqual(saved["schema_version"], 1)
+        self.assertEqual(saved["epoch"], "355")
+        self.assertEqual(saved["excluded"][0]["id"], "gonka1excluded")
+        self.assertEqual(saved["excluded"][0]["reason"], "failed_confirmation_poc")
+        self.assertEqual(saved["excluded"][0]["exclusion_block_height"], 5481065)
+        self.assertEqual(saved["excluded"][0]["weight"], 7719)
+        self.assertEqual(saved["excluded"][0]["rank"], 2)
+        self.assertEqual(saved["excluded"][0]["models"], ["MiniMax-M2.7", "Kimi-K2.6"])
 
     def test_missing_active_details_do_not_hide_exclusion(self):
         snapshot = {
@@ -120,6 +130,64 @@ class NotificationTests(unittest.TestCase):
         self.assertIn("Модели: нет данных", message)
         self.assertIn("ML-ноды: нет данных", message)
         self.assertIn("API: нет данных", message)
+
+
+class ExcludedStateTests(unittest.TestCase):
+    def test_legacy_list_and_snapshot_share_id_set(self):
+        self.assertEqual(
+            watcher.excluded_ids_from_state(["gonka1a", "gonka1b"]),
+            {"gonka1a", "gonka1b"},
+        )
+        self.assertEqual(
+            watcher.excluded_ids_from_state(
+                {
+                    "schema_version": 1,
+                    "excluded": [{"id": "gonka1a"}, {"address": "gonka1b"}],
+                }
+            ),
+            {"gonka1a", "gonka1b"},
+        )
+        self.assertIsNone(watcher.excluded_ids_from_state(None))
+
+    def test_command_message_uses_snapshot_details(self):
+        text = watcher.format_command_excluded_message(
+            {
+                "checked_at": "2026-08-24T07:00:00+00:00",
+                "epoch": 370,
+                "excluded": [
+                    {
+                        "id": "gonka1excluded",
+                        "reason": "failed_confirmation_poc",
+                        "exclusion_block_height": 5481065,
+                        "weight": 7719,
+                        "network_share_percent": 43.6,
+                        "rank": 2,
+                        "participant_count": 29,
+                        "models": ["MiniMax-M2.7"],
+                        "ml_node_count": 2,
+                    }
+                ],
+            },
+            now=datetime(2026, 8, 24, 7, 14, tzinfo=timezone.utc),
+        )
+        self.assertIn("📊 Исключены после CPoC, эпоха 370", text)
+        self.assertIn("gonka1excluded", text)
+        self.assertIn("не пройден Confirmation PoC", text)
+        self.assertIn("Блок: 5 481 065", text)
+        self.assertIn("Вес: 7 719 (43.6%)", text)
+        self.assertIn("место 2 из 29", text)
+        self.assertIn("MiniMax-M2.7 · 2 ML-ноды", text)
+
+    def test_command_message_legacy_list_warns_about_details(self):
+        text = watcher.format_command_excluded_message(["gonka1excluded"])
+        self.assertIn("gonka1excluded", text)
+        self.assertIn("появятся после следующего прогона", text)
+
+    def test_command_message_empty_snapshot(self):
+        text = watcher.format_command_excluded_message(
+            {"epoch": 370, "checked_at": "2026-08-24T07:00:00Z", "excluded": []}
+        )
+        self.assertIn("никто не в excluded_participants", text)
 
 
 if __name__ == "__main__":
