@@ -24,6 +24,9 @@
   блоках и риск чрезмерной chain load/state inflation.
 - `upgrade_adoption_watcher.py` — распространение целевых API- и
   MLNode-версий.
+- `devshard_watcher.py` — слоты versiond на хостах (`/devshard/healthz`).
+- `gateway_watcher.py` — протокол bind гейтвеев брокеров (v3/v4).
+- `command_listener.py` — слэш-команды по последнему снимку `state/`.
 - `analytics_db_probe.py` — безопасная read-only проверка доступности и
   актуальности серверной Gonka Analytics DB через локальный SSH tunnel.
 - `glamsterdam_watcher.py` — дата и статус Ethereum Glamsterdam.
@@ -202,6 +205,26 @@ phase gating не применяется. Telegram содержит только
 последовательных запусков; прежний baseline при этом сохраняется. Полная
 ошибка остаётся в state и workflow log.
 
+## Devshard-слоты хостов
+
+`devshard_watcher.py` раз в час читает `approved_versions` из
+`params.devshard_escrow_params` и у каждого активного хоста —
+`/devshard/healthz` (слоты versiond, не `/v1/versions`). Дайджест — раз
+в эпоху. Событие — смена approved или сдвиг ≥3 хостов по слоту / полному
+набору / лишнему слоту (антидребезг два одинаковых часа). Команда
+`/devshard` читает `state/devshard.json`. Адреса хостов и `binary_version`
+в чат не пишем.
+
+## Гейтвеи брокеров
+
+`gateway_watcher.py` раз в два часа собирает протокол bind (`v3` / `v4`) по
+живым escrow: `GET {host}/devshard/<slot>/stats/shards` и creator из
+`devshard_escrow/{id}`. Бинарь `devshardctl` сеть не отдаёт — в чат его нет.
+Дайджест раз в эпоху. Событие — смена набора слотов у брокера (антидребезг
+два одинаковых прогона). Команда `/gateways`. Имена — heartbeat overview, затем
+gonka-network leaderboard, затем `config/gateway_labels.json`. Id эскроу в чат
+не пишем.
+
 ## Chain halt monitor
 
 `chain_halt_watcher.py` опрашивает все RPC из `config/chain_halt.json`
@@ -373,4 +396,21 @@ Confirmation PoC rate отслеживается отдельно от дост�
 ```bash
 python3 our_nodes_watcher.py
 python3 model_coefficients_watcher.py
+```
+
+## Runtime на 5.78 (Dahl)
+
+Живые алерты и слэш-команды идут с аналитического ящика. GitHub Actions
+`check-*` после cutover не должны слать в Telegram параллельно.
+`scripts/commit_state.sh` с этого сервера не запускать.
+
+Команды `/api`, `/апи`, `/mlnode`, `/млнода`, `/halt`, `/nodes`,
+`/escrow`, `/models`, `/excluded`, `/devshard`, `/gateways` (и русские алиасы)
+читают последний снимок из `state/` (не живой обход сети) и отвечают только в
+настроенном топике. Нужен один процесс `command_listener.py` на токен.
+
+```bash
+sudo cp deploy/host-bot.env.example /etc/gonka-host-bot.env
+# заполнить TELEGRAM_* на сервере, не в git
+sudo bash deploy/systemd/install.sh --enable
 ```

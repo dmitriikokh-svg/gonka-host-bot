@@ -21,6 +21,7 @@ from bot_common import (
     escape_html,
     fetch_json_with_fallback,
     format_alert_datetime,
+    format_snapshot_age,
     load_json,
     save_json_atomic,
     send_telegram_message,
@@ -169,6 +170,69 @@ def format_gnk(value: Decimal | str | int) -> str:
     if "." in rendered:
         rendered = rendered.rstrip("0").rstrip(".")
     return rendered or "0"
+
+
+def format_command_escrow_message(
+    state: dict,
+    *,
+    config: dict | None = None,
+    now: datetime | None = None,
+) -> str:
+    if not isinstance(state, dict) or not isinstance(state.get("accounts"), dict):
+        return "Снимка эскроу ещё нет: watcher не запускался."
+    accounts_state = state["accounts"]
+    if not accounts_state:
+        return "Снимка эскроу ещё нет: watcher не запускался."
+    if config is None:
+        try:
+            config = load_config()
+        except Exception:  # noqa: BLE001 - command still works from state
+            config = None
+    default_low = Decimal("100")
+    if config is not None:
+        try:
+            default_low = decimal_config(
+                config.get("low_balance_below_gnk"), "low_balance_below_gnk"
+            )
+        except ValueError:
+            default_low = Decimal("100")
+    order = [
+        account["name"]
+        for account in (config or {}).get("accounts") or []
+        if account.get("name")
+    ]
+    if not order:
+        order = sorted(accounts_state)
+    lines = ["📊 Эскроу", ""]
+    for name in order:
+        record = accounts_state.get(name)
+        if not isinstance(record, dict):
+            lines.append(f"{name} — нет снимка")
+            continue
+        account_cfg = {}
+        for item in (config or {}).get("accounts") or []:
+            if item.get("name") == name:
+                account_cfg = item
+                break
+        try:
+            low, _recovery = account_thresholds(
+                config or {"low_balance_below_gnk": default_low, "recovery_at_or_above_gnk": default_low},
+                {"name": name, "address": record.get("address") or "gonka1", **account_cfg},
+            )
+        except ValueError:
+            low = default_low
+        status = record.get("status")
+        if status == "unavailable" or record.get("last_error"):
+            note = "нет данных"
+        else:
+            balance = record.get("balance_gnk") or "0"
+            if status == "low":
+                note = f"{balance} GNK, низкий (порог < {format_gnk(low)})"
+            else:
+                note = f"{balance} GNK (порог < {format_gnk(low)})"
+        lines.append(f"{name}: {note}")
+    lines.extend(["", format_snapshot_age(state.get("checked_at"), now=now)])
+    return "\n".join(lines)
 
 
 def parse_timestamp(value: Any) -> datetime | None:

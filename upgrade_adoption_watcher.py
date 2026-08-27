@@ -16,6 +16,7 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -25,9 +26,11 @@ from urllib.parse import urlparse, urlunparse
 
 from bot_common import (
     fetch_json_with_fallback,
+    format_snapshot_age,
     load_json,
     save_json_atomic,
     send_telegram_message,
+    utc_now,
 )
 
 ROOT = Path(__file__).resolve().parent
@@ -791,6 +794,104 @@ def format_mlnode_event_message(epoch, mlnode_snapshot, previous) -> str:
     )
 
 
+def api_snapshot_from_state(state: dict) -> dict | None:
+    snap = state.get("last_api_snapshot")
+    if isinstance(snap, dict) and snap.get("target_version"):
+        return snap
+    notified = state.get("last_notified_api")
+    if isinstance(notified, dict) and notified.get("target_version"):
+        return notified
+    target = state.get("target_version")
+    if not target:
+        return None
+    total = int(state.get("network_total_weight") or 0)
+    adopted = int(state.get("adopted_weight") or 0)
+    percent = float(state.get("adoption_percent") or ADOPTION_PERCENT_DEFAULT)
+    goal_weight = int(state.get("goal_weight") or round(total * percent / 100))
+    unreachable_weight = int(state.get("unreachable_weight") or 0)
+    other_unknown = int(state.get("missing_api_version_weight") or 0) + int(
+        state.get("unqueryable_weight") or 0
+    )
+    return {
+        "target_version": str(target),
+        "adopted_weight": adopted,
+        "adopted_pct": weight_percent(adopted, total),
+        "network_total_weight": total,
+        "goal_pct": percent,
+        "goal_weight": goal_weight,
+        "unreachable": int(state.get("unreachable_count") or 0),
+        "unreachable_weight": unreachable_weight,
+        "unreachable_pct": weight_percent(unreachable_weight, total),
+        "other_unknown_weight": other_unknown,
+        "other_unknown_pct": weight_percent(other_unknown, total),
+        "unknown_band": state.get("unknown_band") or unknown_band_for(
+            weight_percent(int(state.get("unknown_weight") or 0), total)
+        ),
+        "threshold_reached": bool(state.get("threshold_reached")),
+        "unknown_participants": int(state.get("unknown_participants") or 0),
+    }
+
+
+def mlnode_snapshot_from_state(state: dict) -> dict | None:
+    snap = state.get("last_mlnode_snapshot")
+    if isinstance(snap, dict) and snap.get("target_version"):
+        return snap
+    notified = state.get("last_notified_mlnode")
+    if isinstance(notified, dict) and notified.get("target_version"):
+        return notified
+    target = state.get("target_mlnode_version")
+    if not target:
+        return None
+    visible = int(state.get("mlnode_visible_node_count") or 0)
+    target_count = int(state.get("mlnode_target_node_count") or 0)
+    fully = int(state.get("mlnode_fully_updated_host_count") or 0)
+    mixed = int(state.get("mlnode_mixed_host_count") or 0)
+    other = int(state.get("mlnode_other_host_count") or 0)
+    unknown = int(state.get("mlnode_unknown_host_count") or 0)
+    return {
+        "target_version": str(target),
+        "target_node_count": target_count,
+        "visible_node_count": visible,
+        "target_pct": weight_percent(target_count, visible),
+        "fully_updated_host_count": fully,
+        "mixed_host_count": mixed,
+        "other_host_count": other,
+        "unknown_host_count": unknown,
+        "network_host_count": fully + mixed + other + unknown,
+        "version_distribution": state.get("mlnode_version_distribution") or {},
+    }
+
+
+def format_command_api_message(state: dict, *, now: datetime | None = None) -> str:
+    snapshot = api_snapshot_from_state(state)
+    if snapshot is None:
+        return "Снимка API ещё нет: watcher не запускался."
+    epoch = state.get("epoch_index")
+    if epoch is None:
+        epoch = state.get("last_digest_epoch")
+    epoch_note = f", эпоха {epoch}" if epoch is not None else ""
+    return (
+        f"📊 API{epoch_note}\n\n"
+        f"{format_api_block(snapshot, crossed_threshold=bool(snapshot.get('threshold_reached')))}\n\n"
+        f"{format_snapshot_age(state.get('last_check_at'), now=now)}"
+    )
+
+
+def format_command_mlnode_message(state: dict, *, now: datetime | None = None) -> str:
+    snapshot = mlnode_snapshot_from_state(state)
+    if snapshot is None:
+        return "Снимка MLNode ещё нет: watcher не запускался."
+    epoch = state.get("epoch_index")
+    if epoch is None:
+        epoch = state.get("last_digest_epoch")
+    epoch_note = f", эпоха {epoch}" if epoch is not None else ""
+    return (
+        f"📊 MLNode{epoch_note}\n\n"
+        f"{format_mlnode_block(snapshot)}\n\n"
+        f"{format_snapshot_age(state.get('last_check_at'), now=now)}"
+    )
+
+
 def evaluate_debounce(previous, prefix, signature, *, immediate=False, needed=2):
     reported_key = f"{prefix}_reported_signature"
     candidate_key = f"{prefix}_candidate_signature"
@@ -1171,6 +1272,10 @@ def main():
             "last_digest_epoch": last_digest_epoch,
             "last_notified_api": last_notified_api,
             "last_notified_mlnode": last_notified_mlnode,
+            "last_api_snapshot": api_snapshot,
+            "last_mlnode_snapshot": mlnode_snapshot,
+            "last_check_at": utc_now(),
+            "epoch_index": epoch,
             "api_reported_signature": api_reported,
             "api_candidate_signature": api_candidate,
             "api_candidate_runs": api_runs,

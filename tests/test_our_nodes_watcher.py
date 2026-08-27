@@ -72,12 +72,27 @@ class PayloadParsingTests(unittest.TestCase):
         self.assertEqual(metric["confirmation_weight"], 1200)
         self.assertEqual(metric["rate"], 24.0)
 
-    def test_zero_weight_is_rejected(self):
-        with self.assertRaisesRegex(ValueError, "weight must be positive"):
+    def test_zero_weight_rows_are_skipped(self):
+        payload = group_payload()
+        payload["epoch_group_data"]["validation_weights"].insert(
+            0,
+            {
+                "member_address": "gonka1zero",
+                "weight": "0",
+                "confirmation_weight": "0",
+            },
+        )
+        parsed = parse_epoch_group_payload(payload)
+        self.assertNotIn("gonka1zero", parsed["by_address"])
+        self.assertIn("gonka1test", parsed["by_address"])
+        self.assertEqual(parsed["by_address"]["gonka1test"]["rate"], 24.0)
+
+    def test_only_zero_weight_rows_are_rejected(self):
+        with self.assertRaisesRegex(ValueError, "no positive-weight members"):
             parse_epoch_group_payload(group_payload(weight="0"))
 
     def test_negative_weight_is_rejected(self):
-        with self.assertRaisesRegex(ValueError, "weight must be positive"):
+        with self.assertRaisesRegex(ValueError, "weight must be non-negative"):
             parse_epoch_group_payload(group_payload(weight="-1"))
 
     def test_negative_confirmation_weight_is_rejected(self):
@@ -385,6 +400,39 @@ class MessageFormatTests(unittest.TestCase):
             )
         self.assertFalse(result["ok"])
         self.assertEqual(result["reason"], "participant_absent")
+
+
+class CommandSnapshotTests(unittest.TestCase):
+    def test_command_message_lists_cpoc_and_absent_node(self):
+        text = our_nodes_watcher.format_command_nodes_message(
+            {
+                "epoch": 370,
+                "checked_at": "2026-08-24T07:00:00+00:00",
+                "nodes": {
+                    "node1": {
+                        "status": "up",
+                        "participant_present": True,
+                        "weight_ratio": 97.3,
+                        "confirmation_weight": 4535,
+                        "weight": 4659,
+                    },
+                    "node4": {
+                        "status": "up",
+                        "participant_present": False,
+                    },
+                },
+            },
+            config={
+                "nodes": [
+                    {"name": "node1", "role": "host"},
+                    {"name": "node4", "role": "read-only"},
+                ]
+            },
+        )
+        self.assertIn("📊 Наши ноды, эпоха 370", text)
+        self.assertIn("node1 host — up, CPoC 97.3%", text)
+        self.assertIn("4 535 / 4 659", text)
+        self.assertIn("node4 read-only — up, не в участниках", text)
 
 
 if __name__ == "__main__":

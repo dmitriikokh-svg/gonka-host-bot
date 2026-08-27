@@ -59,6 +59,23 @@ def parse_iso_datetime(value: Any) -> datetime | None:
     return parsed
 
 
+def format_snapshot_age(checked_at, *, now: datetime | None = None) -> str:
+    parsed = parse_iso_datetime(checked_at)
+    if parsed is None:
+        return "Снимок: время неизвестно"
+    utc = parsed.astimezone(timezone.utc)
+    current = now or datetime.now(timezone.utc)
+    minutes = max(0, int((current - utc).total_seconds() // 60))
+    if minutes < 1:
+        age = "только что"
+    elif minutes < 60:
+        age = f"{minutes} мин назад"
+    else:
+        hours = minutes // 60
+        age = f"{hours} ч назад"
+    return f"Снимок {utc:%H:%M} UTC ({age})"
+
+
 def format_date_ru(value: datetime) -> str:
     return f"{value.day} {MONTHS_RU[value.month - 1]}"
 
@@ -333,6 +350,7 @@ def send_telegram_message(
     text: str,
     *,
     parse_mode: str | None = "HTML",
+    include_secondary: bool = True,
     session=requests,
 ) -> None:
     token = os.environ["TELEGRAM_BOT_TOKEN"]
@@ -352,7 +370,11 @@ def send_telegram_message(
 
     destinations: list[tuple[str, int | None]] = [(chat_id, parsed_thread_id)]
     secondary_chat_id = os.environ.get("TELEGRAM_SECONDARY_CHAT_ID", "").strip()
-    if secondary_chat_id and secondary_chat_id != chat_id:
+    if (
+        include_secondary
+        and secondary_chat_id
+        and secondary_chat_id != chat_id
+    ):
         destinations.append((secondary_chat_id, None))
 
     errors: list[str] = []

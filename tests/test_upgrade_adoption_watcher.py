@@ -529,5 +529,83 @@ class IntegrationTests(unittest.TestCase):
         self.assertIn("ADOPTION_PERCENT", workflow)
 
 
+class CommandSnapshotTests(unittest.TestCase):
+    def test_command_messages_use_last_check_without_deltas(self):
+        now = watcher.datetime(2026, 8, 24, 7, 40, tzinfo=watcher.timezone.utc)
+        state = {
+            "epoch_index": 370,
+            "last_check_at": "2026-08-24T07:26:00+00:00",
+            "last_api_snapshot": {
+                "target_version": "v0.2.15-post3",
+                "adopted_weight": 376819,
+                "adopted_pct": 65.8,
+                "network_total_weight": 572397,
+                "goal_pct": 80.0,
+                "goal_weight": 457918,
+                "unreachable": 8,
+                "unreachable_weight": 149330,
+                "unreachable_pct": 26.1,
+                "other_unknown_weight": 31747,
+                "other_unknown_pct": 5.5,
+                "unknown_band": "unreliable",
+                "threshold_reached": False,
+                "unknown_participants": 0,
+            },
+            "last_mlnode_snapshot": {
+                "target_version": "3.0.16",
+                "target_node_count": 71,
+                "visible_node_count": 116,
+                "target_pct": 61.2,
+                "fully_updated_host_count": 3,
+                "mixed_host_count": 6,
+                "other_host_count": 10,
+                "unknown_host_count": 10,
+                "network_host_count": 29,
+                "version_distribution": {
+                    "3.0.16": 71,
+                    "0.2.0": 28,
+                    "MISSING_VERSION": 12,
+                },
+            },
+        }
+        api = watcher.format_command_api_message(state, now=now)
+        mlnode = watcher.format_command_mlnode_message(state, now=now)
+        self.assertIn("📊 API, эпоха 370", api)
+        self.assertIn("Обновлено: 376819 / 572397 веса (65.8%)", api)
+        self.assertNotIn("п.п.", api)
+        self.assertIn("Снимок 07:26 UTC (14 мин назад)", api)
+        self.assertIn("📊 MLNode, эпоха 370", mlnode)
+        self.assertIn("3.0.16 — 71", mlnode)
+        self.assertNotIn("было", mlnode)
+        self.assertIn("Снимок 07:26 UTC (14 мин назад)", mlnode)
+
+    def test_command_messages_rebuild_from_legacy_flat_state(self):
+        state = {
+            "target_version": "v0.2.15-post3",
+            "target_mlnode_version": "3.0.16",
+            "adopted_weight": 100,
+            "network_total_weight": 200,
+            "unreachable_count": 1,
+            "unreachable_weight": 50,
+            "missing_api_version_weight": 0,
+            "unqueryable_weight": 0,
+            "unknown_weight": 50,
+            "threshold_reached": False,
+            "mlnode_target_node_count": 2,
+            "mlnode_visible_node_count": 4,
+            "mlnode_fully_updated_host_count": 1,
+            "mlnode_mixed_host_count": 0,
+            "mlnode_other_host_count": 1,
+            "mlnode_unknown_host_count": 0,
+            "mlnode_version_distribution": {"3.0.16": 2, "0.2.0": 2},
+            "last_check_at": "2026-08-24T07:00:00Z",
+        }
+        api = watcher.format_command_api_message(state)
+        self.assertIn("API v0.2.15-post3", api)
+        self.assertIn("Обновлено: 100 / 200 веса (50.0%)", api)
+        mlnode = watcher.format_command_mlnode_message(state)
+        self.assertIn("Ноды с этой версией: 2 из 4 (50.0%)", mlnode)
+
+
 if __name__ == "__main__":
     unittest.main()
