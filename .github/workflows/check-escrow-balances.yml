@@ -1,9 +1,6 @@
 name: Check escrow balances
 
 on:
-  schedule:
-    # Every 15 minutes, away from the top of the hour.
-    - cron: "11,26,41,56 * * * *"
   workflow_dispatch:
     inputs:
       send_summary:

@@ -1,9 +1,6 @@
 name: Check our nodes
 
 on:
-  schedule:
-    # Avoid the top of the hour, when GitHub reports the highest schedule load.
-    - cron: "17 * * * *"
   workflow_dispatch: {}
 
 concurrency:

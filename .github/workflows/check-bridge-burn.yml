@@ -1,9 +1,6 @@
 name: Check bridge WGNK burns
 
 on:
-  schedule:
-    # Every 5 minutes, offset from the top of the hour.
-    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
   workflow_dispatch:
     inputs:
       send_summary:
