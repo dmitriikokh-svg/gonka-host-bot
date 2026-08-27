@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 from bot_common import (
     escape_html,
     fetch_json_with_fallback,
+    format_snapshot_age,
     load_json,
     save_json_atomic,
     send_telegram_message,
@@ -267,6 +268,27 @@ def build_recovery_message(epoch: int | None, models: dict[str, str]) -> str:
         lines.append(
             f"• {escape_html(model_id)} — {escape_html(coefficient)}"
         )
+    return "\n".join(lines)
+
+
+def format_command_models_message(state: dict, *, now=None) -> str:
+    if not isinstance(state, dict):
+        return "Снимка моделей ещё нет: watcher не запускался."
+    models = state.get("models")
+    if not isinstance(models, dict) or not models:
+        if state.get("last_error"):
+            return (
+                "📊 Модели\n\n"
+                f"Не удалось прочитать коэффициенты: {state.get('last_error_reason') or state.get('last_error')}\n\n"
+                f"{format_snapshot_age(state.get('checked_at'), now=now)}"
+            )
+        return "Снимка моделей ещё нет: watcher не запускался."
+    epoch = state.get("epoch")
+    epoch_note = f", эпоха {epoch}" if epoch is not None else ""
+    lines = [f"📊 Модели{epoch_note}", ""]
+    for model_id, coefficient in sorted(models.items()):
+        lines.append(f"{model_id} — {coefficient}")
+    lines.extend(["", format_snapshot_age(state.get("checked_at"), now=now)])
     return "\n".join(lines)
 
 

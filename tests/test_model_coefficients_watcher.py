@@ -253,5 +253,22 @@ class RepositoryWiringTests(unittest.TestCase):
         self.assertIn("TELEGRAM_SECONDARY_CHAT_ID", workflow)
 
 
+class CommandSnapshotTests(unittest.TestCase):
+    def test_command_message_lists_coefficients(self):
+        text = watcher.format_command_models_message(
+            {
+                "epoch": 370,
+                "checked_at": "2026-08-24T07:00:00+00:00",
+                "models": {
+                    "MiniMaxAI/MiniMax-M2.7": "0.3024",
+                    "moonshotai/Kimi-K2.6": "0.945",
+                },
+            }
+        )
+        self.assertIn("📊 Модели, эпоха 370", text)
+        self.assertIn("MiniMaxAI/MiniMax-M2.7 — 0.3024", text)
+        self.assertIn("moonshotai/Kimi-K2.6 — 0.945", text)
+
+
 if __name__ == "__main__":
     unittest.main()

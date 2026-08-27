@@ -165,5 +165,29 @@ class PersistenceTests(unittest.TestCase):
         self.assertIn("Низкий баланс", send.call_args.args[0])
 
 
+class CommandSnapshotTests(unittest.TestCase):
+    def test_command_message_shows_balances_against_threshold(self):
+        text = watcher.format_command_escrow_message(
+            {
+                "checked_at": "2026-08-24T07:00:00+00:00",
+                "accounts": {
+                    "gw2": {"status": "ok", "balance_gnk": "1078.0091995"},
+                    "node4": {"status": "low", "balance_gnk": "80"},
+                },
+            },
+            config={
+                "low_balance_below_gnk": 100,
+                "recovery_at_or_above_gnk": 100,
+                "accounts": [
+                    {"name": "gw2", "address": "gonka1w66aw6jayepglwgz66qtunetr5nyw9ls7evq5g"},
+                    {"name": "node4", "address": "gonka1sy7ug80wrnm6gk47creak0j5eagjpf7maqcqwk"},
+                ],
+            },
+        )
+        self.assertIn("📊 Эскроу", text)
+        self.assertIn("gw2: 1078.0091995 GNK (порог < 100)", text)
+        self.assertIn("node4: 80 GNK, низкий (порог < 100)", text)
+
+
 if __name__ == "__main__":
     unittest.main()
