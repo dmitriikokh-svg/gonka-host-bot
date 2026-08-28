@@ -65,10 +65,6 @@ def load_config() -> dict:
     if not isinstance(config, dict):
         raise ValueError("bridge burn config must be a JSON object")
 
-    owner = config.get("owner")
-    if not isinstance(owner, str) or not owner.strip():
-        raise ValueError("owner is required")
-
     origin_chain = config.get("origin_chain")
     if not isinstance(origin_chain, str) or not origin_chain.strip():
         raise ValueError("origin_chain is required")
@@ -139,6 +135,7 @@ def load_state() -> dict:
     state = load_json(STATE_FILE, default_state())
     if not isinstance(state, dict):
         raise ValueError("bridge burn state must be a JSON object")
+    state.pop("owner", None)
     for field, default in (("queue", {}), ("sources", {})):
         if not isinstance(state.get(field), dict):
             state[field] = copy.deepcopy(default)
@@ -820,7 +817,6 @@ def build_summary(config: dict, state: dict) -> str:
 def run() -> dict:
     config = load_config()
     state = load_state()
-    state["owner"] = config["owner"]
     now = utc_now()
     state["checked_at"] = now
     messages: list[str] = []

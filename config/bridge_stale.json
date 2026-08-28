@@ -1,5 +1,4 @@
 {
-  "owner": "Dmitrii Kokh",
   "origin_chain": "ethereum",
   "inactive_slots_warning_percent": 35,
   "stale_slots_warning_percent": 35,

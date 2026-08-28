@@ -151,11 +151,14 @@ Telegram разрешён только в `Inference` вне активного 
 
 ## `glamsterdam_watcher.py`
 
-Источник: `ethereum/forkcast` `src/data/upgrades.ts`.
+Источник: `ethereum/forkcast` `src/data/upgrades.ts`; отслеживаются `status`,
+дата активации в источнике `activationDate` и ориентировочная дата
+`projectedActivation`. Последняя не является подтверждённой официальной датой
+активации.
 
 | Событие | Назначение | Порог/условие | Уровень | Telegram | Владеющий репозиторий | Известное пересечение | Статус |
 |---|---|---|---|---|---|---|---|
-| `glamsterdam_changed` | Изменение даты/статуса Ethereum Glamsterdam | Изменился `activationDate` или `status` после baseline | INFO | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
+| `glamsterdam_changed` | Изменение статуса, даты активации в источнике или ориентировочной даты Ethereum Glamsterdam | После baseline изменился `status`, `activationDate` или `projectedActivation`; добавление optional-поля в старый state мигрирует без сообщения | INFO | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
 
 ## Retired / external ownership
 

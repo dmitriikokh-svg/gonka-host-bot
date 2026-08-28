@@ -10,7 +10,6 @@ import bridge_stale_watcher as watcher
 
 def config(**overrides):
     value = {
-        "owner": "Dmitrii Kokh",
         "origin_chain": "ethereum",
         "inactive_slots_warning_percent": 35,
         "stale_slots_warning_percent": 35,
@@ -186,6 +185,14 @@ class ParticipantClassificationTests(unittest.TestCase):
 
 
 class StateMigrationTests(unittest.TestCase):
+    def test_legacy_owner_is_removed_from_loaded_state(self):
+        legacy = watcher.default_state()
+        legacy.update({"owner": "legacy value"})
+        with patch.object(watcher, "load_json", return_value=legacy):
+            loaded = watcher.load_state()
+
+        self.assertNotIn("owner", loaded)
+
     def test_old_config_without_top_peer_fields_uses_safe_defaults(self):
         old_config = config()
         old_config.pop("top_peers_count")

@@ -24,7 +24,9 @@
   MLNode-версий.
 - `analytics_db_probe.py` — безопасная read-only проверка доступности и
   актуальности серверной Gonka Analytics DB через локальный SSH tunnel.
-- `glamsterdam_watcher.py` — дата и статус Ethereum Glamsterdam.
+- `glamsterdam_watcher.py` — статус Ethereum Glamsterdam, дата активации в
+  источнике и ориентировочная дата из `projectedActivation`. Ориентировочная
+  дата не является подтверждённой официальной датой активации.
 
 Балансы Node4/GW2 теперь контролирует `dahl-ai/gonka-heartbeat`. Событие
 `gateway_wallet_low` подтверждается двумя последовательными опросами при

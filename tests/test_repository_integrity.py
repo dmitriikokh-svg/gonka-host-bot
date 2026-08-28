@@ -41,6 +41,28 @@ class TelegramRoutingTests(unittest.TestCase):
 
 
 class RepositoryReferenceTests(unittest.TestCase):
+    def test_production_configs_and_python_do_not_contain_internal_owner(self):
+        personal_owner = "".join(("Dmitrii", " Kokh"))
+        indexed_config_owner = "config[" + '"owner"' + "]"
+        indexed_state_owner = "state[" + '"owner"' + "]"
+
+        for relative in (
+            "config/our_nodes.json",
+            "config/bridge_burn.json",
+            "config/bridge_stale.json",
+        ):
+            payload = json.loads((ROOT / relative).read_text(encoding="utf-8"))
+            with self.subTest(config=relative):
+                self.assertNotIn("owner", payload)
+                self.assertNotIn(personal_owner, json.dumps(payload))
+
+        for path in ROOT.glob("*.py"):
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(python=path.name):
+                self.assertNotIn(personal_owner, text)
+                self.assertNotIn(indexed_config_owner, text)
+                self.assertNotIn(indexed_state_owner, text)
+
     def test_server_monitor_workflows_have_no_scheduled_trigger(self):
         workflows = sorted((ROOT / ".github" / "workflows").glob("check-*.yml"))
         self.assertGreater(len(workflows), 0)

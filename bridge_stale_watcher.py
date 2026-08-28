@@ -91,8 +91,6 @@ def load_config() -> dict:
     config.setdefault("top_peer_inactive_alert_after_runs", 2)
     config.setdefault("bridge_latest_lag_tolerance_blocks", 64)
     config.setdefault("stale_alert_after_runs", 2)
-    if not isinstance(config.get("owner"), str) or not config["owner"].strip():
-        raise ValueError("owner is required")
     if not isinstance(config.get("origin_chain"), str) or not config["origin_chain"].strip():
         raise ValueError("origin_chain is required")
 
@@ -140,6 +138,7 @@ def load_state() -> dict:
     state = load_json(STATE_FILE, default_state())
     if not isinstance(state, dict):
         raise ValueError("bridge stale state must be a JSON object")
+    state.pop("owner", None)
     for field in ("signals", "sources", "participants", "top_peers"):
         if not isinstance(state.get(field), dict):
             state[field] = {}
@@ -1018,7 +1017,6 @@ def run() -> dict:
     state = load_state()
     migrate_stale_rule_state(state, config)
     previous_epoch = state.get("epoch")
-    state["owner"] = config["owner"]
     now = utc_now()
     state["checked_at"] = now
     messages: list[str] = []

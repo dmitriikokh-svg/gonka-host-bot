@@ -14,7 +14,6 @@ CONTRACT = "0x972a7A92D92796a98801A8818bcF91f1648f2F68"
 
 def config(**overrides):
     value = {
-        "owner": "Dmitrii Kokh",
         "origin_chain": "ethereum",
         "wgnk_contract": CONTRACT,
         "initial_check_after_minutes": 5,
@@ -60,6 +59,16 @@ def queued_item(block, detected="2026-07-29T00:00:00+00:00"):
         detected,
     )
     return next(iter(state["queue"].values()))
+
+
+class StateMigrationTests(unittest.TestCase):
+    def test_legacy_owner_is_removed_from_loaded_state(self):
+        legacy = watcher.default_state()
+        legacy.update({"owner": "legacy value"})
+        with patch.object(watcher, "load_json", return_value=legacy):
+            loaded = watcher.load_state()
+
+        self.assertNotIn("owner", loaded)
 
 
 class BurnParsingTests(unittest.TestCase):

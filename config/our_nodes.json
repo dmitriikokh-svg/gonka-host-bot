@@ -1,5 +1,4 @@
 {
-  "owner": "Dmitrii Kokh",
   "participants_urls": [
     "http://node1.gonka.ai:8000/v1/epochs/current/participants",
     "http://node2.gonka.ai:8000/v1/epochs/current/participants",
