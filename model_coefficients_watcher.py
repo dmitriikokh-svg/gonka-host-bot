@@ -219,15 +219,13 @@ def build_changes_message(
         f"Эпоха: {epoch if epoch is not None else 'нет данных'}",
     ]
     changed_ids = {change["model_id"] for change in changes}
-    for change in changes:
+    notifiable_changes = [
+        change for change in changes if change["type"] != "added"
+    ]
+    for change in notifiable_changes:
         model_id = escape_html(change["model_id"])
-        if change["type"] == "added":
-            lines.append(
-                f"• <code>{model_id}</code>: добавлена, коэффициент "
-                f"<b>{escape_html(change['new'])}</b>"
-            )
-        elif change["type"] == "removed":
-            lines.append(f"• <code>{model_id}</code>: удалена")
+        if change["type"] == "removed":
+            lines.append(f"• <code>{model_id}</code>: удалена из PoC params")
         else:
             lines.append(
                 f"• <code>{model_id}</code>: "
@@ -286,7 +284,7 @@ def apply_success(
         messages.append(build_recovery_message(epoch, models))
     if not baseline:
         changes = model_changes(previous_models, models)
-        if changes:
+        if any(change["type"] != "added" for change in changes):
             messages.append(build_changes_message(epoch, changes, models))
     return {
         "schema_version": 1,
@@ -366,7 +364,7 @@ def main() -> None:
     print(
         f"Sent {len(messages)} Telegram message(s)."
         if messages
-        else "No coefficient changes; no Telegram messages sent."
+        else "No coefficient alerts; no Telegram messages sent."
     )
 
 

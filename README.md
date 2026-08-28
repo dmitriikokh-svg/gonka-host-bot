@@ -1,7 +1,7 @@
 # Gonka host monitoring
 
-Набор serverless-мониторов для сети Gonka. GitHub Actions запускает проверки
-по расписанию, Telegram получает только события и изменения состояния.
+Набор мониторов для сети Gonka. Production-проверки запускаются внешним
+серверным scheduler, а Telegram получает только события и изменения состояния.
 
 ## Мониторы
 
@@ -32,6 +32,18 @@
 `bot_common.py`. Состояния проверок хранятся в `state/` и коммитятся обратно
 workflow-скриптом `scripts/commit_state.sh`.
 
+Полный перечень событий, порогов и ownership находится в
+[`docs/alert_registry.md`](docs/alert_registry.md).
+
+## Режим запуска
+
+Все monitor workflows `.github/workflows/check-*.yml` имеют только
+`workflow_dispatch` и не запускаются GitHub Actions по расписанию. Они
+сохранены для контролируемого ручного запуска. Production cadence задаётся
+внешним серверным scheduler; для ещё не перенесённых проверок он будет
+настроен отдельно. Наличие workflow в репозитории само по себе не означает
+автоматический запуск.
+
 ## Переменные и secrets
 
 - `TELEGRAM_BOT_TOKEN` — secret.
@@ -41,13 +53,16 @@ workflow-скриптом `scripts/commit_state.sh`.
   завершает проверку ошибкой.
 - `TELEGRAM_SECONDARY_CHAT_ID` — необязательный secret второго канала. Если он
   задан, каждое уведомление отправляется также в этот канал без topic.
-- `ETHEREUM_RPC_URLS` — GitHub Actions secret: один или несколько надёжных
-  Ethereum JSON-RPC URL через запятую или перенос строки. Secret-источники
-  используются раньше публичных fallback.
-- `TARGET_API_VERSION` — repository variable.
-- `TARGET_MLNODE_VERSION` — repository variable; workflow использует `3.0.16`,
-  если переменная ещё не задана.
-- `ADOPTION_THRESHOLD` — repository variable.
+- `ETHEREUM_RPC_URLS` — один или несколько надёжных Ethereum JSON-RPC URL
+  через запятую или перенос строки. В production значение задаётся в
+  защищённом server environment; для ручного workflow используется GitHub
+  Actions secret. Secret-источники используются раньше публичных fallback.
+- `TARGET_API_VERSION` — server environment; repository variable используется
+  только ручным workflow.
+- `TARGET_MLNODE_VERSION` — server environment; ручной workflow использует
+  repository variable либо `3.0.16` по умолчанию.
+- `ADOPTION_THRESHOLD` — server environment/repository variable для
+  соответствующего способа запуска.
 
 Конфигурация собственных нод находится в `config/our_nodes.json`, ключей для
 эскроу — в `config/escrow_balances.json`, bridge burn — в
@@ -55,8 +70,8 @@ workflow-скриптом `scripts/commit_state.sh`.
 `config/bridge_stale.json`. Источники коэффициентов моделей находятся в
 `config/model_coefficients.json`. Баланс хранится в базовом denom
 `ngonka`: 1 GNK = 1 000 000 000 ngonka. Ручной запуск workflow
-`Check escrow balances` по умолчанию отправляет проверочную сводку; плановые
-запуски пишут в Telegram только алерты, восстановления и напоминания.
+`Check escrow balances` по умолчанию отправляет проверочную сводку; обычные
+серверные запуски пишут в Telegram только алерты, восстановления и напоминания.
 
 ## Upgrade adoption monitor
 
@@ -72,32 +87,35 @@ workflow-скриптом `scripts/commit_state.sh`.
 попадают в этот вес. Новое значение MLNode-прогресса отправляется после двух
 одинаковых последовательных проверок; первая проверка новой целевой версии
 создаёт начальную сводку сразу. Подробные версии по хостам сохраняются в
-`state/upgrade_adoption.json` и выводятся в workflow log.
+`state/upgrade_adoption.json` и выводятся в server/workflow log.
 
-Workflow `Check bridge WGNK burns` запланирован каждые пять минут со смещением
-от начала часа. GitHub Actions может фактически запустить его позже. Монитор
-читает только финализированные Ethereum-блоки и ищет событие ERC-20 `Transfer`
-контракта WGNK на нулевой адрес. Новая транзакция впервые проверяется в Gonka
-через 5 минут. Через 10 минут `BRIDGE_PENDING` или отсутствие bridge receipt
-создаёт warning; две просроченные транзакции создают один critical. Ошибка всех
-Gonka API отслеживается отдельно и не считается зависшей транзакцией.
+`bridge_burn_watcher.py` читает только финализированные Ethereum-блоки и ищет
+событие ERC-20 `Transfer` контракта WGNK на нулевой адрес. Его production
+cadence задаётся внешним серверным scheduler; workflow `Check bridge WGNK
+burns` поддерживает только ручной запуск. Новая транзакция впервые проверяется
+в Gonka через 5 минут. Через 10 минут `BRIDGE_PENDING` или отсутствие bridge
+receipt создаёт warning; две просроченные транзакции создают один critical.
+Ошибка всех Gonka API отслеживается отдельно и не считается зависшей
+транзакцией.
 Перед удалением завершённой транзакции из очереди монитор сохраняет её эпоху и
 список подписавших validators. Последние 20 таких записей используются как
 фактическое liveness-доказательство для Top-10 bridge peers.
 
-Для production создайте repository secret `ETHEREUM_RPC_URLS` в GitHub Actions.
-URL провайдера может содержать token в path или query, поэтому его нельзя
-помещать в workflow, config или логи. Монитор принимает несколько URL через
-запятую либо перенос строки, удаляет повторы и сохраняет только безопасную
-метку `scheme://hostname[:port]`. Публичные RPC из `config/bridge_burn.json`
-остаются fallback, но их доступность и поддержка `finalized`/`eth_getLogs` не
+Для production задайте `ETHEREUM_RPC_URLS` в защищённом server environment;
+GitHub Actions secret нужен только для контролируемого ручного workflow. URL
+провайдера может содержать token в path или query, поэтому его нельзя помещать
+в workflow, config или логи. Монитор принимает несколько URL через запятую
+либо перенос строки, удаляет повторы и сохраняет только безопасную метку
+`scheme://hostname[:port]`. Публичные RPC из `config/bridge_burn.json` остаются
+fallback, но их доступность и поддержка `finalized`/`eth_getLogs` не
 гарантируются. Если finalized block или полный диапазон logs недоступен, scan
 cursor не продвигается; пустой успешный `eth_getLogs` означает, что новых burn
 не найдено, а не ошибку мониторинга.
 
-Workflow `Check bridge stale and BLS risk` запускается каждые 5 минут. Он
-читает реальное распределение BLS slots текущей подписанной эпохи и применяет
-пять независимых правил:
+`bridge_stale_watcher.py` читает реальное распределение BLS slots текущей
+подписанной эпохи и применяет независимые правила ниже. Workflow `Check bridge
+stale and BLS risk` запускается только вручную, а production cadence задаётся
+внешним серверным scheduler:
 
 - warning, если Top-3 контролируют большинство: `total_slots // 2 + 1`;
 - warning, если 35% или больше BLS slots принадлежат адресам, отсутствующим в
@@ -188,7 +206,7 @@ phase gating не применяется. Telegram содержит только
 
 ## Коэффициенты PoC-моделей
 
-`model_coefficients_watcher.py` раз в час читает с fallback endpoint
+`model_coefficients_watcher.py` при каждом запуске читает с fallback endpoint
 `/chain-api/productscience/inference/inference/params`. Список находится в
 `params.poc_params.models`, идентификатор — в `model_id`, коэффициент — в
 `weight_scale_factor.value × 10^weight_scale_factor.exponent`. Вычисления и
@@ -196,11 +214,15 @@ phase gating не применяется. Telegram содержит только
 `"0.78"` эквивалентны.
 
 Первый успешный запуск создаёт `state/model_coefficients.json` как baseline
-без Telegram-сообщения. Затем одно INFO-сообщение перечисляет только
-добавленные, удалённые и изменившиеся модели. Reminders не отправляются.
+без Telegram-сообщения. Полный актуальный список всегда сохраняется в state.
+Добавление модели не отправляется в Telegram: этим событием владеет
+`dahl-ai/gonka-model-watch`. Изменение коэффициента существующей модели
+отправляется, а удаление сообщается с формулировкой «удалена из PoC params».
+Если добавление произошло одновременно с другим уведомляемым изменением,
+добавленная модель в сообщение не включается. Reminders не отправляются.
 Недоступность всех params-источников даёт отдельный yellow alert после трёх
 последовательных запусков; прежний baseline при этом сохраняется. Полная
-ошибка остаётся в state и workflow log.
+ошибка остаётся в state и server/workflow log.
 
 ## Chain halt monitor
 
@@ -242,9 +264,10 @@ CHAIN_MONITOR_MODE=daemon CHAIN_POLL_INTERVAL_SECONDS=30 \
 
 Для server-развёртывания используйте
 `deploy/chain-halt.env.example` и `deploy/gonka-chain-halt.service.example`, заменив в них
-пользователя, пути и Telegram secrets. После проверки daemon-запуска
-отключите schedule workflow `Check Gonka chain halt`, чтобы два runner
-не писали в один `state/chain_halt.json` и не дублировали алерты.
+пользователя, пути и Telegram secrets. Workflow `Check Gonka chain halt`
+не имеет schedule и предназначен только для контролируемого ручного запуска;
+не запускайте его параллельно с daemon, чтобы два процесса не писали в один
+`state/chain_halt.json` и не дублировали алерты.
 При переезде меняются только env/config и устанавливается systemd unit;
 Python-логика однократной проверки остаётся той же.
 
@@ -299,8 +322,9 @@ CHAIN_LOAD_MODE=daemon CHAIN_LOAD_POLL_INTERVAL_SECONDS=60 \
 ```
 
 Для server-развёртывания используйте `deploy/chain-load.env.example` и
-`deploy/gonka-chain-load.service.example`. После включения daemon отключите
-schedule workflow `Check Gonka chain load`, чтобы два процесса не писали один
+`deploy/gonka-chain-load.service.example`. Workflow `Check Gonka chain load`
+не имеет schedule и предназначен только для контролируемого ручного запуска;
+не запускайте его параллельно с daemon, чтобы два процесса не писали один
 state и не отправляли повторные сообщения.
 
 Gas alert пока не реализован. Follow-up: исследовать

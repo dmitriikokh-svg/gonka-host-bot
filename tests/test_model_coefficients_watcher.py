@@ -150,6 +150,57 @@ class ChangeDetectionTests(unittest.TestCase):
         )
         self.assertEqual(repeated, [])
 
+    def test_added_model_updates_state_without_alert(self):
+        previous = {"models": {"Existing": "0.78"}}
+        state, messages = watcher.apply_success(
+            previous,
+            {"Existing": "0.78", "Added": "0.31"},
+            epoch=368,
+            source="https://params",
+            epoch_source="https://group",
+            now="2026-08-13T00:00:00+00:00",
+        )
+        self.assertEqual(messages, [])
+        self.assertEqual(
+            state["models"],
+            {"Added": "0.31", "Existing": "0.78"},
+        )
+
+    def test_added_model_is_omitted_when_another_coefficient_changes(self):
+        previous = {"models": {"Changed": "0.72", "Same": "0.5"}}
+        state, messages = watcher.apply_success(
+            previous,
+            {"Added": "0.31", "Changed": "0.78", "Same": "0.5"},
+            epoch=368,
+            source="https://params",
+            epoch_source="https://group",
+            now="2026-08-13T00:00:00+00:00",
+        )
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Changed", messages[0])
+        self.assertIn("0.72", messages[0])
+        self.assertIn("0.78", messages[0])
+        self.assertNotIn("Added", messages[0])
+        self.assertNotIn("0.31", messages[0])
+        self.assertEqual(
+            state["models"],
+            {"Added": "0.31", "Changed": "0.78", "Same": "0.5"},
+        )
+
+    def test_removed_model_uses_poc_params_wording(self):
+        state, messages = watcher.apply_success(
+            {"models": {"Kept": "0.78", "Removed": "0.31"}},
+            {"Kept": "0.78"},
+            epoch=368,
+            source="https://params",
+            epoch_source="https://group",
+            now="2026-08-13T00:00:00+00:00",
+        )
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Removed", messages[0])
+        self.assertIn("удалена из PoC params", messages[0])
+        self.assertEqual(state["models"], {"Kept": "0.78"})
+
     def test_change_alert_lists_unchanged_coefficients(self):
         previous = {"models": {"Kimi": "0.90", "GLM": "2.5935"}}
         _, messages = watcher.apply_success(
