@@ -12,8 +12,6 @@
 - `our_nodes_watcher.py` — доступность собственных нод, присутствие среди
   участников и Confirmation PoC rate из chain group data.
 - `model_coefficients_watcher.py` — изменения коэффициентов PoC-моделей.
-- `escrow_balance_watcher.py` — балансы ключей для создания эскроу, алерт
-  строго ниже 100 GNK, восстановление и суточное напоминание.
 - `bridge_burn_watcher.py` — финализированные burn-транзакции WGNK в Ethereum,
   их очередь и статус обработки bridge на стороне Gonka.
 - `bridge_stale_watcher.py` — риски BLS/bridge: концентрация slots,
@@ -27,6 +25,10 @@
 - `analytics_db_probe.py` — безопасная read-only проверка доступности и
   актуальности серверной Gonka Analytics DB через локальный SSH tunnel.
 - `glamsterdam_watcher.py` — дата и статус Ethereum Glamsterdam.
+
+Балансы Node4/GW2 теперь контролирует `dahl-ai/gonka-heartbeat`. Событие
+`gateway_wallet_low` подтверждается двумя последовательными опросами при
+балансе `< 80 GNK`; этот репозиторий escrow-уведомления больше не отправляет.
 
 Общие HTTP fallback, атомарная запись JSON и Telegram находятся в
 `bot_common.py`. Состояния проверок хранятся в `state/` и коммитятся обратно
@@ -64,14 +66,10 @@ workflow-скриптом `scripts/commit_state.sh`.
 - `ADOPTION_THRESHOLD` — server environment/repository variable для
   соответствующего способа запуска.
 
-Конфигурация собственных нод находится в `config/our_nodes.json`, ключей для
-эскроу — в `config/escrow_balances.json`, bridge burn — в
-`config/bridge_burn.json`, а BLS/bridge stale — в
+Конфигурация собственных нод находится в `config/our_nodes.json`, bridge burn —
+в `config/bridge_burn.json`, а BLS/bridge stale — в
 `config/bridge_stale.json`. Источники коэффициентов моделей находятся в
-`config/model_coefficients.json`. Баланс хранится в базовом denom
-`ngonka`: 1 GNK = 1 000 000 000 ngonka. Ручной запуск workflow
-`Check escrow balances` по умолчанию отправляет проверочную сводку; обычные
-серверные запуски пишут в Telegram только алерты, восстановления и напоминания.
+`config/model_coefficients.json`.
 
 ## Upgrade adoption monitor
 

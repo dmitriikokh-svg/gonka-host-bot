@@ -9,6 +9,7 @@ Telegram-направления:
 - `MONITORING` — `TELEGRAM_CHAT_ID` + обязательный
   `TELEGRAM_MESSAGE_THREAD_ID`, а также необязательный
   `TELEGRAM_SECONDARY_CHAT_ID` через общий helper;
+- `EXTERNAL` — отправкой и маршрутизацией владеет внешний репозиторий;
 - `NONE` — этот переход не отправляется данным репозиторием.
 
 Статусы ownership:
@@ -74,24 +75,6 @@ participants.
 Добавленная модель никогда не включается в сообщение этого watcher, в том
 числе когда одновременно изменился коэффициент другой модели. State при этом
 всегда содержит полный актуальный список.
-
-## `escrow_balance_watcher.py`
-
-Источник: Cosmos Bank balances для включённых accounts из
-`config/escrow_balances.json`; denom `ngonka` отображается как GNK.
-
-| Событие | Назначение | Порог/условие | Уровень | Telegram | Владеющий репозиторий | Известное пересечение | Статус |
-|---|---|---|---|---|---|---|---|
-| `escrow_balance_low` | Недостаток средств для создания escrow | Баланс строго `< 100 GNK` | CRITICAL | MONITORING | `dmitriikokh-svg/gonka-host-bot` | `gonka-heartbeat` проверяет `< 80 GNK` | OWNER |
-| `escrow_balance_low_reminder` | Напоминание об активном low balance | Не чаще одного раза за 24 часа | CRITICAL | MONITORING | `dmitriikokh-svg/gonka-host-bot` | `gonka-heartbeat`, другой порог | OWNER |
-| `escrow_balance_recovered` | Баланс пополнен | Активный alert и баланс `>= 100 GNK` | INFO | MONITORING | `dmitriikokh-svg/gonka-host-bot` | `gonka-heartbeat`, другой порог | OWNER |
-| `escrow_balance_unavailable` | Потеря наблюдаемости баланса | Три последовательных неуспешных проверки account | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет подтверждённого | UNIQUE |
-| `escrow_balance_available` | Восстановление наблюдаемости | Успешное чтение после unavailable alert | INFO | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет подтверждённого | UNIQUE |
-| `escrow_balance_summary` | Ручная проверочная сводка | Только явно запрошенный summary | INFO | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
-
-Escrow monitor остаётся включённым и имеет статус `OWNER`: порог этого
-репозитория 100 GNK даёт более раннее предупреждение, чем текущие 80 GNK в
-Heartbeat.
 
 ## `bridge_burn_watcher.py`
 
@@ -173,6 +156,17 @@ Telegram разрешён только в `Inference` вне активного 
 | Событие | Назначение | Порог/условие | Уровень | Telegram | Владеющий репозиторий | Известное пересечение | Статус |
 |---|---|---|---|---|---|---|---|
 | `glamsterdam_changed` | Изменение даты/статуса Ethereum Glamsterdam | Изменился `activationDate` или `status` после baseline | INFO | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
+
+## Retired / external ownership
+
+### Escrow balances (бывший `escrow_balance_watcher.py`)
+
+Монитор передан 2026-08-28. Наш monitor больше не отправляет escrow-уведомления;
+исторический `state/escrow_balances.json` временно сохранён только для rollback.
+
+| Событие | Назначение | Источник данных | Порог/условие | Уровень | Telegram | Владелец | Дата передачи |
+|---|---|---|---|---|---|---|---|
+| `gateway_wallet_low` | Контроль балансов Node4/GW2 | Проверки кошельков в `dahl-ai/gonka-heartbeat` | Баланс `< 80 GNK` два последовательных опроса | CRITICAL | EXTERNAL | `dahl-ai/gonka-heartbeat` | 2026-08-28 |
 
 ## Компоненты без Telegram-алертов
 
