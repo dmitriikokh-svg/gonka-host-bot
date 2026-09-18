@@ -540,5 +540,34 @@ class WorkflowTests(unittest.TestCase):
             self.assertIn(name, workflow)
 
 
+class CommandSnapshotTests(unittest.TestCase):
+    def test_command_message_summarizes_healthy_quorum(self):
+        text = watcher.format_command_halt_message(
+            {
+                "status": "healthy",
+                "checked_at": "2026-08-24T07:00:00+00:00",
+                "assessment": {
+                    "result": "healthy",
+                    "latest_height": 5716837,
+                    "latest_block_time": "2026-08-24T07:00:00Z",
+                    "latest_block_age_seconds": 7,
+                    "confirming_sources": 2,
+                    "total_sources": 4,
+                },
+                "sources": {
+                    "node3": {"status": "available", "height": 5716837, "block_age_seconds": 7},
+                    "node1": {"status": "unavailable", "error_category": "timeout"},
+                },
+            },
+            now=datetime(2026, 8, 24, 7, 5, tzinfo=timezone.utc),
+        )
+        self.assertIn("📊 Chain — жива", text)
+        self.assertIn("Высота: 5 716 837", text)
+        self.assertIn("Источники: 2/4 подтверждают", text)
+        self.assertIn("• node1 — timeout", text)
+        self.assertIn("• node3 — OK", text)
+        self.assertIn("Снимок 07:00 UTC (5 мин назад)", text)
+
+
 if __name__ == "__main__":
     unittest.main()
