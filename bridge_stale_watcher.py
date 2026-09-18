@@ -49,7 +49,7 @@ CONFIG_FILE = ROOT / "config" / "bridge_stale.json"
 STATE_FILE = ROOT / "state" / "bridge_stale.json"
 BRIDGE_BURN_STATE_FILE = ROOT / "state" / "bridge_burn.json"
 SIGNED_PHASE = "DKG_PHASE_SIGNED"
-TOP_PEER_RULE_VERSION = "bridge_signatures_v1"
+TOP_PEER_RULE_VERSION = "bridge_signatures_v2"
 STALE_RULE_VERSION = "bridge_lag_v1"
 
 
@@ -619,12 +619,11 @@ def load_completed_bridge_history() -> list[dict]:
     return [item for item in history if isinstance(item, dict)] if isinstance(history, list) else []
 
 
-def current_epoch_signature_evidence(
+def recent_signature_evidence(
     history: list[dict],
     epoch: int,
-    limit: int,
 ) -> list[dict]:
-    """Return the newest distinct completed transactions for one epoch."""
+    """Return completed transactions from the current two-epoch signing window."""
 
     parsed: dict[str, dict] = {}
     for item in history:
@@ -637,8 +636,20 @@ def current_epoch_signature_evidence(
         except (TypeError, ValueError):
             continue
         validators = item.get("validators")
-        if item_epoch != epoch or not isinstance(validators, list):
+        if item_epoch not in {epoch, epoch - 1} or not isinstance(validators, list):
             continue
+        raw_eligible = item.get("eligible_validators")
+        eligible_validators = (
+            sorted(
+                {
+                    value
+                    for value in raw_eligible
+                    if isinstance(value, str) and value
+                }
+            )
+            if isinstance(raw_eligible, list)
+            else None
+        )
         key = item.get("key")
         if not isinstance(key, str) or not key:
             key = f"{item.get('origin_chain', 'ethereum')}/{block}/{receipt}"
@@ -646,6 +657,8 @@ def current_epoch_signature_evidence(
             "key": key,
             "block_number": block,
             "receipt_index": receipt,
+            "epoch_index": item_epoch,
+            "eligible_validators": eligible_validators,
             "validators": sorted(
                 {value for value in validators if isinstance(value, str) and value}
             ),
@@ -654,7 +667,36 @@ def current_epoch_signature_evidence(
         parsed.values(),
         key=lambda item: (item["block_number"], item["receipt_index"]),
         reverse=True,
-    )[:limit]
+    )
+
+
+def participant_signature_evidence(
+    evidence: list[dict],
+    address: str,
+    current_epoch: int,
+    current_eligible: set[str],
+    limit: int,
+) -> list[dict]:
+    """Select newest transactions that this participant was eligible to sign."""
+
+    selected: list[dict] = []
+    for item in evidence:
+        eligible_validators = item.get("eligible_validators")
+        if isinstance(eligible_validators, list):
+            participant_was_eligible = address in eligible_validators
+        else:
+            # Legacy history has no per-receipt eligibility snapshot. It is
+            # safe only for the current epoch, where current membership is
+            # the best available evidence.
+            participant_was_eligible = (
+                item.get("epoch_index") == current_epoch
+                and address in current_eligible
+            )
+        if participant_was_eligible:
+            selected.append(item)
+        if len(selected) >= limit:
+            break
+    return selected
 
 
 def top_peer_line(item: dict) -> str:
@@ -696,10 +738,9 @@ def evaluate_top_peers(
         minimum=2,
     )
     inactive_alert_after = positive_int(config, "top_peer_inactive_alert_after_runs")
-    evidence = current_epoch_signature_evidence(
+    evidence = recent_signature_evidence(
         completed_history,
         bls["epoch"],
-        missing_threshold,
     )
     sorted_participants = sorted(
         bls["participants"],
@@ -723,13 +764,21 @@ def evaluate_top_peers(
         if previous.get("epoch") != bls["epoch"]:
             previous = {}
 
+        peer_evidence = participant_signature_evidence(
+            evidence,
+            address,
+            bls["epoch"],
+            eligible,
+            missing_threshold,
+        )
+
         if address not in eligible:
             failure_reason = "inactive_after_cpoc"
             evidence_status = "not_eligible"
-        elif len(evidence) < missing_threshold:
+        elif len(peer_evidence) < missing_threshold:
             failure_reason = None
             evidence_status = "insufficient_transactions"
-        elif all(address not in item["validators"] for item in evidence):
+        elif all(address not in item["validators"] for item in peer_evidence):
             failure_reason = "missing_bridge_signatures"
             evidence_status = "missing_signatures"
         else:
@@ -763,8 +812,8 @@ def evaluate_top_peers(
             "epoch": bls["epoch"],
             "failure_reason": failure_reason,
             "evidence_status": evidence_status,
-            "evidence_count": len(evidence),
-            "evidence_transactions": [item["key"] for item in evidence],
+            "evidence_count": len(peer_evidence),
+            "evidence_transactions": [item["key"] for item in peer_evidence],
             "consecutive_failed_runs": consecutive,
             "alerted": alerted,
             "first_failed_at": first_failed_at,

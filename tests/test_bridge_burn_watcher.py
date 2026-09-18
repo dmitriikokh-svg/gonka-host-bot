@@ -25,6 +25,8 @@ def config(**overrides):
         "request_timeout_seconds": 15,
         "attempts_per_source": 1,
         "completed_history_limit": 20,
+        "non_signer_list_limit": 10,
+        "chain_api_bases": ["https://chain.example"],
         "ethereum_rpc_urls": ["https://rpc.example"],
         "gonka_transaction_url_templates": [
             "https://gonka.example/{origin_chain}/{block_number}/{receipt_index}"
@@ -59,6 +61,19 @@ def queued_item(block, detected="2026-07-29T00:00:00+00:00"):
         detected,
     )
     return next(iter(state["queue"].values()))
+
+
+def signing_snapshot(epoch=342, total_power=100, **weights):
+    eligible_weights = weights or {"gonka1a": 60, "gonka1b": 40}
+    return {
+        "epoch_index": epoch,
+        "group_id": "1",
+        "total_power": total_power,
+        "required_power": total_power // 2 + 1,
+        "weights": dict(eligible_weights),
+        "eligible_weights": dict(eligible_weights),
+        "source": "chain.example",
+    }
 
 
 class StateMigrationTests(unittest.TestCase):
@@ -127,12 +142,14 @@ class BridgeResponseTests(unittest.TestCase):
                     {
                         "status": "BRIDGE_COMPLETED",
                         "epoch_index": "342",
+                        "total_validation_power": "60",
                         "validators": ["gonka1b", "gonka1a"],
                     }
                 ]
             }
         )
         self.assertEqual(observation["epoch_index"], 342)
+        self.assertEqual(observation["total_validation_power"], 60)
         self.assertEqual(observation["completed_validators"], ["gonka1a", "gonka1b"])
 
     def test_valid_empty_response_means_missing(self):
@@ -143,8 +160,42 @@ class BridgeResponseTests(unittest.TestCase):
                 "validators": [],
                 "completed_validators": [],
                 "epoch_index": None,
+                "total_validation_power": None,
             },
         )
+
+    def test_epoch_signing_snapshot_parses_power_and_weights(self):
+        snapshot = watcher.parse_epoch_signing_snapshot(
+            {
+                "epoch_group_data": {
+                    "epoch_index": "342",
+                    "epoch_group_id": "99",
+                    "total_weight": "100",
+                    "validation_weights": [
+                        {"member_address": "gonka1a", "weight": "60"},
+                        {"member_address": "gonka1b", "weight": "40"},
+                        {"member_address": "gonka1zero", "weight": "0"},
+                    ],
+                }
+            },
+            342,
+        )
+        self.assertEqual(snapshot["required_power"], 51)
+        self.assertEqual(
+            snapshot["weights"],
+            {"gonka1a": 60, "gonka1b": 40, "gonka1zero": 0},
+        )
+
+    def test_group_members_are_the_eligible_subset(self):
+        members = watcher.parse_group_members(
+            {
+                "members": [
+                    {"member": {"address": "gonka1a"}},
+                    {"member": {"address": "gonka1b"}},
+                ]
+            }
+        )
+        self.assertEqual(members, {"gonka1a", "gonka1b"})
 
 
 class RpcConfigurationTests(unittest.TestCase):
@@ -246,9 +297,24 @@ class QueueAlertTests(unittest.TestCase):
     def test_pending_warns_at_ten_minutes_once_and_recovers(self):
         state = self.state_with_items(101)
         cfg = config()
-        pending = ({"status": "BRIDGE_PENDING", "validators": ["gonka1a"]}, "archive")
+        pending = (
+            {
+                "status": "BRIDGE_PENDING",
+                "validators": ["gonka1a"],
+                "epoch_index": 342,
+                "total_validation_power": 40,
+            },
+            "archive",
+        )
 
-        with patch.object(watcher, "fetch_bridge_observation", return_value=pending):
+        with (
+            patch.object(watcher, "fetch_bridge_observation", return_value=pending),
+            patch.object(
+                watcher,
+                "fetch_epoch_signing_snapshot",
+                return_value=signing_snapshot(),
+            ),
+        ):
             messages = watcher.process_queue(state, cfg, "2026-07-29T00:05:00+00:00")
         self.assertEqual(messages, [])
         self.assertFalse(next(iter(state["queue"].values()))["overdue"])
@@ -257,11 +323,21 @@ class QueueAlertTests(unittest.TestCase):
             [],
         )
 
-        with patch.object(watcher, "fetch_bridge_observation", return_value=pending):
+        with (
+            patch.object(watcher, "fetch_bridge_observation", return_value=pending),
+            patch.object(
+                watcher,
+                "fetch_epoch_signing_snapshot",
+                return_value=signing_snapshot(),
+            ),
+        ):
             watcher.process_queue(state, cfg, "2026-07-29T00:10:00+00:00")
         messages = watcher.evaluate_alerts(state, cfg, "2026-07-29T00:10:00+00:00")
         self.assertEqual(len(messages), 1)
         self.assertIn("не завершена вовремя", messages[0])
+        self.assertIn("40", messages[0])
+        self.assertIn("51", messages[0])
+        self.assertIn("gonka1b", messages[0])
         self.assertEqual(
             watcher.evaluate_alerts(state, cfg, "2026-07-29T00:11:00+00:00"),
             [],
@@ -273,10 +349,18 @@ class QueueAlertTests(unittest.TestCase):
                 "validators": ["gonka1a"],
                 "completed_validators": ["gonka1a"],
                 "epoch_index": 342,
+                "total_validation_power": 60,
             },
             "archive",
         )
-        with patch.object(watcher, "fetch_bridge_observation", return_value=completed):
+        with (
+            patch.object(watcher, "fetch_bridge_observation", return_value=completed),
+            patch.object(
+                watcher,
+                "fetch_epoch_signing_snapshot",
+                return_value=signing_snapshot(),
+            ),
+        ):
             messages = watcher.process_queue(state, cfg, "2026-07-29T00:15:00+00:00")
         self.assertEqual(len(messages), 1)
         self.assertIn("завершена", messages[0])
@@ -285,6 +369,7 @@ class QueueAlertTests(unittest.TestCase):
         evidence = state["completed_history"][0]
         self.assertEqual(evidence["epoch_index"], 342)
         self.assertEqual(evidence["validators"], ["gonka1a"])
+        self.assertEqual(evidence["eligible_validators"], ["gonka1a", "gonka1b"])
 
     def test_completed_signer_history_is_deduplicated_and_bounded(self):
         state = watcher.default_state()
@@ -315,6 +400,36 @@ class QueueAlertTests(unittest.TestCase):
             [102, 103],
         )
         self.assertEqual(state["completed_history"][-1]["validators"], ["gonka1signer"])
+
+    def test_pending_with_quorum_uses_separate_finalization_alert(self):
+        state = self.state_with_items(101)
+        observation = (
+            {
+                "status": "BRIDGE_PENDING",
+                "validators": ["gonka1a"],
+                "epoch_index": 342,
+                "total_validation_power": 60,
+            },
+            "archive",
+        )
+        with (
+            patch.object(watcher, "fetch_bridge_observation", return_value=observation),
+            patch.object(
+                watcher,
+                "fetch_epoch_signing_snapshot",
+                return_value=signing_snapshot(),
+            ),
+        ):
+            watcher.process_queue(state, config(), "2026-07-29T00:10:00+00:00")
+
+        messages = watcher.evaluate_alerts(
+            state,
+            config(),
+            "2026-07-29T00:10:00+00:00",
+        )
+        self.assertEqual(len(messages), 1)
+        self.assertIn("quorum, но не финализировалась", messages[0])
+        self.assertIn("missing <b>0</b>", messages[0])
 
     def test_missing_is_treated_as_overdue_after_successful_query(self):
         state = self.state_with_items(101)

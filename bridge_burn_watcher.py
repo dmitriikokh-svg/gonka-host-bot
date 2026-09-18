@@ -16,13 +16,15 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import requests
 
 from bot_common import (
     SourcesUnavailable,
     escape_html,
+    fetch_json_with_fallback,
+    format_integer,
     load_json,
     save_json_atomic,
     send_telegram_message,
@@ -102,6 +104,23 @@ def load_config() -> dict:
             "gonka_transaction_url_templates",
         )
 
+    config.setdefault(
+        "chain_api_bases",
+        [
+            "http://204.12.168.157:1317",
+            "https://node3.gonka.ai/chain-api",
+            "http://node2.gonka.ai:8000/chain-api",
+            "http://node1.gonka.ai:8000/chain-api",
+        ],
+    )
+    chain_api_bases = config.get("chain_api_bases")
+    if not isinstance(chain_api_bases, list) or not chain_api_bases:
+        raise ValueError("chain_api_bases must be a non-empty list")
+    for url in chain_api_bases:
+        if not isinstance(url, str):
+            raise ValueError("each chain API base must be a string")
+        validate_url(url, "chain_api_bases")
+
     initial = positive_int(config, "initial_check_after_minutes")
     warning = positive_int(config, "warning_after_minutes")
     if warning <= initial:
@@ -115,6 +134,8 @@ def load_config() -> dict:
     positive_int(config, "attempts_per_source")
     config.setdefault("completed_history_limit", 20)
     positive_int(config, "completed_history_limit", minimum=2)
+    config.setdefault("non_signer_list_limit", 10)
+    positive_int(config, "non_signer_list_limit")
     return config
 
 
@@ -398,6 +419,110 @@ def bridge_urls(config: dict, item: dict) -> list[str]:
     ]
 
 
+def chain_urls(config: dict, suffix: str) -> list[str]:
+    return [
+        base.rstrip("/") + "/" + suffix.lstrip("/")
+        for base in config["chain_api_bases"]
+    ]
+
+
+def parse_epoch_signing_snapshot(payload: Any, expected_epoch: int) -> dict:
+    if not isinstance(payload, dict):
+        raise ValueError("epoch group response must be an object")
+    group = payload.get("epoch_group_data") or payload.get("epochGroupData")
+    if not isinstance(group, dict):
+        raise ValueError("epoch group data is missing")
+    try:
+        epoch = int(group.get("epoch_index") or group.get("epochIndex"))
+        total_power = int(group.get("total_weight") or group.get("totalWeight"))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("epoch group power data is invalid") from exc
+    if epoch != expected_epoch:
+        raise ValueError(f"epoch group {epoch} does not match {expected_epoch}")
+    if total_power <= 0:
+        raise ValueError("epoch total weight must be positive")
+    group_id = group.get("epoch_group_id") or group.get("epochGroupId")
+    if group_id is None or not str(group_id):
+        raise ValueError("epoch_group_id is missing")
+    raw_weights = group.get("validation_weights") or group.get("validationWeights")
+    if not isinstance(raw_weights, list) or not raw_weights:
+        raise ValueError("validation_weights must be a non-empty list")
+    weights: dict[str, int] = {}
+    for entry in raw_weights:
+        if not isinstance(entry, dict):
+            raise ValueError("validation weight entry is malformed")
+        address = entry.get("member_address") or entry.get("memberAddress")
+        if not isinstance(address, str) or not address.startswith("gonka1"):
+            raise ValueError("validation weight address is invalid")
+        try:
+            weight = int(entry.get("weight"))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"validation weight for {address} is invalid") from exc
+        # Historical epoch snapshots can contain eligible group members with
+        # zero validation power. They may sign but do not contribute to quorum.
+        if weight < 0 or address in weights:
+            raise ValueError(f"validation weight for {address} is invalid")
+        weights[address] = weight
+    return {
+        "epoch_index": epoch,
+        "group_id": str(group_id),
+        "total_power": total_power,
+        "required_power": total_power // 2 + 1,
+        "weights": weights,
+    }
+
+
+def parse_group_members(payload: Any) -> set[str]:
+    if not isinstance(payload, dict) or not isinstance(payload.get("members"), list):
+        raise ValueError("group members response is missing members list")
+    members: set[str] = set()
+    for entry in payload["members"]:
+        member = entry.get("member") if isinstance(entry, dict) else None
+        address = member.get("address") if isinstance(member, dict) else None
+        if not isinstance(address, str) or not address.startswith("gonka1"):
+            raise ValueError("group member address is invalid")
+        members.add(address)
+    if not members:
+        raise ValueError("group members list is empty")
+    return members
+
+
+def fetch_epoch_signing_snapshot(config: dict, epoch_index: int) -> dict:
+    group_urls = chain_urls(
+        config,
+        f"productscience/inference/inference/epoch_group_data/{epoch_index}",
+    )
+    group_payload, group_source = fetch_json_with_fallback(
+        group_urls,
+        timeout=config["request_timeout_seconds"],
+        attempts=config["attempts_per_source"],
+        validator=lambda payload: parse_epoch_signing_snapshot(payload, epoch_index),
+    )
+    snapshot = parse_epoch_signing_snapshot(group_payload, epoch_index)
+    member_urls = chain_urls(
+        config,
+        f"cosmos/group/v1/group_members/{quote(snapshot['group_id'], safe='')}",
+    )
+    member_payload, member_source = fetch_json_with_fallback(
+        member_urls,
+        timeout=config["request_timeout_seconds"],
+        attempts=config["attempts_per_source"],
+        validator=parse_group_members,
+    )
+    members = parse_group_members(member_payload)
+    missing_weights = sorted(members - set(snapshot["weights"]))
+    if missing_weights:
+        raise ValueError(
+            "eligible group members are missing validation weights: "
+            + ", ".join(missing_weights[:3])
+        )
+    snapshot["eligible_weights"] = {
+        address: snapshot["weights"][address] for address in sorted(members)
+    }
+    snapshot["source"] = f"{source_label(group_source)}, {source_label(member_source)}"
+    return snapshot
+
+
 def parse_bridge_observation(payload: Any) -> dict:
     if not isinstance(payload, dict):
         raise ValueError("bridge transaction response must be an object")
@@ -414,6 +539,7 @@ def parse_bridge_observation(payload: Any) -> dict:
             "validators": [],
             "completed_validators": [],
             "epoch_index": None,
+            "total_validation_power": None,
         }
 
     statuses: list[str] = []
@@ -440,11 +566,21 @@ def parse_bridge_observation(payload: Any) -> dict:
             epoch_index = None
         if epoch_index is not None and epoch_index < 0:
             epoch_index = None
+        raw_power = transaction.get("totalValidationPower")
+        if raw_power is None:
+            raw_power = transaction.get("total_validation_power")
+        try:
+            total_validation_power = int(raw_power) if raw_power is not None else None
+        except (TypeError, ValueError):
+            total_validation_power = None
+        if total_validation_power is not None and total_validation_power < 0:
+            total_validation_power = None
         normalized.append(
             {
                 "status": normalized_status,
                 "validators": parsed_validators,
                 "epoch_index": epoch_index,
+                "total_validation_power": total_validation_power,
             }
         )
 
@@ -473,11 +609,17 @@ def parse_bridge_observation(payload: Any) -> dict:
         if item["status"] == "BRIDGE_COMPLETED"
         for validator in item["validators"]
     }
+    power_values = [
+        item["total_validation_power"]
+        for item in selected
+        if item["total_validation_power"] is not None
+    ]
     return {
         "status": status,
         "validators": sorted(validators),
         "completed_validators": sorted(completed_validators),
         "epoch_index": epoch_index,
+        "total_validation_power": max(power_values) if power_values else None,
     }
 
 
@@ -519,7 +661,10 @@ def fetch_bridge_observation(
     rank = {"MISSING": 0, "UNKNOWN": 1, "BRIDGE_PENDING": 2, "BRIDGE_COMPLETED": 3}
     best, best_source = max(
         observations,
-        key=lambda value: rank.get(value[0]["status"], 1),
+        key=lambda value: (
+            rank.get(value[0]["status"], 1),
+            value[0].get("total_validation_power") or -1,
+        ),
     )
     all_validators = {
         validator
@@ -530,6 +675,46 @@ def fetch_bridge_observation(
     best["validators"] = sorted(all_validators)
     successful_sources = ", ".join(dict.fromkeys(label for _value, label in observations))
     return best, successful_sources or best_source
+
+
+def apply_signing_snapshot(item: dict, observation: dict, snapshot: dict) -> None:
+    validators = {
+        value
+        for value in observation.get("validators", [])
+        if isinstance(value, str) and value
+    }
+    eligible_weights = snapshot["eligible_weights"]
+    total_validation_power = observation.get("total_validation_power")
+    required_power = snapshot["required_power"]
+    item.update(
+        {
+            "epoch_index": snapshot["epoch_index"],
+            "total_epoch_power": snapshot["total_power"],
+            "required_power": required_power,
+            "total_validation_power": total_validation_power,
+            "missing_power": (
+                max(0, required_power - total_validation_power)
+                if isinstance(total_validation_power, int)
+                else None
+            ),
+            "eligible_validators": sorted(eligible_weights),
+            "eligible_non_signers": [
+                {"address": address, "weight": weight}
+                for address, weight in sorted(
+                    eligible_weights.items(),
+                    key=lambda value: (-value[1], value[0]),
+                )
+                if address not in validators
+            ],
+            "finalization_stuck": (
+                observation.get("status") == "BRIDGE_PENDING"
+                and isinstance(total_validation_power, int)
+                and total_validation_power >= required_power
+            ),
+            "signing_evidence_error": None,
+            "signing_evidence_source": snapshot.get("source"),
+        }
+    )
 
 
 def remember_completed_transaction(
@@ -557,6 +742,11 @@ def remember_completed_transaction(
         "transaction_hash": item["transaction_hash"],
         "status": "BRIDGE_COMPLETED",
         "epoch_index": observation.get("epoch_index"),
+        "total_epoch_power": item.get("total_epoch_power"),
+        "required_power": item.get("required_power"),
+        "total_validation_power": item.get("total_validation_power"),
+        "eligible_validators": item.get("eligible_validators", []),
+        "eligible_non_signers": item.get("eligible_non_signers", []),
         "validators": sorted(
             {value for value in validators if isinstance(value, str) and value}
         ),
@@ -656,13 +846,53 @@ def tx_link(item: dict) -> str:
     return f'<a href="https://etherscan.io/tx/{escape_html(tx_hash)}">{escape_html(label)}</a>'
 
 
-def tx_details(item: dict, now: datetime) -> str:
-    return (
+def signing_details(item: dict, config: dict) -> str:
+    lines: list[str] = []
+    epoch_index = item.get("epoch_index")
+    if isinstance(epoch_index, int):
+        lines.append(f"Receipt epoch: <code>{epoch_index}</code>")
+    observed = item.get("total_validation_power")
+    required = item.get("required_power")
+    missing = item.get("missing_power")
+    if all(isinstance(value, int) for value in (observed, required, missing)):
+        lines.append(
+            "Validation power: "
+            f"<b>{format_integer(observed)}</b> / {format_integer(required)} required; "
+            f"missing <b>{format_integer(missing)}</b>"
+        )
+    if item.get("finalization_stuck"):
+        lines.append("Quorum уже набран, но статус всё ещё <code>BRIDGE_PENDING</code>.")
+    non_signers = item.get("eligible_non_signers")
+    if isinstance(non_signers, list) and non_signers:
+        limit = positive_int(config, "non_signer_list_limit")
+        lines.append("Eligible participants без подписи:")
+        for entry in non_signers[:limit]:
+            if not isinstance(entry, dict):
+                continue
+            address = entry.get("address")
+            weight = entry.get("weight")
+            if not isinstance(address, str) or not isinstance(weight, int):
+                continue
+            lines.append(
+                f"• <code>{escape_html(address)}</code> — вес "
+                f"<b>{format_integer(weight)}</b>"
+            )
+        if len(non_signers) > limit:
+            lines.append(f"• …и ещё {len(non_signers) - limit}")
+    elif item.get("signing_evidence_error"):
+        lines.append("Список eligible signers временно недоступен.")
+    return "\n".join(lines)
+
+
+def tx_details(item: dict, now: datetime, config: dict) -> str:
+    base = (
         f"Ethereum tx: {tx_link(item)}\n"
         f"Block / position: <code>{item['block_number']} / {item['receipt_index']}</code>\n"
         f"Gonka status: <code>{escape_html(item.get('gonka_status', 'UNKNOWN'))}</code>\n"
         f"В очереди: <b>{age_minutes(item, now)} мин.</b>"
     )
+    details = signing_details(item, config)
+    return base + ("\n" + details if details else "")
 
 
 def process_queue(state: dict, config: dict, now_text: str) -> list[str]:
@@ -675,6 +905,7 @@ def process_queue(state: dict, config: dict, now_text: str) -> list[str]:
     successful = 0
     errors: list[str] = []
     completed_keys: list[str] = []
+    signing_snapshots: dict[int, dict | Exception] = {}
 
     for key, item in list(state["queue"].items()):
         if age_minutes(item, now) < config["initial_check_after_minutes"]:
@@ -688,11 +919,31 @@ def process_queue(state: dict, config: dict, now_text: str) -> list[str]:
                 {
                     "gonka_status": observation["status"],
                     "validators": observation["validators"],
+                    "epoch_index": observation.get("epoch_index"),
+                    "total_validation_power": observation.get(
+                        "total_validation_power"
+                    ),
                     "last_checked_at": now_text,
                     "last_error": None,
                     "source": source,
                 }
             )
+            epoch_index = observation.get("epoch_index")
+            if isinstance(epoch_index, int):
+                if epoch_index not in signing_snapshots:
+                    try:
+                        signing_snapshots[epoch_index] = fetch_epoch_signing_snapshot(
+                            config,
+                            epoch_index,
+                        )
+                    except (SourcesUnavailable, ValueError, TypeError) as exc:
+                        signing_snapshots[epoch_index] = exc
+                signing_snapshot = signing_snapshots[epoch_index]
+                if isinstance(signing_snapshot, Exception):
+                    item["signing_evidence_error"] = safe_rpc_error(signing_snapshot)[:500]
+                    item["finalization_stuck"] = False
+                else:
+                    apply_signing_snapshot(item, observation, signing_snapshot)
             if observation["status"] == "BRIDGE_COMPLETED":
                 remember_completed_transaction(
                     state,
@@ -705,7 +956,7 @@ def process_queue(state: dict, config: dict, now_text: str) -> list[str]:
                 if item.get("alert_level") == "warning":
                     messages.append(
                         "🟢 <b>Bridge-транзакция завершена</b>\n\n"
-                        + tx_details(item, now)
+                        + tx_details(item, now, config)
                     )
                 completed_keys.append(key)
             else:
@@ -734,12 +985,25 @@ def process_queue(state: dict, config: dict, now_text: str) -> list[str]:
     return messages
 
 
-def compact_tx_list(items: list[dict], now: datetime, *, limit: int = 5) -> str:
+def compact_tx_list(
+    items: list[dict],
+    now: datetime,
+    config: dict,
+    *,
+    limit: int = 5,
+) -> str:
     lines: list[str] = []
     for item in items[:limit]:
         lines.append(
             f"• {tx_link(item)} — {age_minutes(item, now)} мин., "
             f"<code>{escape_html(item.get('gonka_status', 'UNKNOWN'))}</code>"
+            + (
+                f", power {format_integer(item['total_validation_power'])}/"
+                f"{format_integer(item['required_power'])}"
+                if isinstance(item.get("total_validation_power"), int)
+                and isinstance(item.get("required_power"), int)
+                else ""
+            )
         )
     if len(items) > limit:
         lines.append(f"• …и ещё {len(items) - limit}")
@@ -764,7 +1028,7 @@ def evaluate_alerts(state: dict, config: dict, now_text: str) -> list[str]:
                 "🔴 <b>Несколько bridge-транзакций застряли</b>\n\n"
                 f"Просрочено транзакций: <b>{len(overdue)}</b>\n"
                 f"Порог: <code>{threshold}</code>\n\n"
-                + compact_tx_list(overdue, now)
+                + compact_tx_list(overdue, now, config)
             )
             state["critical_since"] = now_text
         state["critical_alerted"] = True
@@ -780,7 +1044,7 @@ def evaluate_alerts(state: dict, config: dict, now_text: str) -> list[str]:
             messages.append(
                 "🟡 <b>Критическое состояние bridge-очереди снято</b>\n\n"
                 "Осталась одна просроченная транзакция:\n"
-                + compact_tx_list(overdue, now)
+                + compact_tx_list(overdue, now, config)
             )
             for item in overdue:
                 item["alert_level"] = "warning"
@@ -792,9 +1056,14 @@ def evaluate_alerts(state: dict, config: dict, now_text: str) -> list[str]:
 
     for item in overdue:
         if item.get("alert_level") is None:
+            title = (
+                "Bridge-транзакция набрала quorum, но не финализировалась"
+                if item.get("finalization_stuck")
+                else "Bridge-транзакция не завершена вовремя"
+            )
             messages.append(
-                "🟡 <b>Bridge-транзакция не завершена вовремя</b>\n\n"
-                + tx_details(item, now)
+                f"🟡 <b>{title}</b>\n\n"
+                + tx_details(item, now, config)
             )
             item["alert_level"] = "warning"
             item["alerted_at"] = now_text

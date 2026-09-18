@@ -467,6 +467,51 @@ class TopPeerSignalTests(unittest.TestCase):
         self.assertIn("восстановились", recovered[0])
         self.assertFalse(state["top_peers"][address]["alerted"])
 
+    def test_previous_epoch_transactions_are_used_with_eligibility_snapshot(self):
+        address = self.snapshot["participants"][0]["address"]
+        other_signers = self.eligible - {address}
+        history = self.history(other_signers, other_signers)
+        for item in history:
+            item["epoch_index"] = self.snapshot["epoch"] - 1
+            item["eligible_validators"] = sorted(self.eligible)
+
+        state = watcher.default_state()
+        messages = watcher.evaluate_top_peers(
+            state,
+            config(),
+            self.snapshot,
+            self.eligible,
+            history,
+            self.now,
+        )
+
+        self.assertEqual(len(messages), 1)
+        self.assertIn(address, messages[0])
+        self.assertEqual(state["top_peers"][address]["evidence_count"], 2)
+
+    def test_transaction_is_ignored_when_peer_was_not_eligible_to_sign(self):
+        address = self.snapshot["participants"][0]["address"]
+        other_signers = self.eligible - {address}
+        history = self.history(other_signers, other_signers)
+        for item in history:
+            item["eligible_validators"] = sorted(other_signers)
+
+        state = watcher.default_state()
+        messages = watcher.evaluate_top_peers(
+            state,
+            config(),
+            self.snapshot,
+            self.eligible,
+            history,
+            self.now,
+        )
+
+        self.assertEqual(messages, [])
+        self.assertEqual(
+            state["top_peers"][address]["evidence_status"],
+            "insufficient_transactions",
+        )
+
     def test_inactive_top_peer_alerts_on_second_check_but_peer_below_top_ten_does_not(self):
         top_address = self.snapshot["participants"][1]["address"]
         below_top_address = self.snapshot["participants"][10]["address"]

@@ -10,6 +10,13 @@
   "request_timeout_seconds": 15,
   "attempts_per_source": 1,
   "completed_history_limit": 20,
+  "non_signer_list_limit": 10,
+  "chain_api_bases": [
+    "http://204.12.168.157:1317",
+    "https://node3.gonka.ai/chain-api",
+    "http://node2.gonka.ai:8000/chain-api",
+    "http://node1.gonka.ai:8000/chain-api"
+  ],
   "ethereum_rpc_urls": [
     "https://ethereum-rpc.publicnode.com",
     "https://cloudflare-eth.com",

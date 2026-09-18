@@ -83,7 +83,8 @@ zero address; Gonka `bridge_transaction` API для статуса обрабо�
 
 | Событие | Назначение | Порог/условие | Уровень | Telegram | Владеющий репозиторий | Известное пересечение | Статус |
 |---|---|---|---|---|---|---|---|
-| `bridge_transaction_overdue` | Одиночная незавершённая burn-транзакция | Первая проверка после 5 минут; warning при возрасте `>= 10 минут` | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
+| `bridge_transaction_overdue` | Одиночная незавершённая burn-транзакция с недостаточной мощностью подписей | Первая проверка после 5 минут; warning при возрасте `>= 10 минут`, с observed/required/missing power и eligible non-signers | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
+| `bridge_finalization_stuck` | Receipt набрал quorum, но не завершён | Возраст `>= 10 минут`, `BRIDGE_PENDING` и observed power `>=` required power | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
 | `bridge_queue_critical` | Несколько зависших burn-транзакций | Не меньше 2 overdue transactions | CRITICAL | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
 | `bridge_transaction_completed` | Завершение ранее предупреждённой транзакции | `BRIDGE_COMPLETED` после warning | INFO | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
 | `bridge_queue_downgraded` | Снятие critical при оставшейся просрочке | Overdue count падает с 2+ до 1 | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
@@ -104,7 +105,7 @@ bridge transactions.
 | `bls_inactive_slots` | Slots участников, не способных голосовать | Inactive/invalidated slots `>= 35%` | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
 | `bridge_stale_slots` | Значимое отставание bridge | Lag больше 64 Ethereum blocks у `>= 35%` slots две проверки подряд | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
 | `bridge_unknown_slots` | Значимая потеря bridge visibility | Unknown status у `>= 35%` slots | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
-| `bridge_top10_peer_problem` | Неучастие значимого bridge peer | Нет подписи в 2 последних completed transactions либо inactive две проверки подряд | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
+| `bridge_top10_peer_problem` | Неучастие значимого bridge peer | Нет подписи в 2 последних completed transactions, eligible для этого peer по snapshot эпохи receipt, либо inactive две проверки подряд | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
 | `bridge_stale_recovery` | Recovery любого активного bridge/BLS сигнала | Условие соответствующего сигнала больше не выполнено | INFO | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
 | `bridge_stale_source_unavailable` | Потеря chain/Ethereum source | Три последовательных неуспешных проверки | WARNING | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
 | `bridge_stale_summary` | Ручная диагностическая сводка | Только явно запрошенный summary | INFO | MONITORING | `dmitriikokh-svg/gonka-host-bot` | Нет | UNIQUE |
